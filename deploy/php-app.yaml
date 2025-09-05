@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: php-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: php-app
+  template:
+    metadata:
+      labels:
+        app: php-app
+        admission.datadoghq.com/cws-instrumentation.enabled: "true"
+    spec:
+      containers:
+        - name: php-app
+          image: safchain/datadog-security-playground:latest
+          imagePullPolicy: Always
+          env:
+            - name: DD_SERVICE
+              value: "php-app"

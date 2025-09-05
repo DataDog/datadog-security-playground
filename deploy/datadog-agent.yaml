@@ -1,0 +1,20 @@
+datadog:
+  site: "datadoghq.com"
+  apiKeyExistingSecret: "datadog-api-secret"
+  env:
+    - name: DD_HOSTNAME
+      value: playground
+    - name: DD_ENV
+      value: "playground-env"
+    - name: DD_CLUSTER_NAME
+      value: "playground-cluster"
+  securityAgent:
+    runtime:
+      enabled: true
+
+clusterAgent:
+  enabled: true
+  admissionController:
+    cwsInstrumentation:
+      enabled: true
+      mode: remote_copy
