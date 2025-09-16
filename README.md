@@ -105,6 +105,20 @@ Navigate to the `scripts/` folder to explore available attack scenarios. Each sc
 kubectl exec -it deploy/php-app -- /scripts/malware/detonate.sh --wait
 ```
 
+#### 2. BPFDoor Network Backdoor Attack
+- **Location**: `scripts/fake-bpfdoor/`
+- **Description**: Simulates a command injection attack that deploys a persistent BPFDoor network backdoor
+- **Attack Vector**: Command injection vulnerability
+- **Impact**: Covert network communication channels, process masquerading, persistence, system compromise
+- **Detection**: Workload Protection signals for backdoor execution, network behavior, file modifications, and persistence mechanisms
+- **Technical Features**: Process camouflage (haldrund), BPF packet filtering, raw socket communication, magic signature detection
+
+**How to Run:**
+```bash
+# Execute the attack simulation from within the php-app pod
+kubectl exec -it deploy/php-app -- /scripts/fake-bpfdoor/detonate.sh --wait
+```
+
 ## 📊 Monitoring and Detection
 
 ### Datadog Workload Protection App
