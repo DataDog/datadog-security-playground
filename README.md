@@ -132,7 +132,7 @@ After running any attack scenario:
 
 ## 🔨 Optional: Building Binaries
 
-Before running the attack scenarios, you need to build the simulation binaries:
+Here's how to rebuild the simulation binaries:
 
 ### Build All Assets
 ```bash
