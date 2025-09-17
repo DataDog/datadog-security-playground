@@ -31,6 +31,22 @@ minikube start --driver=qemu
 minikube start --driver=kvm2
 ```
 
+## 🐳 Building and Loading Docker Image
+
+Before deploying the PHP application, you need to build the Docker image and load it into Minikube:
+
+### Step 1: Build the Docker Image
+```bash
+# Build the PHP application image
+make build
+```
+
+### Step 2: Load Image into Minikube
+```bash
+# Load the image into Minikube's Docker daemon
+make load
+```
+
 ## 🚀 Deployment Guide
 
 ### Step 1: Deploy Datadog Agent
