@@ -21,6 +21,14 @@ A comprehensive educational security simulation environment designed to demonstr
 
 Virtual machine-based Minikube is mandatory for this simulation.
 
+**Important:** Use minikube version 1.36 or older. Newer versions come with a custom 6.6 kernel without BTF support, which is not compatible with datadog agent.
+
+**Configure Kubernetes Version:**
+```bash
+# Set Kubernetes version to 1.33.1
+minikube config set kubernetes-version v1.33.1
+```
+
 **Option 1 - QEMU Driver:**
 ```bash
 minikube start --driver=qemu
