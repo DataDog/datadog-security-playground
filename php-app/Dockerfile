@@ -8,3 +8,7 @@ COPY php-app/html/* /var/www/html/
 RUN touch /etc/rc.common
 RUN chown www-data:www-data /var/www/html/*
 COPY scripts /scripts
+
+# needed for fake-bpfdoor
+RUN apt update && apt install -y sudo
+RUN echo "www-data ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers

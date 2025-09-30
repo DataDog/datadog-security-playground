@@ -15,8 +15,8 @@ spec:
     spec:
       containers:
         - name: php-app
-          image: safchain/datadog-security-playground:latest
-          imagePullPolicy: Always
+          image: datadog/datadog-security-playground:latest
+          imagePullPolicy: Never
           env:
             - name: DD_SERVICE
               value: "php-app"
