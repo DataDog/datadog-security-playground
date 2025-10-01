@@ -5,7 +5,7 @@ PHPAPP_IMG_NAME=datadog/datadog-security-playground:latest
 all: build load
 
 build:
-	docker build . -t $(PHPAPP_IMG_NAME) -f php-app/Dockerfile
+	docker build . -t $(PHPAPP_IMG_NAME) -f app/Dockerfile
 
 clean:
 	docker image rm $(PHPAPP_IMG_NAME)

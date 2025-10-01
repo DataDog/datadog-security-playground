@@ -1,22 +1,22 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: php-app
+  name: playground-app
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: php-app
+      app: playground-app
   template:
     metadata:
       labels:
-        app: php-app
+        app: playground-app
         admission.datadoghq.com/cws-instrumentation.enabled: "true"
     spec:
       containers:
-        - name: php-app
+        - name: playground-app
           image: datadog/datadog-security-playground:latest
           imagePullPolicy: Never
           env:
             - name: DD_SERVICE
-              value: "php-app"
+              value: "playground-app"
