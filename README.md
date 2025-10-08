@@ -73,7 +73,7 @@ make load
    ```bash
    helm install datadog-agent \
      --set datadog.apiKeyExistingSecret=$DATADOG_API_SECRET_NAME \
-     --set datadog.site=datadoghq.eu \
+     --set datadog.site=datadoghq.com \
      -f deploy/datadog-agent.yaml \
      datadog/datadog
    ```
