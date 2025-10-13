@@ -1,7 +1,7 @@
 #!/usr/bin/sh
 
 # Source the helper functions
-. "$(dirname "$0")/../tool.sh"
+. "$(dirname "$0")/../../scripts/tool.sh"
 
 # Parse command line arguments
 parse_args "$@"
