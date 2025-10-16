@@ -14,7 +14,7 @@ A comprehensive educational security simulation environment designed to demonstr
 ## 🛠️ Prerequisites
 
 ### Required Tools
-- **Helm Charts**: [Installation Guide](https://helm.sh/docs/topics/charts/)
+- **Helm Charts**: [Installation Guide](https://helm.sh/docs/intro/install/)
 - **Minikube** (optional): [Installation Guide](https://minikube.sigs.k8s.io/docs/start)
 
 ### Minikube Setup (optional)
@@ -71,6 +71,8 @@ make load
 
 3. **Install Datadog Agent:**
    ```bash
+   helm repo add datadog https://helm.datadoghq.com
+   helm repo update
    helm install datadog-agent \
      --set datadog.apiKeyExistingSecret=$DATADOG_API_SECRET_NAME \
      --set datadog.site=datadoghq.com \
