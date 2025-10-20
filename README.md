@@ -132,7 +132,7 @@ kubectl exec -it deploy/playground-app -- /scenarios/malware/detonate.sh --wait
 ```
 
 #### 2. BPFDoor Network Backdoor Attack
-- **Location**: `scenarios/fake-bpfdoor/`
+- **Location**: `scenarios/bpfdoor/`
 - **Description**: Simulates a command injection attack that deploys a persistent BPFDoor network backdoor
 - **Attack Vector**: Command injection vulnerability
 - **Impact**: Covert network communication channels, process masquerading, persistence, system compromise
@@ -142,7 +142,7 @@ kubectl exec -it deploy/playground-app -- /scenarios/malware/detonate.sh --wait
 **How to Run:**
 ```bash
 # Execute the attack simulation from within the playground-app pod
-kubectl exec -it deploy/playground-app -- /scenarios/fake-bpfdoor/detonate.sh --wait
+kubectl exec -it deploy/playground-app -- /scenarios/bpfdoor/detonate.sh --wait
 ```
 
 ## 🎯 Atomic test organization
@@ -201,7 +201,7 @@ cd assets && make
 ### Build Individual Components
 ```bash
 # Build BPFDoor simulator
-cd assets/ && make fake-bpfdoor
+cd assets/ && make bpfdoor
 
 # Build malware simulator
 cd assets/ && make malware

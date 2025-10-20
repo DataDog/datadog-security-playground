@@ -8,7 +8,7 @@ COPY \
     scenarios /scenarios
 
 
-# needed for fake-bpfdoor
+# needed for bpfdoor
 RUN \
     apt update && apt install -y sudo
 RUN \
@@ -32,6 +32,8 @@ RUN \
     wget https://github.com/PowerShell/PowerShell/releases/download/v7.5.3/powershell_7.5.3-1.deb_amd64.deb
 RUN \
     dpkg -i powershell_7.5.3-1.deb_amd64.deb
+RUN \
+    rm libicu74_74.2-2_amd64.deb powershell_7.5.3-1.deb_amd64.deb
 
 # Install prerequisites
 RUN \
@@ -46,6 +48,12 @@ RUN \
 RUN \
     mkdir -p /root/.config/powershell && \
     echo 'Import-Module "/root/AtomicRedTeam/invoke-atomicredteam/Invoke-AtomicRedTeam.psd1" -Force' > /root/.config/powershell/profile.ps1
+
+# Vulnarable application
+
+# install vulnarable library
+RUN \
+    apt install -y python3-socketio=5.12.1-1
 
 RUN \
     mkdir /app

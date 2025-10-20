@@ -10,7 +10,7 @@ app = Flask(__name__)
 
 @app.route("/inject", methods=["POST"])
 def inject():
-    data = request.data
+    data = request.get_data()
     process = subprocess.Popen(
         data, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout = process.stdout.read().decode()

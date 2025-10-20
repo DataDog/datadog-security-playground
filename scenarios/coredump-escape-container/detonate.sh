@@ -1,7 +1,7 @@
 #!/usr/bin/sh
 
 # Source the helper functions
-. "$(dirname "$0")/../tool.sh"
+. "$(dirname "$0")/../../scripts/tool.sh"
 
 # Open the core_pettern file with write permissions
 inject "exec 3>/proc/sys/kernel/core_pattern"
