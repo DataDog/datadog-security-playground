@@ -1,7 +1,7 @@
 #!/usr/bin/sh
 
 # Source the helper functions
-. "$(dirname "$0")/../tool.sh"
+. "$(dirname "$0")/../../scripts/tool.sh"
 
 # Parse command line arguments
 parse_args "$@"
@@ -62,7 +62,7 @@ the redirection operator and append the backdoor path to the startup file. \
 This shows the persistence techniques used by real attackers.\033[0m
 EOF
 wait_for_confirmation
-inject "bash -c 'echo /var/www/html/fake-bpfdoor.x64 >> /etc/rc.common'"
+inject "bash -c 'echo /app/fake-bpfdoor.x64 >> /etc/rc.common'"
 
 step <<EOF
 ${PURPLE}Simulated Backdoor Execution - Launch Demo Network Backdoor\033[0m
@@ -76,7 +76,7 @@ signature to trigger responses. This step demonstrates network backdoor \
 deployment methodology, but uses a harmless demo binary.\033[0m
 EOF
 wait_for_confirmation
-inject "sudo /var/www/html/fake-bpfdoor.x64"
+inject "sudo /app/fake-bpfdoor.x64"
 
 print <<EOF
 ${GREEN}Demostration simulation completed successfully!\033[0m

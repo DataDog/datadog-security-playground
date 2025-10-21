@@ -114,12 +114,12 @@ make load
 
 ## 🎯 Available Attack Scenarios
 
-Navigate to the `scripts/` folder to explore available attack scenarios. Each scenario includes detailed documentation and step-by-step instructions.
+Navigate to the `scenarios/` folder to explore available attack scenarios. Each scenario includes detailed documentation and step-by-step instructions.
 
 ### Current Scenarios
 
 #### 1. Cryptocurrency Mining Malware Attack
-- **Location**: `scripts/malware/`
+- **Location**: `scenarios/malware/`
 - **Description**: Simulates a command injection attack that deploys persistent cryptocurrency mining malware
 - **Attack Vector**: Command injection vulnerability
 - **Impact**: Resource hijacking, persistence, system compromise
@@ -128,11 +128,11 @@ Navigate to the `scripts/` folder to explore available attack scenarios. Each sc
 **How to Run:**
 ```bash
 # Execute the attack simulation from within the playground-app pod
-kubectl exec -it deploy/playground-app -- /scripts/malware/detonate.sh --wait
+kubectl exec -it deploy/playground-app -- /scenarios/malware/detonate.sh --wait
 ```
 
 #### 2. BPFDoor Network Backdoor Attack
-- **Location**: `scripts/fake-bpfdoor/`
+- **Location**: `scenarios/bpfdoor/`
 - **Description**: Simulates a command injection attack that deploys a persistent BPFDoor network backdoor
 - **Attack Vector**: Command injection vulnerability
 - **Impact**: Covert network communication channels, process masquerading, persistence, system compromise
@@ -142,7 +142,7 @@ kubectl exec -it deploy/playground-app -- /scripts/malware/detonate.sh --wait
 **How to Run:**
 ```bash
 # Execute the attack simulation from within the playground-app pod
-kubectl exec -it deploy/playground-app -- /scripts/fake-bpfdoor/detonate.sh --wait
+kubectl exec -it deploy/playground-app -- /scenarios/bpfdoor/detonate.sh --wait
 ```
 
 ## 🎯 Atomic test organization
@@ -201,7 +201,7 @@ cd assets && make
 ### Build Individual Components
 ```bash
 # Build BPFDoor simulator
-cd assets/ && make fake-bpfdoor
+cd assets/ && make bpfdoor
 
 # Build malware simulator
 cd assets/ && make malware

@@ -8,6 +8,14 @@ datadog:
       value: "playground-env"
     - name: DD_CLUSTER_NAME
       value: "playground-cluster"
+    - name: DD_KUBELET_TLS_VERIFY
+      value: "false"
+    - name: DD_SBOM_ENABLED
+      value: "true"
+    - name: DD_SBOM_CONTAINER_IMAGE_ENABLED
+      value: "true"
+    - name: DD_SBOM_CONTAINER_IMAGE_ALLOW_MISSING_REPODIGEST
+      value: "true"
   securityAgent:
     runtime:
       enabled: true

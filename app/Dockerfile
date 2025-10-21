@@ -1,28 +1,18 @@
-FROM php:8-apache
+FROM python:3.12-slim
 
-#
-# Apache & PHP
-#
 RUN \
-    a2enmod rewrite
-RUN \
-    mv "$PHP_INI_DIR/php.ini-development" "$PHP_INI_DIR/php.ini"
-
-COPY \
-    app/conf/000-default.conf /etc/apache2/sites-available/000-default.conf
-COPY \
-    app/html/* /var/www/html/
-RUN \
-    touch /etc/rc.common && \
-    chown www-data:www-data /var/www/html/*
+    touch /etc/rc.common
 COPY \
     scripts /scripts
+COPY \
+    scenarios /scenarios
 
-# needed for fake-bpfdoor
+
+# needed for bpfdoor
 RUN \
     apt update && apt install -y sudo
 RUN \
-    echo "www-data ALL=(ALL) NOPASSWD: ALL" >> /etc/RUNers
+    echo "www-data ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
 #
 # Atomic Red Team
@@ -32,7 +22,7 @@ RUN \
 
 # Install powershell
 RUN \
-    apt-get install -y wget lsb-release
+    apt-get install -y wget lsb-release libgssapi-krb5-2
 
 RUN \
     wget https://github.com/berkley4/icu-74-debian/releases/download/74.2-2/libicu74_74.2-2_amd64.deb
@@ -42,6 +32,8 @@ RUN \
     wget https://github.com/PowerShell/PowerShell/releases/download/v7.5.3/powershell_7.5.3-1.deb_amd64.deb
 RUN \
     dpkg -i powershell_7.5.3-1.deb_amd64.deb
+RUN \
+    rm libicu74_74.2-2_amd64.deb powershell_7.5.3-1.deb_amd64.deb
 
 # Install prerequisites
 RUN \
@@ -57,4 +49,26 @@ RUN \
     mkdir -p /root/.config/powershell && \
     echo 'Import-Module "/root/AtomicRedTeam/invoke-atomicredteam/Invoke-AtomicRedTeam.psd1" -Force' > /root/.config/powershell/profile.ps1
 
-WORKDIR /
+# Vulnarable application
+
+# install vulnarable library
+RUN \
+    apt install -y python3-socketio=5.12.1-1
+
+RUN \
+    mkdir /app
+RUN \
+    groupadd --gid 1000 app
+RUN \
+    useradd --home-dir /app --create-home --uid 1000 --gid 1000 --shell /bin/bash app
+
+WORKDIR /app
+
+COPY app/app.py /app/app.py
+COPY app/requirements.txt /app/requirements.txt
+RUN \
+    pip install --no-cache-dir -r /app/requirements.txt
+RUN \
+    chown -R app:app /app
+
+ENTRYPOINT ["python", "/app/app.py" ]

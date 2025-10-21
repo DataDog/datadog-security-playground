@@ -13,7 +13,7 @@ NC='\033[0m' # No Color
 WAIT_FOR_CONFIRM=false
 SILENT_MODE=false
 STEP=1
-ENDPOINT="http://localhost:80"
+ENDPOINT="http://localhost:5000"
 
 # Help function
 show_help() {
@@ -74,17 +74,17 @@ wait_for_confirmation() {
 inject() {
     if [ "$SILENT_MODE" = "true" ]; then
         # Silent mode: execute command without any output
-        curl -s -X POST -d "$1" ${ENDPOINT}/ -o /dev/null &
+        curl -s -X POST -d "$1" ${ENDPOINT}/inject -o /dev/null &
         sleep 1
     else
         # Normal mode: show command and execute
         echo "${BLUE}Executing command...${NC}"
         echo
         echo "\033[0;36m\`\`\`\033[0m"
-        echo "\033[1;33m$ curl -s -X POST -d \"$1\" ${ENDPOINT}/\033[0m"
+        echo "\033[1;33m$ curl -s -X POST -d \"$1\" ${ENDPOINT}/inject\033[0m"
         echo "\033[0;36m\`\`\`\033[0m"
         echo
-        curl -s -X POST -d "$1" ${ENDPOINT}/ -o /dev/null &
+        curl -s -X POST -d "$1" ${ENDPOINT}/inject -o /dev/null &
         sleep 1
     fi
 }
