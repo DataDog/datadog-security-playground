@@ -41,11 +41,11 @@ minikube start --driver=kvm2
 
 ## 🐳 Building and Loading Docker Image
 
-Before deploying the PHP application, you need to build the Docker image and load it into Minikube:
+Before deploying the application, you need to build the Docker image and load it into Minikube:
 
 ### Step 1: Build the Docker Image
 ```bash
-# Build the PHP application image
+# Build the application image
 make build
 ```
 

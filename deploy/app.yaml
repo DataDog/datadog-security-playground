@@ -1,22 +1,22 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: playground-app
+  name: python-app
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: playground-app
+      app: python-app
   template:
     metadata:
       labels:
-        app: playground-app
+        app: python-app
         admission.datadoghq.com/cws-instrumentation.enabled: "true"
     spec:
       containers:
-        - name: playground-app
-          image: datadog/datadog-security-playground:latest
+        - name: python-app
+          image: datadog/python-security-playground:latest
           imagePullPolicy: Never
           env:
             - name: DD_SERVICE
-              value: "playground-app"
+              value: "python-app"

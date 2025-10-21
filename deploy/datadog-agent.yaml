@@ -1,6 +1,6 @@
 datadog:
   site: "datadoghq.com"
-  apiKeyExistingSecret: "datadog-api-secret"
+  apiKeyExistingSecret: datadog-api-secret
   env:
     - name: DD_HOSTNAME
       value: playground

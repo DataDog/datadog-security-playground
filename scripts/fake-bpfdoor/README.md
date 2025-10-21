@@ -49,7 +49,7 @@ The simulation showcases how attackers can compromise web applications through c
 
 ## Usage
 
-1. Run the attack simulation: `kubectl exec -it deploy/php-app -- /scripts/fake-bpfdoor/detonate.sh --wait`
+1. Run the attack simulation: `kubectl exec -it deploy/playground-app -- /scripts/fake-bpfdoor/detonate.sh --wait`
 2. Monitor detection in Datadog Workload Protection App
 
 ## Security Notice
