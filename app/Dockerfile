@@ -71,4 +71,9 @@ RUN \
 RUN \
     chown -R app:app /app
 
+
+# clean up
+RUN \
+    apt remove --purge -y curl
+
 ENTRYPOINT ["python", "/app/app.py" ]
