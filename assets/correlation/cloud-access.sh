@@ -13,7 +13,7 @@ fi
 
 INSTANCE_TYPE='m5.xlarge'
 REGIONS=('us-east-1' 'us-west-2')
-IMAGE_ID='ami-0c55b159cbfafe1f0' # Likely not existing
+IMAGE_ID='ami-00000000000000000' # Likely not existing
 
 echo "Attempting to launch EC2 instances with $INSTANCE_TYPE instance type..."
 echo ""
