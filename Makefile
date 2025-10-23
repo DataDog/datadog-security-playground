@@ -8,7 +8,7 @@ ATOMIC_RED_TEAM?=true
 all: build load
 
 build:
-	docker build . -t $(APP_IMG_NAME) -f app/Dockerfile --build-arg ATOMIC_RED_TEAM=$(ATOMIC_RED_TEAM)
+	docker build . -t $(APP_IMG_NAME) -f app/Dockerfile --build-arg ATOMIC_RED_TEAM=$(ATOMIC_RED_TEAM) --build-arg APP_PORT=$(APP_PORT)
 
 build-no-art:
 	$(MAKE) build ATOMIC_RED_TEAM=false

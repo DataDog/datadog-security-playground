@@ -1,6 +1,7 @@
 FROM python:3.12-slim
 
 ARG ATOMIC_RED_TEAM=true
+ARG PORT=5000
 
 RUN \
     touch /etc/rc.common
@@ -61,3 +62,4 @@ RUN \
     apt remove --purge -y curl
 
 ENTRYPOINT ["python", "/app/app.py" ]
+EXPOSE $PORT
