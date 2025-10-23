@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: playground-app
-          image: datadog/datadog-security-playground:latest
+          image: ghcr.io/datadog/datadog-security-playground:sha256-bb4b6f099e4469b36dc85b5d4aaffd5ffb48076699012c037ca0c9aec54e3d48
           imagePullPolicy: Never
           env:
             - name: DD_SERVICE

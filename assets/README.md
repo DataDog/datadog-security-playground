@@ -15,6 +15,9 @@ This directory contains the assets used by the different detonation scenarios of
   - `malware.arm64` : Compiled binary for ARM64 architecture
   - `Makefile` : Build script for the malware binaries
 
+- **`correlation/`** : Contains the script to run the threats correlation and attack chain demonstration
+  - `payload.sh` : First stage of the attack, retrieved by exploiting the playground app
+
 ## Building Binaries
 
 To rebuild all binaries from both directories, use the root Makefile:

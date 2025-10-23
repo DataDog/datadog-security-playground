@@ -1,0 +1,103 @@
+{
+    "name": "[Execution context] File download and execution activity",
+    "isEnabled": true,
+    "queries": [
+      {
+        "query": "@agent.rule_id:(package_management_in_container) @process.args:(add OR *install OR \"-i\") @process.args:(curl OR wget) @process.variables.correlation_key:*",
+        "groupByFields": [
+          "@process.variables.correlation_key",
+          "host"
+        ],
+        "hasOptionalGroupByFields": false,
+        "distinctFields": [],
+        "aggregation": "count",
+        "name": "package_installation",
+        "dataSource": "security_runtime"
+      },
+      {
+        "query": "@agent.rule_id:(net_util_in_container OR net_util OR net_file_download) @process.variables.correlation_key:*",
+        "groupByFields": [
+          "@process.variables.correlation_key",
+          "host"
+        ],
+        "hasOptionalGroupByFields": false,
+        "distinctFields": [],
+        "aggregation": "count",
+        "name": "file_download",
+        "dataSource": "security_runtime"
+      },
+      {
+        "query": "@agent.rule_id:(new_binary_execution_in_container OR executable_bit_added) @process.variables.correlation_key:*",
+        "groupByFields": [
+          "@process.variables.correlation_key",
+          "host"
+        ],
+        "hasOptionalGroupByFields": false,
+        "distinctFields": [],
+        "aggregation": "count",
+        "name": "new_binary_execution",
+        "dataSource": "security_runtime"
+      },
+      {
+        "query": "@agent.rule_id:(cryptominer_args OR cryptominer_envs OR mining_pool_domain OR potential_cryptominer) @process.variables.correlation_key:*",
+        "groupByFields": [
+          "@process.variables.correlation_key",
+          "host"
+        ],
+        "hasOptionalGroupByFields": false,
+        "distinctFields": [],
+        "aggregation": "count",
+        "name": "cryptominer_execution",
+        "dataSource": "security_runtime"
+      },
+      {
+        "query": "@agent.rule_id:(aws_imds) @process.variables.correlation_key:*",
+        "groupByFields": [
+          "@process.variables.correlation_key",
+          "host"
+        ],
+        "hasOptionalGroupByFields": false,
+        "distinctFields": [],
+        "aggregation": "count",
+        "name": "credential_access_imds",
+        "dataSource": "security_runtime"
+      }
+    ],
+    "options": {
+      "evaluationWindow": 900,
+      "detectionMethod": "threshold",
+      "maxSignalDuration": 86400,
+      "keepAlive": 900
+    },
+    "cases": [
+      {
+        "name": "IMDS access",
+        "status": "critical",
+        "notifications": [],
+        "condition": "package_installation > 0 && file_download > 0 && new_binary_execution > 0 && cryptominer_execution > 0 && credential_access_imds > 0"
+      },
+      {
+        "name": "Crypto mining activity",
+        "status": "high",
+        "notifications": [],
+        "condition": "package_installation > 0 && file_download > 0 && new_binary_execution > 0 && cryptominer_execution > 0"
+      },
+      {
+        "name": "File download executes",
+        "status": "medium",
+        "notifications": [],
+        "condition": "package_installation > 0 && file_download > 0 && new_binary_execution > 0"
+      },
+      {
+        "name": "Package install and file download",
+        "status": "low",
+        "notifications": [],
+        "condition": "package_installation > 0 && file_download > 0"
+      }
+    ],
+    "message": "Grouping events typically seen in compromises to show a complete picture.",
+    "tags": [],
+    "hasExtendedTitle": true,
+    "type": "workload_security",
+    "filters": []
+  }

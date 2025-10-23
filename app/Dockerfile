@@ -34,9 +34,9 @@ RUN if [ "$ATOMIC_RED_TEAM" = "true" ]; then \
         echo 'Import-Module "/root/AtomicRedTeam/invoke-atomicredteam/Invoke-AtomicRedTeam.psd1" -Force' > /root/.config/powershell/profile.ps1; \
     fi
 
-# Vulnarable application
+# Vulnerable application
 
-# install vulnarable library
+# install vulnerable library
 RUN \
     apt install -y python3-socketio=5.12.1-1
 

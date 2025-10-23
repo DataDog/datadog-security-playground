@@ -145,6 +145,13 @@ kubectl exec -it deploy/playground-app -- /scenarios/malware/detonate.sh --wait
 kubectl exec -it deploy/playground-app -- /scenarios/bpfdoor/detonate.sh --wait
 ```
 
+#### 3. Full chain RCE to malware download, persistence and cryptomining
+- **Location**: `scenarios/correlation/`
+- **Description**: Simulates a command injection attack that deploys a payload containing a cryptominer via file download, achieve persistence, and attempts to lateral move to the cloud. The aim is to showcase a complete compromise and generate a signal describing the full attack.
+- **Attack Vector**: Command injection vulnerability
+- **Impact**: 
+- **Detection**: Workload Protection signals for backdoor execution, network behavior, file modifications, and persistence mechanisms
+
 ## 🎯 Atomic test organization
 
 [Atomic Red Team](https://atomicredteam.io/) often contains multiple tests for the same ATT&CK technique. For example, the test identifier T1136.001-1 refers to the first test for MITRE ATT&CK technique T1136.001 (Create Account: Local Account). This test creates an account on a Linux system. The second test, T1136.001-2, creates an account on a MacOS system.
