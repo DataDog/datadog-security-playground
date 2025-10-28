@@ -82,44 +82,19 @@ EOF
 wait_for_confirmation
 inject "chmod +x cloud-access.sh"
 
-print <<EOF
-\033[1;36m──────────────────────────────────────────────────────────────\033[0m
-${YELLOW}⚠️  ACTION REQUIRED: Provide AWS Credentials ⚠️\033[0m
-\033[1;36m──────────────────────────────────────────────────────────────\033[0m
-
-${PURPLE}The next step will use the cloud-access.sh script to attempt launching \
-EC2 instances with stolen credentials. You can use:\033[0m
-
-${WHITE}Option 1: Credentials stolen from IMDS (from payload.sh output above)
-Option 2: Your own test AWS credentials\033[0m
-
-${PURPLE}Note: The script will attempt to launch m5.xlarge instances in us-east-1 \
-and us-west-2, but will likely fail due to invalid AMI IDs. The goal is to \
-generate CloudTrail events showing the unauthorized API activity.\033[0m
-
-EOF
-
-# Prompt for AWS credentials
-echo ""
-echo -n "${YELLOW}Enter AWS Access Key ID: ${NC}"
-read -r AWS_ACCESS_KEY_ID
-echo ""
-echo -n "${YELLOW}Enter AWS Secret Access Key: ${NC}"
-read -r AWS_SECRET_ACCESS_KEY
-echo -n "${YELLOW}Enter AWS Session Token: ${NC}"
-read -r AWS_SESSION_TOKEN
-echo ""
-
 step <<EOF
 \033[1;35mCloud Resource Abuse - Attempt EC2 Instance Launch\033[0m
 
-${PURPLE}Now we execute the cloud-access script with the provided AWS credentials. \
-The script will attempt to launch expensive EC2 instances across multiple regions, \
-generating CloudTrail events that demonstrate cloud resource abuse stemming from \
-the workload compromise.\033[0m
+${PURPLE}Now we execute the cloud-access script which will automatically retrieve \
+credentials from the Instance Metadata Service (IMDS). The script will attempt (and fail) to \
+launch expensive EC2 instances across multiple regions, generating CloudTrail events \ 
+that can be investigated.\\033[0m
+
+${PURPLE}The script will try both IMDSv2 and IMDSv1 to retrieve the node's IAM role \
+credentials automatically.\033[0m
 EOF
 wait_for_confirmation
-inject "./cloud-access.sh $AWS_ACCESS_KEY_ID $AWS_SECRET_ACCESS_KEY $AWS_SESSION_TOKEN"
+inject "./cloud-access.sh"
 
 print <<EOF
 ${GREEN}Demonstration simulation completed successfully!\033[0m
