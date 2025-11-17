@@ -22,9 +22,6 @@ resource "kubernetes_service_account" "playground" {
   metadata {
     name      = var.service_account_name
     namespace = kubernetes_namespace.playground.metadata[0].name
-    annotations = {
-      "eks.amazonaws.com/role-arn" = aws_iam_role.playground.arn
-    }
   }
 }
 
