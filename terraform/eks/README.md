@@ -7,6 +7,7 @@ The Terraform code inside this repository provides a simple way to create an EKS
 - AWS credentials configured or passed as environment variables
 - Terraform installed (>= 1.0)
 - Datadog API key
+- (Optional) Datadog site if yours differs from `datadoghq.com`.
 
 ## Deployment
 
@@ -17,9 +18,18 @@ Due to Terraform provider initialization requirements, deployment must be done i
 ```bash
 terraform init
 terraform apply -var="datadog_api_key=YOUR_API_KEY_HERE" \
+    -var="datadog_site=datadoghq.com" \
     -target=module.vpc \
     -target=module.eks
 ```
+
+**Note**: The `datadog_site` variable is optional and defaults to `datadoghq.com`. Common values include:
+- `datadoghq.com`
+- `datadoghq.eu`
+- `us3.datadoghq.com`
+- `us5.datadoghq.com`
+- `ap1.datadoghq.com`
+- `ddog-gov.com`
 
 This creates:
 - VPC with public and private subnets
@@ -31,7 +41,8 @@ This creates:
 Once the cluster is created, deploy the Kubernetes resources:
 
 ```bash
-terraform apply -var="datadog_api_key=YOUR_API_KEY_HERE"
+terraform apply -var="datadog_api_key=YOUR_API_KEY_HERE" \
+    -var="datadog_site=datadoghq.com"
 ```
 
 This deploys:
