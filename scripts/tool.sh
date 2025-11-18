@@ -74,8 +74,7 @@ wait_for_confirmation() {
 inject() {
     if [ "$SILENT_MODE" = "true" ]; then
         # Silent mode: execute command without any output
-        curl -s -X POST -d "$1" ${ENDPOINT}/inject -o /dev/null &
-        sleep 1
+        curl -s -X POST -d "$1" ${ENDPOINT}/inject -o /dev/null
     else
         # Normal mode: show command and execute
         echo "${BLUE}Executing command...${NC}"
@@ -84,8 +83,7 @@ inject() {
         echo "\033[1;33m$ curl -s -X POST -d \"$1\" ${ENDPOINT}/inject\033[0m"
         echo "\033[0;36m\`\`\`\033[0m"
         echo
-        curl -s -X POST -d "$1" ${ENDPOINT}/inject -o /dev/null &
-        sleep 1
+        curl -s -X POST -d "$1" ${ENDPOINT}/inject -o /dev/null
     fi
 }
 
