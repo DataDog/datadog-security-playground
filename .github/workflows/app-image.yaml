@@ -7,6 +7,8 @@ on:
     types: [opened, reopened, edited]
     paths:
       - 'app/**'
+      - 'scripts/**'
+      - 'scenarios/**'
 
 jobs:
   push_to_registries:
