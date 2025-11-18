@@ -102,7 +102,7 @@ resource "helm_release" "datadog_agent" {
   }
   set {
         name  = "datadog.site"
-        value = "datadoghq.com"
+        value = var.datadog_site
     }
   
   values = [
