@@ -177,6 +177,12 @@ kubectl exec -it deploy/playground-app -- /scenarios/bpfdoor/detonate.sh --wait
 - **Detection**: Workload Protection signals for backdoor execution, network behavior, file modifications, and persistence mechanisms
 - **Prerequisites**: Before running this scenario, you must first create the correlation detection rule in Datadog by running `scenarios/correlation/create-rule.sh` with `DD_API_KEY` and `DD_APP_KEY` environment variables set. The `security_monitoring_rules_write` permission should be assigned to the `DD_APP_KEY`
 
+**How to Run:**
+```bash
+# Execute the attack simulation from within the playground-app pod
+kubectl exec -it <playground-app-pod-name> -- /scenarios/correlation/detonate.sh --wait
+```
+
 ## 🎯 Atomic test organization
 
 [Atomic Red Team](https://atomicredteam.io/) often contains multiple tests for the same ATT&CK technique. For example, the test identifier T1136.001-1 refers to the first test for MITRE ATT&CK technique T1136.001 (Create Account: Local Account). This test creates an account on a Linux system. The second test, T1136.001-2, creates an account on a MacOS system.
