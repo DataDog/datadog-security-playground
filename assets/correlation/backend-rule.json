@@ -3,7 +3,7 @@
     "isEnabled": true,
     "queries": [
       {
-        "query": "@agent.rule_id:(package_management_in_container) @process.args:(add OR *install OR \"-i\") @process.args:(curl OR wget) @process.variables.correlation_key:*",
+        "query": "@agent.rule_id:(package_management_in_container OR package_management_in_container_v2) @process.args:(add OR *install OR \"-i\") @process.args:(curl OR wget) @process.variables.correlation_key:*",
         "groupByFields": [
           "@process.variables.correlation_key",
           "host"
@@ -15,7 +15,7 @@
         "dataSource": "security_runtime"
       },
       {
-        "query": "@agent.rule_id:(net_util_in_container OR net_util OR net_file_download) @process.variables.correlation_key:*",
+        "query": "@agent.rule_id:(net_util_in_container OR net_util_in_container_v2 OR net_util OR net_util_v2 OR net_file_download) @process.variables.correlation_key:*",
         "groupByFields": [
           "@process.variables.correlation_key",
           "host"
@@ -27,7 +27,7 @@
         "dataSource": "security_runtime"
       },
       {
-        "query": "@agent.rule_id:(new_binary_execution_in_container OR executable_bit_added) @process.variables.correlation_key:*",
+        "query": "@agent.rule_id:(new_binary_execution_in_container OR new_binary_execution_in_container_v2 OR executable_bit_added) @process.variables.correlation_key:*",
         "groupByFields": [
           "@process.variables.correlation_key",
           "host"
