@@ -1,18 +1,85 @@
 #!/bin/bash
 
-# Parse command-line arguments for AWS credentials
-if [ $# -eq 3 ]; then
-    export AWS_ACCESS_KEY_ID="$1"
-    export AWS_SECRET_ACCESS_KEY="$2"
-    export AWS_SESSION_TOKEN="$3"
-    echo "Using provided AWS credentials."
-else
-    echo "Invalid number of arguments. Please provide 3 arguments: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN."
+# Define the IMDS endpoint IP
+IMDS_IP="169.254.169.254"
+IMDS_BASE_URL="http://${IMDS_IP}/latest/meta-data/iam/security-credentials/"
+
+# Check for 'jq' dependency
+if ! command -v jq &> /dev/null
+then
+    echo "Error: 'jq' is not installed. Please install it to parse the JSON response." >&2
     exit 1
 fi
 
+# Function to retrieve credentials from IMDS
+get_imds_credentials() {
+    echo "Attempting to retrieve credentials from IMDS..." >&2
+    
+    # Try IMDSv2 first
+    echo "Trying IMDSv2 ..." >&2
+    TOKEN=$(curl -s -X PUT "http://${IMDS_IP}/latest/api/token" \
+        -H "X-aws-ec2-metadata-token-ttl-seconds: 21600" --connect-timeout 2 --max-time 5)
+    
+    if [ -n "$TOKEN" ]; then
+        echo "IMDSv2 token retrieved successfully" >&2
+        ROLE_NAME=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" "${IMDS_BASE_URL}" --connect-timeout 2 --max-time 5)
+        
+        if [ -n "$ROLE_NAME" ]; then
+            echo "Retrieved IAM Role Name: ${ROLE_NAME}" >&2
+            CREDENTIALS_JSON=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" "${IMDS_BASE_URL}${ROLE_NAME}" --connect-timeout 2 --max-time 5)
+            
+            if [ -n "$CREDENTIALS_JSON" ]; then
+                export AWS_ACCESS_KEY_ID=$(echo "$CREDENTIALS_JSON" | jq -r '.AccessKeyId')
+                export AWS_SECRET_ACCESS_KEY=$(echo "$CREDENTIALS_JSON" | jq -r '.SecretAccessKey')
+                export AWS_SESSION_TOKEN=$(echo "$CREDENTIALS_JSON" | jq -r '.Token')
+                export AWS_IMDS_ROLE_NAME="$ROLE_NAME"
+                echo "Successfully retrieved credentials from IMDSv2" >&2
+                return 0
+            fi
+        fi
+    fi
+    
+    # Fall back to IMDSv1
+    echo "IMDSv2 failed, trying IMDSv1 ..." >&2
+    ROLE_NAME=$(curl -s "${IMDS_BASE_URL}" --connect-timeout 2 --max-time 5)
+    
+    if [ -n "$ROLE_NAME" ]; then
+        echo "Retrieved IAM Role Name: ${ROLE_NAME}" >&2
+        CREDENTIALS_JSON=$(curl -s "${IMDS_BASE_URL}${ROLE_NAME}" --connect-timeout 2 --max-time 5)
+        
+        if [ -n "$CREDENTIALS_JSON" ]; then
+            export AWS_ACCESS_KEY_ID=$(echo "$CREDENTIALS_JSON" | jq -r '.AccessKeyId')
+            export AWS_SECRET_ACCESS_KEY=$(echo "$CREDENTIALS_JSON" | jq -r '.SecretAccessKey')
+            export AWS_SESSION_TOKEN=$(echo "$CREDENTIALS_JSON" | jq -r '.Token')
+            export AWS_IMDS_ROLE_NAME="$ROLE_NAME"
+            echo "Successfully retrieved credentials from IMDSv1" >&2
+            return 0
+        fi
+    fi
+    
+    echo "Failed to retrieve credentials from IMDS" >&2
+    return 1
+}
+
+# Try to get credentials from IMDS first
+if ! get_imds_credentials; then
+    # Fall back to command-line arguments
+    if [ $# -eq 3 ]; then
+        export AWS_ACCESS_KEY_ID="$1"
+        export AWS_SECRET_ACCESS_KEY="$2"
+        export AWS_SESSION_TOKEN="$3"
+        echo "Using provided AWS credentials from command-line arguments."
+    else
+        echo "Error: Could not retrieve credentials from IMDS and no valid command-line arguments provided."
+        echo "Usage: $0 [AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN]"
+        exit 1
+    fi
+else
+    echo "Using credentials from IMDS (Role: ${AWS_IMDS_ROLE_NAME:-unknown})"
+fi
+
 INSTANCE_TYPE='m5.xlarge'
-REGIONS=('us-east-1' 'us-west-2')
+REGIONS=('us-east-1' 'us-west-2' 'us-east-2' 'us-west-1' 'eu-west-1' 'eu-central-1' 'ap-southeast-1' 'ap-northeast-1')
 IMAGE_ID='ami-00000000000000000' # Likely not existing
 
 echo "Attempting to launch EC2 instances with $INSTANCE_TYPE instance type..."
@@ -31,12 +98,10 @@ for REGION in "${REGIONS[@]}"; do
 
     # The command to launch the instance. We use 'run-instances'.
     # We deliberately use an invalid AMI_ID to force a failure (and a CloudTrail log entry).
-    # The --output json is standard for CLI parsing.
     LAUNCH_OUTPUT=$(aws ec2 run-instances \
         --image-id "$IMAGE_ID" \
         --instance-type "$INSTANCE_TYPE" \
-        --min-count 1 \
-        --max-count 1 \
+        --count 1 \
         --region "$REGION" 2>&1)
 
     # Check the exit status of the previous command
