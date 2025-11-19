@@ -175,7 +175,7 @@ kubectl exec -it deploy/playground-app -- /scenarios/bpfdoor/detonate.sh --wait
 - **Attack Vector**: Command injection vulnerability
 - **Impact**: 
 - **Detection**: Workload Protection signals for backdoor execution, network behavior, file modifications, and persistence mechanisms
-- **Prerequisites**: Before running this scenario, you must first create the correlation detection rule in Datadog by running `scenarios/correlation/create-rule.sh` with `DD_API_KEY` and `DD_APP_KEY` environment variables set. The `security_monitoring_rules_write` permission should be assigned to the `DD_APP_KEY`
+- **Prerequisites**: Before running this scenario, you must first create the correlation detection rule in Datadog by running `assets/correlation/create-rule.sh` with `DD_API_KEY` and `DD_APP_KEY` environment variables set. The `security_monitoring_rules_write` permission should be assigned to the `DD_APP_KEY`
 
 ## 🎯 Atomic test organization
 
