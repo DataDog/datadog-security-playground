@@ -152,7 +152,7 @@ Navigate to the `scenarios/` folder to explore available attack scenarios. Each 
 **How to Run:**
 ```bash
 # Execute the attack simulation from within the playground-app pod
-kubectl exec -it deploy/playground-app -- /scenarios/malware/detonate.sh --wait
+kubectl exec -it <playground-app-pod-name> -- /scenarios/malware/detonate.sh --wait
 ```
 
 #### 2. BPFDoor Network Backdoor Attack
@@ -166,7 +166,7 @@ kubectl exec -it deploy/playground-app -- /scenarios/malware/detonate.sh --wait
 **How to Run:**
 ```bash
 # Execute the attack simulation from within the playground-app pod
-kubectl exec -it deploy/playground-app -- /scenarios/bpfdoor/detonate.sh --wait
+kubectl exec -it <playground-app-pod-name> -- /scenarios/bpfdoor/detonate.sh --wait
 ```
 
 #### 3. Full chain RCE to malware download, persistence and cryptomining
@@ -185,7 +185,7 @@ kubectl exec -it deploy/playground-app -- /scenarios/bpfdoor/detonate.sh --wait
 
 **How to Run:**
 ```
-kubectl exec -it deploy/playground-app -- pwsh
+kubectl exec -it <playground-app-pod-name> -- pwsh
 Invoke-AtomicTest T1105-27 -ShowDetails
 Invoke-AtomicTest T1105-27 -GetPrereqs # Download packages or payloads
 Invoke-AtomicTest T1105-27
