@@ -1,8 +1,7 @@
 #!/bin/bash
 
-# Script to generate findings for critical_binaries_changed detection rule
-# This script performs various file operations on critical system binaries to trigger FIM alerts
-# 
+# Script to generate findings for Essential Linux Binary Modified 
+# This script performs various file operations on critical system binaries
 # WARNING: This script modifies system binaries and requires root/sudo privileges
 # Use only in test environments!
 
@@ -20,7 +19,7 @@ TEST_PATH="/usr/local/bin/${TEST_BINARY_NAME}"
 SLEEP_INTERVAL=2  # Seconds between operations to allow agent to capture events
 
 echo -e "${YELLOW}========================================${NC}"
-echo -e "${YELLOW}Critical Binary FIM Finding Generator${NC}"
+echo -e "${YELLOW}Essential Linux Binary Modified Finding Generator${NC}"
 echo -e "${YELLOW}========================================${NC}"
 echo ""
 
@@ -89,17 +88,11 @@ test_chown() {
     echo ""
     echo -e "${YELLOW}[Test 2/7] Testing chown operation...${NC}"
     
-    # Get current user and group
-    ORIGINAL_OWNER=$(stat -f "%u:%g" "${TEST_PATH}" 2>/dev/null || stat -c "%u:%g" "${TEST_PATH}")
+    # Get current user and group (username:groupname format, not numeric IDs)
+    ORIGINAL_OWNER=$(stat -c "%U:%G" "${TEST_PATH}")
     
     echo "  Changing ownership to nobody:nogroup"
-    if [ "$(uname)" = "Darwin" ]; then
-        # macOS
-        chown nobody:nobody "${TEST_PATH}" 2>/dev/null || chown nobody:wheel "${TEST_PATH}"
-    else
-        # Linux
-        chown nobody:nogroup "${TEST_PATH}" 2>/dev/null || chown nobody:nobody "${TEST_PATH}"
-    fi
+    chown nobody:nogroup "${TEST_PATH}" 2>/dev/null || chown nobody:nobody "${TEST_PATH}"
     echo -e "${GREEN}✓ chown operation completed${NC}"
     echo "  Agent rule triggered: pci_11_5_critical_binaries_chown"
     sleep $SLEEP_INTERVAL
@@ -228,14 +221,14 @@ echo -e "${GREEN}✓ Finding generation complete!${NC}"
 echo -e "${YELLOW}========================================${NC}"
 echo ""
 echo "Expected findings in Datadog:"
-echo "  - Detection rule: Critical system binary modified"
+echo "  - Finding: Verify Essential Linux Binary Modified on Host"
 echo "  - Resource type: host"
 echo "  - Severity: low"
 echo "  - Operations triggered: ${OPERATION}"
 echo ""
 echo "To view findings:"
 echo "  1. Navigate to Security > Workload Protection > Findings"
-echo "  2. Filter by rule: 'Critical system binary modified'"
+echo "  2. Filter by Finding: 'Verify Essential Linux Binary Modified on Host'"
 echo "  3. Check findings for host: $(hostname)"
 echo ""
 echo -e "${YELLOW}Note: It may take a few minutes for findings to appear in Datadog${NC}"
