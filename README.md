@@ -152,6 +152,23 @@ kubectl exec -it deploy/playground-app -- /scenarios/bpfdoor/detonate.sh --wait
 - **Impact**: 
 - **Detection**: Workload Protection signals for backdoor execution, network behavior, file modifications, and persistence mechanisms
 
+#### 4. Essential Linux Binary Modified - Findings Generator
+- **Location**: `scenarios/findings-generator/`
+- **Description**: Essential system binaries in containers are executable files that perform operating system functions and administrative tasks. These binaries typically reside in protected system directories such as `/bin`, `/sbin`, `/usr/bin`, and `/usr/sbin`. In containerized environments, these binaries are part of the container image layers and should be immutable during runtime. 
+- **Attack Vector**: File system modifications to critical binaries
+- **Impact**: Demonstrates detection of unauthorized changes to system binaries including permission changes, ownership modifications, file renames, deletions, and timestamp tampering
+- **Detection**: Workload Protection findings for Essential Linux binary modified on container (PCI DSS 11.5 compliance)
+- **Operations**: chmod, chown, link, rename, open/modify, unlink, and utimes operations
+
+**How to Run:**
+```bash
+# Execute all file operations (recommended)
+kubectl exec -it deploy/playground-app -- /scenarios/findings-generator/detonate.sh
+
+# Or run a specific operation
+kubectl exec -it deploy/playground-app -- /scenarios/findings-generator/detonate.sh [chmod|chown|link|rename|open|unlink|utimes]
+```
+
 ## 🎯 Atomic test organization
 
 [Atomic Red Team](https://atomicredteam.io/) often contains multiple tests for the same ATT&CK technique. For example, the test identifier T1136.001-1 refers to the first test for MITRE ATT&CK technique T1136.001 (Create Account: Local Account). This test creates an account on a Linux system. The second test, T1136.001-2, creates an account on a MacOS system.
