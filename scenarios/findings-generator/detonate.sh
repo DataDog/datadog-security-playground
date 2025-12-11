@@ -17,6 +17,8 @@ NC='\033[0m' # No Color
 TEST_BINARY_NAME="test_critical_binary_$$"
 TEST_PATH="/usr/local/bin/${TEST_BINARY_NAME}"
 SLEEP_INTERVAL=2  # Seconds between operations to allow agent to capture events
+TEST_COUNT=1
+TEST_NB=1
 
 echo -e "${YELLOW}========================================${NC}"
 echo -e "${YELLOW}Essential Linux Binary Modified Finding Generator${NC}"
@@ -72,9 +74,10 @@ EOF
 # Test 1: chmod - Change file permissions
 test_chmod() {
     echo ""
-    echo -e "${YELLOW}[Test 1/7] Testing chmod operation...${NC}"
+    echo -e "${YELLOW}[Test ${TEST_NB}/${TEST_COUNT}] Testing chmod operation...${NC}"
     echo "  Changing permissions from 755 to 644"
     chmod 644 "${TEST_PATH}"
+    TEST_NB=$((TEST_NB + 1))
     echo -e "${GREEN}✓ chmod operation completed${NC}"
     echo "  Agent rule triggered: pci_11_5_critical_binaries_chmod"
     sleep $SLEEP_INTERVAL
@@ -86,13 +89,14 @@ test_chmod() {
 # Test 2: chown - Change file ownership
 test_chown() {
     echo ""
-    echo -e "${YELLOW}[Test 2/7] Testing chown operation...${NC}"
+    echo -e "${YELLOW}[Test ${TEST_NB}/${TEST_COUNT}] Testing chown operation...${NC}"
     
     # Get current user and group (username:groupname format, not numeric IDs)
     ORIGINAL_OWNER=$(stat -c "%U:%G" "${TEST_PATH}")
     
     echo "  Changing ownership to nobody:nogroup"
     chown nobody:nogroup "${TEST_PATH}" 2>/dev/null || chown nobody:nobody "${TEST_PATH}"
+    TEST_NB=$((TEST_NB + 1))
     echo -e "${GREEN}✓ chown operation completed${NC}"
     echo "  Agent rule triggered: pci_11_5_critical_binaries_chown"
     sleep $SLEEP_INTERVAL
@@ -104,10 +108,11 @@ test_chown() {
 # Test 3: link - Create symbolic link
 test_link() {
     echo ""
-    echo -e "${YELLOW}[Test 3/7] Testing link operation...${NC}"
+    echo -e "${YELLOW}[Test ${TEST_NB}/${TEST_COUNT}] Testing link operation...${NC}"
     LINK_PATH="/tmp/${TEST_BINARY_NAME}_link"
     echo "  Creating symbolic link: ${LINK_PATH} -> ${TEST_PATH}"
     ln -s "${TEST_PATH}" "${LINK_PATH}"
+    TEST_NB=$((TEST_NB + 1))
     echo -e "${GREEN}✓ link operation completed${NC}"
     echo "  Agent rule triggered: pci_11_5_critical_binaries_link"
     sleep $SLEEP_INTERVAL
@@ -119,10 +124,11 @@ test_link() {
 # Test 4: rename - Rename file
 test_rename() {
     echo ""
-    echo -e "${YELLOW}[Test 4/7] Testing rename operation...${NC}"
+    echo -e "${YELLOW}[Test ${TEST_NB}/${TEST_COUNT}] Testing rename operation...${NC}"
     RENAME_PATH="${TEST_PATH}_renamed"
     echo "  Renaming: ${TEST_PATH} -> ${RENAME_PATH}"
     mv "${TEST_PATH}" "${RENAME_PATH}"
+    TEST_NB=$((TEST_NB + 1))
     echo -e "${GREEN}✓ rename operation completed${NC}"
     echo "  Agent rule triggered: pci_11_5_critical_binaries_rename"
     sleep $SLEEP_INTERVAL
@@ -134,9 +140,10 @@ test_rename() {
 # Test 5: open - Modify file contents
 test_open() {
     echo ""
-    echo -e "${YELLOW}[Test 5/7] Testing open/modify operation...${NC}"
+    echo -e "${YELLOW}[Test ${TEST_NB}/${TEST_COUNT}] Testing open/modify operation...${NC}"
     echo "  Modifying file contents"
     echo "# Modified content" >> "${TEST_PATH}"
+    TEST_NB=$((TEST_NB + 1))
     echo -e "${GREEN}✓ open/modify operation completed${NC}"
     echo "  Agent rule triggered: pci_11_5_critical_binaries_open"
     sleep $SLEEP_INTERVAL
@@ -145,9 +152,10 @@ test_open() {
 # Test 6: unlink - Delete file
 test_unlink() {
     echo ""
-    echo -e "${YELLOW}[Test 6/7] Testing unlink operation...${NC}"
+    echo -e "${YELLOW}[Test ${TEST_NB}/${TEST_COUNT}] Testing unlink operation...${NC}"
     echo "  Deleting file: ${TEST_PATH}"
     rm -f "${TEST_PATH}"
+    TEST_NB=$((TEST_NB + 1))
     echo -e "${GREEN}✓ unlink operation completed${NC}"
     echo "  Agent rule triggered: pci_11_5_critical_binaries_unlink"
     sleep $SLEEP_INTERVAL
@@ -161,9 +169,10 @@ test_unlink() {
 # Test 7: utimes - Change file timestamps
 test_utimes() {
     echo ""
-    echo -e "${YELLOW}[Test 7/7] Testing utimes operation...${NC}"
+    echo -e "${YELLOW}[Test ${TEST_NB}/${TEST_COUNT}] Testing utimes operation...${NC}"
     echo "  Changing file timestamps"
     touch -t 202301010000 "${TEST_PATH}"
+    TEST_NB=$((TEST_NB + 1))
     echo -e "${GREEN}✓ utimes operation completed${NC}"
     echo "  Agent rule triggered: pci_11_5_critical_binaries_utimes"
     sleep $SLEEP_INTERVAL
@@ -179,6 +188,7 @@ create_test_binary
 # Execute tests based on operation mode
 case $OPERATION in
     all)
+        TEST_COUNT=7
         test_chmod
         test_chown
         test_link
