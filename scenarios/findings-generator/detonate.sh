@@ -75,8 +75,8 @@ EOF
 test_chmod() {
     echo ""
     echo -e "${YELLOW}[Test ${TEST_NB}/${TEST_COUNT}] Testing chmod operation...${NC}"
-    echo "  Changing permissions from 755 to 644"
-    chmod 644 "${TEST_PATH}"
+    echo "  Making file executable"
+    chmod 755 "${TEST_PATH}"
     TEST_NB=$((TEST_NB + 1))
     echo -e "${GREEN}✓ chmod operation completed${NC}"
     echo "  Agent rule triggered: pci_11_5_critical_binaries_chmod"
