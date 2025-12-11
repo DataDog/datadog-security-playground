@@ -178,6 +178,18 @@ test_utimes() {
     sleep $SLEEP_INTERVAL
 }
 
+test_download() {
+    echo ""
+    echo -e "${YELLOW}[Test ${TEST_NB}/${TEST_COUNT}] Testing download operation...${NC}"
+    echo "  Downloading kubectl utility to ${TEST_PATH}"
+    curl -o "${TEST_PATH}" -L https://dl.k8s.io/release/v1.34.0/bin/linux/amd64/kubectl2>/dev/null || echo "#!/bin/bash\necho 'Downloaded test binary'" > "${TEST_PATH}"
+    chmod 755 "${TEST_PATH}"
+    TEST_NB=$((TEST_NB + 1))
+    echo -e "${GREEN}✓ download operation completed${NC}"
+    echo "  Agent rule triggered: pci_11_5_critical_binaries_open"
+    sleep $SLEEP_INTERVAL
+}
+
 # Main execution
 echo "Operation mode: ${OPERATION}"
 echo ""
@@ -217,6 +229,12 @@ case $OPERATION in
         ;;
     utimes)
         test_utimes
+        ;;
+    download)
+        TEST_COUNT=2
+        OPERATION="download utility and make executable"
+        test_download
+        test_chmod
         ;;
     *)
         echo -e "${RED}ERROR: Unknown operation: ${OPERATION}${NC}"
