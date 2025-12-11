@@ -20,9 +20,9 @@ SLEEP_INTERVAL=2  # Seconds between operations to allow agent to capture events
 TEST_COUNT=1
 TEST_NB=1
 
-echo -e "${YELLOW}========================================${NC}"
+echo -e "${YELLOW}=================================================${NC}"
 echo -e "${YELLOW}Essential Linux Binary Modified Finding Generator${NC}"
-echo -e "${YELLOW}========================================${NC}"
+echo -e "${YELLOW}=================================================${NC}"
 echo ""
 
 # Check if running as root
