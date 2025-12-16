@@ -5,11 +5,6 @@ ARG PORT=5000
 
 RUN \
     touch /etc/rc.common
-COPY \
-    scripts /scripts
-COPY \
-    scenarios /scenarios
-
 
 # needed for bpfdoor
 RUN \
@@ -55,6 +50,11 @@ RUN \
     pip install --no-cache-dir -r /app/requirements.txt
 RUN \
     chown -R app:app /app
+
+COPY \
+    scripts /scripts
+COPY \
+    scenarios /scenarios
 
 ENTRYPOINT ["python", "/app/app.py" ]
 EXPOSE $PORT
