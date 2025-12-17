@@ -56,5 +56,5 @@ RUN \
 RUN \
     chown -R app:app /app
 
-ENTRYPOINT ["python", "/app/app.py" ]
+ENTRYPOINT ["ddtrace-run", "python", "/app/app.py" ]
 EXPOSE $PORT
