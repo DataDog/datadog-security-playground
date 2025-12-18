@@ -189,7 +189,7 @@ kubectl exec -it <playground-app-pod-name> -- /scenarios/correlation/detonate.sh
 - **Attack Vector**: File system modifications to critical binaries
 - **Impact**: Demonstrates detection of unauthorized changes to system binaries including download third party binaries, permission changes, ownership modifications, file renames, deletions, and timestamp tampering
 - **Detection**: Workload Protection findings for Essential Linux binary modified on container (PCI DSS 11.5 compliance)
-- **Operations**: chmod, chown, link, rename, open/modify, unlink, and utimes operations
+- **Operations**: chmod, chown, link, rename, open/modify, unlink, utimes and executable file download operations
 
 **How to Run:**
 ```bash
@@ -197,7 +197,7 @@ kubectl exec -it <playground-app-pod-name> -- /scenarios/correlation/detonate.sh
 kubectl exec -it deploy/playground-app -- /scenarios/findings-generator/detonate.sh
 
 # Or run a specific operation
-kubectl exec -it deploy/playground-app -- /scenarios/findings-generator/detonate.sh [chmod|chown|link|rename|open|unlink|utimes]
+kubectl exec -it deploy/playground-app -- /scenarios/findings-generator/detonate.sh [download|chmod|chown|link|rename|open|unlink|utimes]
 ```
 
 ## 🎯 Atomic test organization
