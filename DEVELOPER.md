@@ -10,8 +10,6 @@ This guide is for developers who want to run the Datadog Security Playground loc
 
 ## Minikube Setup
 
-Virtual machine-based Minikube is mandatory for this simulation.
-
 **Important:** Use [minikube version 1.36](https://github.com/kubernetes/minikube/releases/tag/v1.36.0) or older. Newer versions come with a custom 6.6 kernel without BTF support, which is not compatible with datadog agent.
 
 **Configure Kubernetes Version:**
@@ -19,6 +17,10 @@ Virtual machine-based Minikube is mandatory for this simulation.
 # Set Kubernetes version to 1.33.1
 minikube config set kubernetes-version v1.33.1
 ```
+
+Using a VM-based Minikube driver is mandatory, as the Docker driver will not provide the Linux kernel needed by the Datadog agent.
+
+### Linux Setup
 
 **Option 1 - QEMU Driver:**
 ```bash
@@ -28,6 +30,46 @@ minikube start --driver=qemu
 **Option 2 - KVM2 Driver:**
 ```bash
 minikube start --driver=kvm2
+```
+
+### macOS Setup
+
+For macOS users, you'll need to install a VM driver. Choose one of the following options:
+
+**Option 1 - VirtualBox Driver (Recommended):**
+
+First, install VirtualBox:
+```bash
+# Install VirtualBox via Homebrew
+brew install --cask virtualbox
+```
+
+Then start Minikube:
+```bash
+minikube start --driver=virtualbox
+```
+
+**Option 2 - VMware Fusion Driver:**
+
+First, install VMware Fusion (commercial license required):
+- Download from [VMware website](https://www.vmware.com/products/fusion.html)
+
+Then start Minikube:
+```bash
+minikube start --driver=vmware
+```
+
+**Option 3 - QEMU Driver:**
+
+First, install QEMU:
+```bash
+# Install QEMU via Homebrew
+brew install qemu
+```
+
+Then start Minikube:
+```bash
+minikube start --driver=qemu
 ```
 
 ## 🐳 Building and Loading Docker Image
