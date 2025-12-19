@@ -1,19 +1,34 @@
-.PHONY: all clean fake-bpfdoor malware
+.PHONY: all clean rebuild help
 
-all: fake-bpfdoor malware
+docker-build-assets:
+	@echo "Building Docker build image for assets..."
+	docker build --progress=plain -t datadog-security-playground-assets:latest -f Dockerfile .
+	@echo "Extracting binaries from Docker image..."
+	@docker create --name temp-assets datadog-security-playground-assets:latest
+	@docker cp temp-assets:/output/bpfdoor/fake-bpfdoor.x64 ./bpfdoor/ || true
+	@docker cp temp-assets:/output/malware/malware.x64 ./malware/ || true
+	@docker cp temp-assets:/output/malware/malware.arm64 ./malware/ || true
+	@docker rm temp-assets
+	@echo "Binaries extracted successfully!"
+	@ls -lh bpfdoor/*.x64 malware/malware.*
 
-fake-bpfdoor:
-	@echo "Building fake-bpfdoor binary..."
-	cd fake-bpfdoor && make
+# Default target
+all: docker-build-assets
 
-malware:
-	@echo "Building malware binaries..."
-	cd malware && make
+docker-clean:
+	@echo "Cleaning Docker images..."
+	@docker rmi datadog-security-playground-assets:latest 2>/dev/null || true
 
-clean:
-	@echo "Cleaning all binaries..."
-	cd fake-bpfdoor && make clean
-	cd malware && make clean 2>/dev/null || true
+clean: docker-clean
 
-re: clean all
+# Force rebuild
+rebuild: clean all
 
+# Help target
+help:
+	@echo "Datadog Security Playground Assets Build System"
+	@echo ""
+	@echo "make all                 - Build all binaries using Docker (default)"
+	@echo "make clean               - Delete Docker image"
+	@echo "make rebuild             - Force clean and rebuild"
+	@echo "make help                - Show this help message"
