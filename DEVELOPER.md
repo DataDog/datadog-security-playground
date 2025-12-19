@@ -7,6 +7,7 @@ This guide is for developers who want to run the Datadog Security Playground loc
 ### Required Tools
 - **Helm Charts**: [Installation Guide](https://helm.sh/docs/intro/install/)
 - **Minikube**: [Installation Guide](https://minikube.sigs.k8s.io/docs/start)
+- **Docker**: Only required if you plan to rebuild assets
 
 ## Minikube Setup
 
@@ -48,20 +49,13 @@ make load
 
 ## 🔨 Building Binaries
 
-Here's how to rebuild the simulation binaries:
+**Note**: Pre-compiled binaries are included in the repository. You only need to rebuild them if you're modifying the source code.
 
-### Build All Assets
+### Build All Assets using Docker
+
 ```bash
 # Build all simulation binaries
 cd assets && make
 ```
 
-### Build Individual Components
-```bash
-# Build BPFDoor simulator
-cd assets/ && make bpfdoor
-
-# Build malware simulator
-cd assets/ && make malware
-```
-
+See [assets/README.md](assets/README.md) for additonal information.
