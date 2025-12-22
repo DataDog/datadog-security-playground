@@ -4,7 +4,7 @@ import logging
 
 from datetime import datetime
 
-from flask import Flask, abort, request
+from flask import Flask, request
 
 # Configure logging
 logging.basicConfig(
@@ -49,6 +49,27 @@ def inject():
         logger.error(f"Error executing command: {str(e)}", exc_info=True)
         raise
 
+@app.route("/ssrf", methods=["GET"])
+def ssrf():
+    url = request.args.get("url")
+    logger.info(f"Received SSRF request from {request.remote_addr} with URL: {url}")
+    try:
+        response = requests.get(url)
+        return response.text
+    except Exception as e:
+        logger.error(f"Error executing SSRF request: {str(e)}", exc_info=True)
+        raise
+
+@app.route("/lfi", methods=["GET"])
+def lfi():
+    filename = request.args.get("filename")
+    logger.info(f"Received LFI request from {request.remote_addr} with filename: {filename}")
+    try:
+        with open(filename, "r") as file:
+            return file.read()
+    except Exception as e:
+        logger.error(f"Error executing LFI request: {str(e)}", exc_info=True)
+        raise
 
 if __name__ == '__main__':
     logger.info("Starting Flask application")
