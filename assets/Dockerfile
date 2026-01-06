@@ -1,8 +1,10 @@
 # Multi-stage Dockerfile for building Datadog Security Playground assets
 # This provides a reproducible build environment for all simulation binaries
 
-# Stage 1: Build BPFDoor simulator (requires gcc and Linux headers)
-FROM ubuntu:24.04 AS bpfdoor-builder
+###############################################################################
+# Build image for BPFDoor simulator, uses Ubuntu 24.04 base image
+###############################################################################
+FROM ubuntu@sha256:c35e29c9450151419d9448b0fd75374fec4fff364a27f176fb458d472dfc9e54 AS bpfdoor-builder
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -22,8 +24,10 @@ WORKDIR /build
 COPY bpfdoor/fake-bpfdoor.c bpfdoor/build.sh ./
 RUN chmod +x build.sh && ./build.sh
 
-# Stage 2: Build malware simulator (requires Go toolchain)
-FROM golang:1.24.3 AS malware-builder
+###############################################################################
+# Build image for malware simulator (uses Go 1.24.3)
+###############################################################################
+FROM golang@sha256:81bf5927dc91aefb42e2bc3a5abdbe9bb3bae8ba8b107e2a4cf43ce3402534c6 AS malware-builder
 
 WORKDIR /build
 COPY malware/go.mod malware/go.sum ./
