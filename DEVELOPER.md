@@ -56,6 +56,11 @@ Before deploying the Python application, you need to build the Docker image and 
 
 ### Step 1: Build the Docker Image
 ```bash
+# add multiarch support
+docker buildx create --use
+```
+
+```bash
 # Build the Python application image
 make build
 ```
