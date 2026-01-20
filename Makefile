@@ -9,7 +9,10 @@ ATOMIC_RED_TEAM?=false
 all: build load
 
 build:
-	docker build . -t $(APP_IMG_NAME):$(APP_IMG_TAG) -f app/Dockerfile --build-arg ATOMIC_RED_TEAM=$(ATOMIC_RED_TEAM) --build-arg APP_PORT=$(APP_PORT)
+	docker buildx build --platform linux/amd64,linux/arm64 . -t $(APP_IMG_NAME):$(APP_IMG_TAG) -f app/Dockerfile --build-arg ATOMIC_RED_TEAM=$(ATOMIC_RED_TEAM) --build-arg APP_PORT=$(APP_PORT) $(EXTRA_ARGS)
+
+push:
+	$(MAKE) build EXTRA_ARGS="--push"
 
 build-redteam:
 	$(MAKE) build ATOMIC_RED_TEAM=true APP_IMG_TAG=redteam
