@@ -1,17 +1,18 @@
 .PHONY: build build-no-art clean rebuild load reload
 
-APP_IMG_NAME=datadog/datadog-security-playground:latest
+APP_IMG_NAME=datadog/datadog-security-playground
+APP_IMG_TAG?=latest
 APP_HOSTNAME=localhost
 APP_PORT=5000
-ATOMIC_RED_TEAM?=true
+ATOMIC_RED_TEAM?=false
 
 all: build load
 
 build:
-	docker build . -t $(APP_IMG_NAME) -f app/Dockerfile --build-arg ATOMIC_RED_TEAM=$(ATOMIC_RED_TEAM) --build-arg APP_PORT=$(APP_PORT)
+	docker build . -t $(APP_IMG_NAME):$(APP_IMG_TAG) -f app/Dockerfile --build-arg ATOMIC_RED_TEAM=$(ATOMIC_RED_TEAM) --build-arg APP_PORT=$(APP_PORT)
 
-build-no-art:
-	$(MAKE) build ATOMIC_RED_TEAM=false
+build-redteam:
+	$(MAKE) build ATOMIC_RED_TEAM=true APP_IMG_TAG=redteam
 
 clean:
 	docker image rm $(APP_IMG_NAME)

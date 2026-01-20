@@ -206,6 +206,11 @@ kubectl exec -it deploy/playground-app -- /scenarios/findings-generator/detonate
 
 ### Test against real-world threats
 
+**Deploy Atomic Red Team Image:**
+   ```bash
+   kubectl apply -f deploy/redteam.yaml
+   ```
+
 **How to Run:**
 ```
 kubectl exec -it <playground-app-pod-name> -- pwsh

@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: playground-redteam
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: playground-redteam
+  template:
+    metadata:
+      labels:
+        app: playground-redteam
+        admission.datadoghq.com/cws-instrumentation.enabled: "true"
+    spec:
+      containers:
+        - name: playground-redteam
+          image: docker.io/datadog/datadog-security-playground:redteam
+          imagePullPolicy: Always
+          env:
+            - name: DD_SERVICE
+              value: "playground-redteam"
