@@ -142,17 +142,18 @@ Navigate to the `scenarios/` folder to explore available attack scenarios. Each 
 
 ### Current Scenarios
 
-#### 1. Cryptocurrency Mining Malware Attack
-- **Location**: `scenarios/malware/`
-- **Description**: Simulates a command injection attack that deploys persistent cryptocurrency mining malware
+#### 1. Full chain RCE to malware download, persistence and cryptomining
+- **Location**: `scenarios/rce-malware/`
+- **Description**: Simulates a command injection attack that deploys a payload containing a cryptominer via file download, achieve persistence, and attempts to lateral move to the cloud. The aim is to showcase a complete compromise and generate a signal describing the full attack.
 - **Attack Vector**: Command injection vulnerability
-- **Impact**: Resource hijacking, persistence, system compromise
-- **Detection**: Workload Protection signals for malware execution, file modifications, and persistence mechanisms
+- **Impact**:
+- **Detection**: Workload Protection signals for backdoor execution, network behavior, file modifications, and persistence mechanisms
+- **Prerequisites**: Before running this scenario, you must first create the correlation detection rule in Datadog by running `assets/correlation/create-rule.sh` with the `DD_API_KEY`, `DD_APP_KEY`, and `DD_API_SITE` environment variables set. The `security_monitoring_rules_write` permission should be assigned to the `DD_APP_KEY`. The `DD_API_SITE` should be set to the Datadog site your are using, refer to the [Datadog documentation](https://docs.datadoghq.com/getting_started/site/#access-the-datadog-site) for available sites).
 
 **How to Run:**
 ```bash
 # Execute the attack simulation from within the playground-app pod
-kubectl exec -it <playground-app-pod-name> -- /scenarios/malware/detonate.sh --wait
+kubectl exec -it deploy/playground-app -- /scenarios/rce-malware/detonate.sh --wait
 ```
 
 #### 2. BPFDoor Network Backdoor Attack
@@ -166,24 +167,10 @@ kubectl exec -it <playground-app-pod-name> -- /scenarios/malware/detonate.sh --w
 **How to Run:**
 ```bash
 # Execute the attack simulation from within the playground-app pod
-kubectl exec -it <playground-app-pod-name> -- /scenarios/bpfdoor/detonate.sh --wait
+kubectl exec -it deploy/playground-app -- /scenarios/bpfdoor/detonate.sh --wait
 ```
 
-#### 3. Full chain RCE to malware download, persistence and cryptomining
-- **Location**: `scenarios/correlation/`
-- **Description**: Simulates a command injection attack that deploys a payload containing a cryptominer via file download, achieve persistence, and attempts to lateral move to the cloud. The aim is to showcase a complete compromise and generate a signal describing the full attack.
-- **Attack Vector**: Command injection vulnerability
-- **Impact**: 
-- **Detection**: Workload Protection signals for backdoor execution, network behavior, file modifications, and persistence mechanisms
-- **Prerequisites**: Before running this scenario, you must first create the correlation detection rule in Datadog by running `assets/correlation/create-rule.sh` with the `DD_API_KEY`, `DD_APP_KEY`, and `DD_API_SITE` environment variables set. The `security_monitoring_rules_write` permission should be assigned to the `DD_APP_KEY`. The `DD_API_SITE` should be set to the Datadog site your are using, refer to the [Datadog documentation](https://docs.datadoghq.com/getting_started/site/#access-the-datadog-site) for available sites).
-
-**How to Run:**
-```bash
-# Execute the attack simulation from within the playground-app pod
-kubectl exec -it <playground-app-pod-name> -- /scenarios/correlation/detonate.sh --wait
-```
-
-#### 4. Essential Linux Binary Modified - Findings Generator
+#### 3. Essential Linux Binary Modified - Findings Generator
 - **Location**: `scenarios/findings-generator/`
 - **Description**: Essential system binaries in containers are executable files that perform operating system functions and administrative tasks. These binaries typically reside in protected system directories such as `/bin`, `/sbin`, `/usr/bin`, and `/usr/sbin`. In containerized environments, these binaries are part of the container image layers and should be immutable during runtime. 
 - **Attack Vector**: File system modifications to critical binaries
