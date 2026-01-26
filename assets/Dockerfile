@@ -30,9 +30,9 @@ RUN chmod +x build.sh && ./build.sh
 FROM golang@sha256:81bf5927dc91aefb42e2bc3a5abdbe9bb3bae8ba8b107e2a4cf43ce3402534c6 AS malware-builder
 
 WORKDIR /build
-COPY malware/go.mod malware/go.sum ./
+COPY rce-malware/go.mod rce-malware/go.sum ./
 RUN go mod download
-COPY malware/main.go malware/build.sh ./
+COPY rce-malware/main.go rce-malware/build.sh ./
 RUN chmod +x build.sh && ./build.sh
 
 ###############################################################################
@@ -42,7 +42,7 @@ FROM alpine:latest
 
 WORKDIR /output
 COPY --from=bpfdoor-builder /build/fake-bpfdoor.x64 ./bpfdoor/
-COPY --from=malware-builder /build/malware.x64 ./malware/
-COPY --from=malware-builder /build/malware.arm64 ./malware/
+COPY --from=malware-builder /build/malware.x64 ./rce-malware/
+COPY --from=malware-builder /build/malware.arm64 ./rce-malware/
 
 CMD ["ls", "-lhR", "/output/*"]
