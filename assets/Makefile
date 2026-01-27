@@ -10,7 +10,7 @@ docker-build-assets:
 	@docker cp temp-assets:/output/malware/malware.arm64 ./malware/ || true
 	@docker rm temp-assets
 	@echo "Binaries extracted successfully!"
-	@ls -lh bpfdoor/*.x64 malware/malware.*
+	@ls -lh bpfdoor/*.x64 rce-malware/malware.*
 
 # Default target
 all: docker-build-assets
