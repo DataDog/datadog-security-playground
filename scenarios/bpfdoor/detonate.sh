@@ -33,9 +33,7 @@ server's document root directory, making it accessible and ready for \
 execution. Note: This is a harmless demonstration binary.\033[0m
 EOF
 wait_for_confirmation
-# TODO: replace the link when we'll decide to open the repository:
-# inject "curl -OL https://github.com/DataDog/datadog-security-playground/raw/refs/heads/main/assets/fake-bpfdoor/fake-bpfdoor.x64"
-inject "curl -OL https://github.com/spikat/fake-bpfdoor/raw/refs/heads/main/fake-bpfdoor.x64"
+inject "curl -OL https://raw.githubusercontent.com/DataDog/datadog-security-playground/main/assets/bpfdoor/fake-bpfdoor.x64"
 
 step <<EOF
 ${PURPLE}Privilege Escalation - Set Execution Permissions\033[0m
