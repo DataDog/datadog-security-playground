@@ -50,6 +50,7 @@ RUN \
 WORKDIR /app
 
 COPY app/app.py /app/app.py
+COPY app/templates /app/templates
 COPY app/requirements.txt /app/requirements.txt
 RUN \
     pip install --no-cache-dir -r /app/requirements.txt
