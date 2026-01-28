@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Playground</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        datadog: {
+                            purple: '#632CA6',
+                            'purple-dark': '#4F2284',
+                            'purple-light': '#7B42C4',
+                            violet: '#8B5CF6',
+                            grape: '#9D4EDD',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['DM Sans', 'system-ui', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .gradient-border {
+            background: linear-gradient(135deg, #632CA6 0%, #9D4EDD 50%, #632CA6 100%);
+            background-size: 200% 200%;
+            animation: gradient-shift 8s ease infinite;
+        }
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        .card-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px -12px rgba(99, 44, 166, 0.25);
+        }
+        .input-focus:focus {
+            box-shadow: 0 0 0 3px rgba(99, 44, 166, 0.2);
+        }
+        .btn-pulse:active {
+            transform: scale(0.98);
+        }
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-white min-h-screen font-sans">
+    <!-- Header -->
+    <header class="gradient-border">
+        <div class="bg-white mx-[2px] mt-[2px]">
+            <div class="max-w-6xl mx-auto px-6 py-6">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-datadog-purple to-datadog-grape flex items-center justify-center shadow-lg">
+                        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">Security Playground</h1>
+                        <p class="text-gray-500 text-sm">Vulnerability simulation environment</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Warning Banner -->
+    <div class="bg-amber-50 border-b border-amber-200">
+        <div class="max-w-6xl mx-auto px-6 py-3">
+            <div class="flex items-center gap-2 text-amber-800">
+                <svg class="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                </svg>
+                <span class="text-sm font-medium">Educational purposes only. These vulnerabilities are intentional for security training.</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="max-w-6xl mx-auto px-6 py-10">
+        <div class="grid md:grid-cols-3 gap-6">
+
+            <!-- Command Injection Card -->
+            <div class="card-hover bg-white rounded-2xl border border-gray-200 overflow-hidden">
+                <div class="p-6">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 rounded-lg bg-datadog-purple/10 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-datadog-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-semibold text-gray-900">Command Injection</h2>
+                            <p class="text-xs text-gray-500 font-mono">/inject</p>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 text-sm mb-5">Execute arbitrary shell commands on the server through unsanitized input.</p>
+                    
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1.5">Command</label>
+                            <input type="text" id="inject-cmd" placeholder="whoami" 
+                                class="input-focus w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:border-datadog-purple transition-colors font-mono">
+                        </div>
+                        <button onclick="executeInject()" 
+                            class="btn-pulse w-full py-2.5 bg-datadog-purple hover:bg-datadog-purple-dark text-white font-medium rounded-xl transition-colors text-sm">
+                            Execute
+                        </button>
+                    </div>
+                </div>
+                <div id="inject-result" class="hidden border-t border-gray-100 bg-gray-50 p-4">
+                    <p class="text-xs font-medium text-gray-500 mb-2">Response</p>
+                    <pre id="inject-output" class="text-sm text-gray-800 font-mono bg-white rounded-lg p-3 border border-gray-200 max-h-48 overflow-auto"></pre>
+                </div>
+            </div>
+
+            <!-- LFI Card -->
+            <div class="card-hover bg-white rounded-2xl border border-gray-200 overflow-hidden">
+                <div class="p-6">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 rounded-lg bg-datadog-purple/10 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-datadog-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-semibold text-gray-900">Local File Inclusion</h2>
+                            <p class="text-xs text-gray-500 font-mono">/lfi</p>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 text-sm mb-5">Read arbitrary files from the server filesystem through path traversal.</p>
+                    
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1.5">File Path</label>
+                            <input type="text" id="lfi-file" placeholder="/etc/passwd" 
+                                class="input-focus w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:border-datadog-purple transition-colors font-mono">
+                        </div>
+                        <button onclick="executeLfi()" 
+                            class="btn-pulse w-full py-2.5 bg-datadog-purple hover:bg-datadog-purple-dark text-white font-medium rounded-xl transition-colors text-sm">
+                            Read File
+                        </button>
+                    </div>
+                </div>
+                <div id="lfi-result" class="hidden border-t border-gray-100 bg-gray-50 p-4">
+                    <p class="text-xs font-medium text-gray-500 mb-2">Response</p>
+                    <pre id="lfi-output" class="text-sm text-gray-800 font-mono bg-white rounded-lg p-3 border border-gray-200 max-h-48 overflow-auto"></pre>
+                </div>
+            </div>
+
+            <!-- SSRF Card -->
+            <div class="card-hover bg-white rounded-2xl border border-gray-200 overflow-hidden">
+                <div class="p-6">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 rounded-lg bg-datadog-purple/10 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-datadog-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-semibold text-gray-900">SSRF</h2>
+                            <p class="text-xs text-gray-500 font-mono">/ssrf</p>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 text-sm mb-5">Make the server fetch arbitrary URLs, accessing internal services.</p>
+                    
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1.5">Target URL</label>
+                            <input type="text" id="ssrf-url" placeholder="http://169.254.169.254/latest/meta-data/" 
+                                class="input-focus w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:border-datadog-purple transition-colors font-mono">
+                        </div>
+                        <button onclick="executeSsrf()" 
+                            class="btn-pulse w-full py-2.5 bg-datadog-purple hover:bg-datadog-purple-dark text-white font-medium rounded-xl transition-colors text-sm">
+                            Fetch URL
+                        </button>
+                    </div>
+                </div>
+                <div id="ssrf-result" class="hidden border-t border-gray-100 bg-gray-50 p-4">
+                    <p class="text-xs font-medium text-gray-500 mb-2">Response</p>
+                    <pre id="ssrf-output" class="text-sm text-gray-800 font-mono bg-white rounded-lg p-3 border border-gray-200 max-h-48 overflow-auto"></pre>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-gray-200 mt-auto">
+        <div class="max-w-6xl mx-auto px-6 py-6">
+            <p class="text-center text-sm text-gray-500">
+                Built for security education and testing with 
+                <span class="text-datadog-purple font-medium">Datadog</span>
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        async function executeInject() {
+            const cmd = document.getElementById('inject-cmd').value;
+            const resultDiv = document.getElementById('inject-result');
+            const outputPre = document.getElementById('inject-output');
+            
+            try {
+                const response = await fetch('/inject', {
+                    method: 'POST',
+                    body: cmd
+                });
+                const text = await response.text();
+                outputPre.textContent = text || '(empty response)';
+                resultDiv.classList.remove('hidden');
+                resultDiv.classList.add('fade-in');
+            } catch (error) {
+                outputPre.textContent = 'Error: ' + error.message;
+                resultDiv.classList.remove('hidden');
+            }
+        }
+
+        async function executeLfi() {
+            const file = document.getElementById('lfi-file').value;
+            const resultDiv = document.getElementById('lfi-result');
+            const outputPre = document.getElementById('lfi-output');
+            
+            try {
+                const response = await fetch('/lfi?filename=' + encodeURIComponent(file));
+                const text = await response.text();
+                outputPre.textContent = text || '(empty response)';
+                resultDiv.classList.remove('hidden');
+                resultDiv.classList.add('fade-in');
+            } catch (error) {
+                outputPre.textContent = 'Error: ' + error.message;
+                resultDiv.classList.remove('hidden');
+            }
+        }
+
+        async function executeSsrf() {
+            const url = document.getElementById('ssrf-url').value;
+            const resultDiv = document.getElementById('ssrf-result');
+            const outputPre = document.getElementById('ssrf-output');
+            
+            try {
+                const response = await fetch('/ssrf?url=' + encodeURIComponent(url));
+                const text = await response.text();
+                outputPre.textContent = text || '(empty response)';
+                resultDiv.classList.remove('hidden');
+                resultDiv.classList.add('fade-in');
+            } catch (error) {
+                outputPre.textContent = 'Error: ' + error.message;
+                resultDiv.classList.remove('hidden');
+            }
+        }
+
+        // Allow Enter key to submit
+        document.getElementById('inject-cmd').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') executeInject();
+        });
+        document.getElementById('lfi-file').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') executeLfi();
+        });
+        document.getElementById('ssrf-url').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') executeSsrf();
+        });
+    </script>
+</body>
+</html>
+

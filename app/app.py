@@ -1,10 +1,11 @@
 import os
 import subprocess
 import logging
+import requests
 
 from datetime import datetime
 
-from flask import Flask, request
+from flask import Flask, request, send_from_directory, render_template
 
 # Configure logging
 logging.basicConfig(
@@ -18,6 +19,11 @@ logging.basicConfig(
 
 app = Flask(__name__)
 logger = logging.getLogger(__name__)
+
+
+@app.route("/", methods=["GET"])
+def index():
+    return render_template('index.html')
 
 
 @app.route("/ping", methods=["GET"])
@@ -49,6 +55,7 @@ def inject():
         logger.error(f"Error executing command: {str(e)}", exc_info=True)
         raise
 
+
 @app.route("/ssrf", methods=["GET"])
 def ssrf():
     url = request.args.get("url")
@@ -60,9 +67,10 @@ def ssrf():
         logger.error(f"Error executing SSRF request: {str(e)}", exc_info=True)
         raise
 
+
 @app.route("/lfi", methods=["GET"])
 def lfi():
-    filename = request.args.get("filename")
+    filename = request.args.get("filename", "").strip()
     logger.info(f"Received LFI request from {request.remote_addr} with filename: {filename}")
     try:
         with open(filename, "r") as file:
@@ -70,6 +78,12 @@ def lfi():
     except Exception as e:
         logger.error(f"Error executing LFI request: {str(e)}", exc_info=True)
         raise
+
+
+@app.route("/assets/<path:filename>", methods=["GET"])
+def serve_asset(filename):
+    return send_from_directory('/app/assets', filename)
+
 
 if __name__ == '__main__':
     logger.info("Starting Flask application")
