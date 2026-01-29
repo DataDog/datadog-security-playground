@@ -63,6 +63,22 @@ spec:
             periodSeconds: 10
             timeoutSeconds: 2
 ---
+# Ensure juiceshop is never accessible from outside the cluster
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: juiceshop-internal-only
+  namespace: playground
+spec:
+  podSelector:
+    matchLabels:
+      app: juiceshop
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector: {}
+---
 apiVersion: v1
 kind: Service
 metadata:
@@ -118,17 +134,17 @@ spec:
             - name: DD_APPSEC_SCA_ENABLED
               value: "true"
           ports:
-            - containerPort: 8081
+            - containerPort: 3000
           readinessProbe:
             httpGet:
               path: /
-              port: 8081
+              port: 3000
             initialDelaySeconds: 15
             periodSeconds: 10
           livenessProbe:
             httpGet:
               path: /
-              port: 8081
+              port: 3000
             initialDelaySeconds: 30
             periodSeconds: 15
 
