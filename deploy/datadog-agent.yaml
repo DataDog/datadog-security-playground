@@ -25,6 +25,9 @@ datadog:
   securityAgent:
     runtime:
       enabled: true
+  asm:
+    threats:
+      enabled: true
 
 clusterAgent:
   enabled: true
