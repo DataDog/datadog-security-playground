@@ -22,6 +22,10 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: status.hostIP
+            - name: DD_API_KEY
+              value: "${dd_api_key}"
+            - name: DD_SITE
+              value: "${dd_site}"
             - name: DD_TRACE_AGENT_PORT
               value: "8126"
             - name: DD_TRACER_ENABLED

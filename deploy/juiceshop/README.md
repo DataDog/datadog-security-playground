@@ -10,17 +10,39 @@ This directory contains Kubernetes manifests for deploying OWASP JuiceShop with 
 | `db-service.yaml` | MySQL service (internal, port 3306) |
 | `db-deployment.yaml` | MySQL 8.0 deployment |
 | `juiceshop-service.yaml` | JuiceShop service (port 8081 → 3000) |
-| `juiceshop-deployment.yaml` | JuiceShop app with Datadog APM |
+| `juiceshop-deployment.yaml` | JuiceShop app with Datadog APM (contains template variables) |
 | `juiceshop-networkpolicy.yaml` | Restricts access to cluster-internal only |
 | `kustomization.yaml` | Kustomize orchestration file |
 
 ## Manual Deployment
 
-### Deploy
+### Prerequisites
+
+Set your Datadog credentials as environment variables:
 
 ```bash
-# Deploy everything with kustomize (recommended)
-kubectl apply -k deploy/juiceshop/
+export DD_API_KEY="your-datadog-api-key"
+export DD_SITE="datadoghq.com"  # or datadoghq.eu, us3.datadoghq.com, etc.
+```
+
+### Deploy
+
+The `juiceshop-deployment.yaml` contains template variables (`${dd_api_key}`, `${dd_site}`) used by Terraform. For manual deployment, substitute them with `sed`:
+
+```bash
+# Create namespace first
+kubectl apply -f deploy/juiceshop/namespace.yaml
+
+# Deploy db and other resources (no template vars)
+kubectl apply -f deploy/juiceshop/db-service.yaml
+kubectl apply -f deploy/juiceshop/db-deployment.yaml
+kubectl apply -f deploy/juiceshop/juiceshop-networkpolicy.yaml
+kubectl apply -f deploy/juiceshop/juiceshop-service.yaml
+
+# Deploy juiceshop with variable substitution
+sed -e "s/\${dd_api_key}/$DD_API_KEY/g" \
+    -e "s/\${dd_site}/$DD_SITE/g" \
+    deploy/juiceshop/juiceshop-deployment.yaml | kubectl apply -f -
 
 # Verify pods are running
 kubectl get pods -n playground -w

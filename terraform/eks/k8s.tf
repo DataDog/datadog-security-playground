@@ -190,10 +190,16 @@ resource "kubernetes_manifest" "juiceshop_deployment" {
   depends_on = [kubernetes_namespace.playground, helm_release.datadog_agent, kubernetes_manifest.juiceshop_db_deployment]
   
   manifest = merge(
-    yamldecode(file("${path.module}/../../deploy/juiceshop/juiceshop-deployment.yaml")),
+    yamldecode(templatefile("${path.module}/../../deploy/juiceshop/juiceshop-deployment.yaml", {
+      dd_api_key = var.datadog_api_key
+      dd_site    = var.datadog_site
+    })),
     {
       metadata = merge(
-        yamldecode(file("${path.module}/../../deploy/juiceshop/juiceshop-deployment.yaml")).metadata,
+        yamldecode(templatefile("${path.module}/../../deploy/juiceshop/juiceshop-deployment.yaml", {
+          dd_api_key = var.datadog_api_key
+          dd_site    = var.datadog_site
+        })).metadata,
         { namespace = kubernetes_namespace.playground.metadata[0].name }
       )
     }
