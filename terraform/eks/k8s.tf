@@ -125,3 +125,77 @@ resource "kubernetes_manifest" "playground_app" {
   )
 }
 
+# JuiceShop MySQL Database - Service
+resource "kubernetes_manifest" "juiceshop_db_service" {
+  depends_on = [kubernetes_namespace.playground]
+  
+  manifest = merge(
+    yamldecode(file("${path.module}/../../deploy/juiceshop/db-service.yaml")),
+    {
+      metadata = merge(
+        yamldecode(file("${path.module}/../../deploy/juiceshop/db-service.yaml")).metadata,
+        { namespace = kubernetes_namespace.playground.metadata[0].name }
+      )
+    }
+  )
+}
+
+# JuiceShop MySQL Database - Deployment
+resource "kubernetes_manifest" "juiceshop_db_deployment" {
+  depends_on = [kubernetes_namespace.playground, kubernetes_manifest.juiceshop_db_service]
+  
+  manifest = merge(
+    yamldecode(file("${path.module}/../../deploy/juiceshop/db-deployment.yaml")),
+    {
+      metadata = merge(
+        yamldecode(file("${path.module}/../../deploy/juiceshop/db-deployment.yaml")).metadata,
+        { namespace = kubernetes_namespace.playground.metadata[0].name }
+      )
+    }
+  )
+}
+
+# JuiceShop NetworkPolicy - Restrict external access
+resource "kubernetes_manifest" "juiceshop_networkpolicy" {
+  depends_on = [kubernetes_namespace.playground]
+  
+  manifest = merge(
+    yamldecode(file("${path.module}/../../deploy/juiceshop/juiceshop-networkpolicy.yaml")),
+    {
+      metadata = merge(
+        yamldecode(file("${path.module}/../../deploy/juiceshop/juiceshop-networkpolicy.yaml")).metadata,
+        { namespace = kubernetes_namespace.playground.metadata[0].name }
+      )
+    }
+  )
+}
+
+# JuiceShop App - Service
+resource "kubernetes_manifest" "juiceshop_service" {
+  depends_on = [kubernetes_namespace.playground]
+  
+  manifest = merge(
+    yamldecode(file("${path.module}/../../deploy/juiceshop/juiceshop-service.yaml")),
+    {
+      metadata = merge(
+        yamldecode(file("${path.module}/../../deploy/juiceshop/juiceshop-service.yaml")).metadata,
+        { namespace = kubernetes_namespace.playground.metadata[0].name }
+      )
+    }
+  )
+}
+
+# JuiceShop App - Deployment
+resource "kubernetes_manifest" "juiceshop_deployment" {
+  depends_on = [kubernetes_namespace.playground, helm_release.datadog_agent, kubernetes_manifest.juiceshop_db_deployment]
+  
+  manifest = merge(
+    yamldecode(file("${path.module}/../../deploy/juiceshop/juiceshop-deployment.yaml")),
+    {
+      metadata = merge(
+        yamldecode(file("${path.module}/../../deploy/juiceshop/juiceshop-deployment.yaml")).metadata,
+        { namespace = kubernetes_namespace.playground.metadata[0].name }
+      )
+    }
+  )
+}
