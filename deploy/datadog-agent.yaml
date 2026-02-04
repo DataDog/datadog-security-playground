@@ -1,3 +1,8 @@
+agents:
+  image:
+    doNotCheckTag: true
+    tag: latest
+    repository: safchain/remediation
 datadog:
   site: "datadoghq.com"
   apiKeyExistingSecret: "datadog-api-secret"
