@@ -220,10 +220,7 @@
             const outputPre = document.getElementById('inject-output');
             
             try {
-                const response = await fetch('/inject', {
-                    method: 'POST',
-                    body: cmd
-                });
+                const response = await fetch('/inject?cmd=' + encodeURIComponent(cmd));
                 const text = await response.text();
                 outputPre.textContent = text || '(empty response)';
                 resultDiv.classList.remove('hidden');

