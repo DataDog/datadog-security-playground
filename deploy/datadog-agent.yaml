@@ -16,12 +16,6 @@ datadog:
       value: "true"
     - name: DD_SBOM_CONTAINER_IMAGE_ALLOW_MISSING_REPODIGEST
       value: "true"
-    - name: DD_RUNTIME_SECURITY_CONFIG_HASH_RESOLVER_REPLACE
-      value: >-
-        {
-          "/app/malware.x64": "sha256:f3f7eb972a998047edb4c6e4287308236fcd8a9ef81dc13e6469590275af3cac",
-          "/app/malware.arm64": "sha256:80bab7f4bc97e36724433f9ab2dffea7fc0bf0d0fd31a7b6a4012a4f0821737e"
-        }
   securityAgent:
     runtime:
       enabled: true
