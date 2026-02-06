@@ -32,10 +32,18 @@ def ping():
     return "pong\n"
 
 
-@app.route("/inject", methods=["GET"])
+@app.route("/inject", methods=["GET", "POST"])
 def inject():
-    data = request.args.get("cmd")
+    if request.method == "GET":
+        data = request.args.get("cmd", "")
+    elif request.method == "POST":
+        data = request.get_data().decode() if request.get_data() else ""
+    
     logger.info(f"Received injection request from {request.remote_addr}")
+    
+    if not data:
+        return "No command provided", 400
+    
     logger.info(f"Executing command: {data}")
     
     try:
