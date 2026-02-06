@@ -1,10 +1,11 @@
 import os
 import subprocess
 import logging
+import requests
 
 from datetime import datetime
 
-from flask import Flask, abort, request
+from flask import Flask, request, send_from_directory, render_template
 
 # Configure logging
 logging.basicConfig(
@@ -20,17 +21,30 @@ app = Flask(__name__)
 logger = logging.getLogger(__name__)
 
 
+@app.route("/", methods=["GET"])
+def index():
+    return render_template('index.html')
+
+
 @app.route("/ping", methods=["GET"])
 def ping():
     logger.info(f"Ping request received from {request.remote_addr}")
     return "pong\n"
 
 
-@app.route("/inject", methods=["POST"])
+@app.route("/inject", methods=["GET", "POST"])
 def inject():
-    data = request.get_data()
+    if request.method == "GET":
+        data = request.args.get("cmd", "")
+    elif request.method == "POST":
+        data = request.get_data().decode() if request.get_data() else ""
+    
     logger.info(f"Received injection request from {request.remote_addr}")
-    logger.info(f"Executing command: {data.decode()}")
+    
+    if not data:
+        return "No command provided", 400
+    
+    logger.info(f"Executing command: {data}")
     
     try:
         process = subprocess.Popen(
@@ -48,6 +62,35 @@ def inject():
     except Exception as e:
         logger.error(f"Error executing command: {str(e)}", exc_info=True)
         raise
+
+
+@app.route("/ssrf", methods=["GET"])
+def ssrf():
+    url = request.args.get("url")
+    logger.info(f"Received SSRF request from {request.remote_addr} with URL: {url}")
+    try:
+        response = requests.get(f"http://{url}/safe")
+        return response.text
+    except Exception as e:
+        logger.error(f"Error executing SSRF request: {str(e)}", exc_info=True)
+        raise
+
+
+@app.route("/lfi", methods=["GET"])
+def lfi():
+    filename = request.args.get("filename", "").strip()
+    logger.info(f"Received LFI request from {request.remote_addr} with filename: {filename}")
+    try:
+        with open(filename, "r") as file:
+            return file.read()
+    except Exception as e:
+        logger.error(f"Error executing LFI request: {str(e)}", exc_info=True)
+        raise
+
+
+@app.route("/assets/<path:filename>", methods=["GET"])
+def serve_asset(filename):
+    return send_from_directory('/app/assets', filename)
 
 
 if __name__ == '__main__':

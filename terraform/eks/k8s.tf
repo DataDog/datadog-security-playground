@@ -115,12 +115,21 @@ resource "kubernetes_manifest" "playground_app" {
   depends_on = [kubernetes_namespace.playground, helm_release.datadog_agent]
   
   manifest = merge(
-    yamldecode(file("${path.module}/../../deploy/app.yaml")),
+    yamldecode(templatefile("${path.module}/../../deploy/app.yaml", {
+      dd_api_key = var.datadog_api_key
+      dd_site    = var.datadog_site
+    })),
     {
-      metadata = {
-        namespace = kubernetes_namespace.playground.metadata[0].name
-        name = "playground-app"
-      }
+      metadata = merge(
+        yamldecode(templatefile("${path.module}/../../deploy/app.yaml", {
+          dd_api_key = var.datadog_api_key
+          dd_site    = var.datadog_site
+        })).metadata,
+        {
+          namespace = kubernetes_namespace.playground.metadata[0].name
+          name = "playground-app"
+        }
+      )
     }
   )
 }

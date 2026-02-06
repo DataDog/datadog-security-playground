@@ -1,6 +1,12 @@
 datadog:
   site: "datadoghq.com"
   apiKeyExistingSecret: "datadog-api-secret"
+  
+  apm:
+    portEnabled: true
+    port: 8126
+    socketEnabled: true
+  
   env:
     - name: DD_HOSTNAME
       value: playground
@@ -24,6 +30,9 @@ datadog:
         }
   securityAgent:
     runtime:
+      enabled: true
+  asm:
+    threats:
       enabled: true
 
 clusterAgent:
