@@ -96,7 +96,7 @@
 
     <!-- Main Content -->
     <main class="max-w-6xl mx-auto px-6 py-10">
-        <div class="grid md:grid-cols-3 gap-6">
+        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
 
             <!-- Command Injection Card -->
             <div class="card-hover bg-white rounded-2xl border border-gray-200 overflow-hidden">
@@ -181,14 +181,14 @@
                         </div>
                     </div>
                     <p class="text-gray-600 text-sm mb-5">Make the server fetch arbitrary URLs, accessing internal services.</p>
-                    
+
                     <div class="space-y-3">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1.5">Target URL</label>
-                            <input type="text" id="ssrf-url" placeholder="http://169.254.169.254/latest/meta-data/" 
+                            <input type="text" id="ssrf-url" placeholder="http://169.254.169.254/latest/meta-data/"
                                 class="input-focus w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:border-datadog-purple transition-colors font-mono">
                         </div>
-                        <button onclick="executeSsrf()" 
+                        <button onclick="executeSsrf()"
                             class="btn-pulse w-full py-2.5 bg-datadog-purple hover:bg-datadog-purple-dark text-white font-medium rounded-xl transition-colors text-sm">
                             Fetch URL
                         </button>
@@ -197,6 +197,45 @@
                 <div id="ssrf-result" class="hidden border-t border-gray-100 bg-gray-50 p-4">
                     <p class="text-xs font-medium text-gray-500 mb-2">Response</p>
                     <pre id="ssrf-output" class="text-sm text-gray-800 font-mono bg-white rounded-lg p-3 border border-gray-200 max-h-48 overflow-auto"></pre>
+                </div>
+            </div>
+
+            <!-- SQL Injection Card -->
+            <div class="card-hover bg-white rounded-2xl border border-gray-200 overflow-hidden">
+                <div class="p-6">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 rounded-lg bg-datadog-purple/10 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-datadog-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-semibold text-gray-900">SQL Injection</h2>
+                            <p class="text-xs text-gray-500 font-mono">/login</p>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 text-sm mb-5">Bypass authentication through unsanitized SQL queries in the login form.</p>
+
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1.5">Login</label>
+                            <input type="text" id="sqli-login" placeholder="admin"
+                                class="input-focus w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:border-datadog-purple transition-colors font-mono">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
+                            <input type="text" id="sqli-password" placeholder="' OR '1'='1"
+                                class="input-focus w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:border-datadog-purple transition-colors font-mono">
+                        </div>
+                        <button onclick="executeLogin()"
+                            class="btn-pulse w-full py-2.5 bg-datadog-purple hover:bg-datadog-purple-dark text-white font-medium rounded-xl transition-colors text-sm">
+                            Login
+                        </button>
+                    </div>
+                </div>
+                <div id="sqli-result" class="hidden border-t border-gray-100 bg-gray-50 p-4">
+                    <p class="text-xs font-medium text-gray-500 mb-2">Response</p>
+                    <pre id="sqli-output" class="text-sm text-gray-800 font-mono bg-white rounded-lg p-3 border border-gray-200 max-h-48 overflow-auto"></pre>
                 </div>
             </div>
 
@@ -265,6 +304,24 @@
             }
         }
 
+        async function executeLogin() {
+            const login = document.getElementById('sqli-login').value;
+            const password = document.getElementById('sqli-password').value;
+            const resultDiv = document.getElementById('sqli-result');
+            const outputPre = document.getElementById('sqli-output');
+
+            try {
+                const response = await fetch('/login?login=' + encodeURIComponent(login) + '&password=' + encodeURIComponent(password));
+                const text = await response.text();
+                outputPre.textContent = text || '(empty response)';
+                resultDiv.classList.remove('hidden');
+                resultDiv.classList.add('fade-in');
+            } catch (error) {
+                outputPre.textContent = 'Error: ' + error.message;
+                resultDiv.classList.remove('hidden');
+            }
+        }
+
         // Allow Enter key to submit
         document.getElementById('inject-cmd').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') executeInject();
@@ -274,6 +331,12 @@
         });
         document.getElementById('ssrf-url').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') executeSsrf();
+        });
+        document.getElementById('sqli-login').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') executeLogin();
+        });
+        document.getElementById('sqli-password').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') executeLogin();
         });
     </script>
 </body>
