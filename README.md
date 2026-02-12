@@ -83,6 +83,25 @@ You can deploy this playground on:
    playground-app-deployment-87b8d4b88-2hmzx             1/1     Running             0          1m30s
    ```
 
+### Cleanup
+
+To remove the playground from your cluster:
+
+1. **Delete the Application:**
+   ```bash
+   kubectl delete -f deploy/app.yaml
+   ```
+
+2. **Uninstall the Datadog Agent:**
+   ```bash
+   helm uninstall datadog-agent
+   ```
+
+3. **Delete the API Key Secret:**
+   ```bash
+   kubectl delete secret $DATADOG_API_SECRET_NAME
+   ```
+
 ## ☁️ Terraform EKS Setup (Optional)
 
 If you don't have an existing Kubernetes cluster, you can use Terraform to create an Amazon EKS cluster with the playground application and Datadog Agent pre-configured.
