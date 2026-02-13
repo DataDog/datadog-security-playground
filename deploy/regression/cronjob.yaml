@@ -1,0 +1,111 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: detection-regression-runner
+  namespace: playground
+  labels:
+    app: detection-regression
+spec:
+  # Run every 6 hours. Adjust to match your desired test cadence.
+  # The schedule must allow enough time for signal propagation between runs.
+  schedule: "0 */6 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 5
+  failedJobsHistoryLimit: 5
+  jobTemplate:
+    metadata:
+      labels:
+        app: detection-regression
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 3600
+      template:
+        metadata:
+          labels:
+            app: detection-regression
+        spec:
+          serviceAccountName: scenario-runner
+          containers:
+            - name: runner
+              image: bitnami/kubectl:latest
+              command: ["bash", "/scripts/run-scenarios.sh"]
+              env:
+                - name: PLAYGROUND_NAMESPACE
+                  value: "playground"
+                - name: APP_DEPLOYMENT
+                  value: "playground-app"
+                - name: WAIT_AFTER_RESTART
+                  value: "60"
+                - name: WAIT_BETWEEN_SCENARIOS
+                  value: "60"
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+                  readOnly: true
+          volumes:
+            - name: scripts
+              configMap:
+                name: scenario-runner-scripts
+                defaultMode: 0755
+          restartPolicy: Never
+---
+# Optional: separate CronJob that verifies signals after scenarios have run.
+# This job runs 30 minutes after the scenario runner to allow signal propagation.
+# Requires DD_API_KEY and DD_APP_KEY secrets.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: detection-regression-verifier
+  namespace: playground
+  labels:
+    app: detection-regression
+spec:
+  # Runs 30 minutes after the scenario runner (offset from 0 */6)
+  schedule: "30 */6 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 5
+  failedJobsHistoryLimit: 5
+  jobTemplate:
+    metadata:
+      labels:
+        app: detection-regression
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 600
+      template:
+        metadata:
+          labels:
+            app: detection-regression
+        spec:
+          serviceAccountName: scenario-runner
+          containers:
+            - name: verifier
+              image: bitnami/kubectl:latest
+              command: ["bash", "/scripts/verify-signals.sh", "--lookback", "90"]
+              env:
+                - name: DD_API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: datadog-regression-keys
+                      key: api-key
+                - name: DD_APP_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: datadog-regression-keys
+                      key: app-key
+                - name: DD_SITE
+                  value: "datadoghq.com"
+                - name: SUBMIT_METRICS
+                  value: "true"
+                - name: CLUSTER_NAME
+                  value: "playground-cluster"
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+                  readOnly: true
+          volumes:
+            - name: scripts
+              configMap:
+                name: scenario-runner-scripts
+                defaultMode: 0755
+          restartPolicy: Never
