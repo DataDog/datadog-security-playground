@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AppSec Dogfooding Scenarios</title>
+    <link
+      rel="stylesheet"
+      href="{{ request.url_for('dogfooding-static', path='dogfooding.css') }}"
+    />
+  </head>
+  <body>
+    <main class="page-shell">
+      <header class="panel page-header">
+        <div class="brand-row">
+          <p class="eyebrow">Datadog AppSec Dogfooding</p>
+          <span class="brand-badge">API Security Lab</span>
+        </div>
+        <h1>Scenario Catalog</h1>
+        <p class="subtitle">
+          Use this UI to trigger AppSec test API scenarios.
+        </p>
+      </header>
+
+      <section class="group-list">
+        {% for group in groups %}
+          <details class="panel group-card">
+            <summary class="group-summary">
+              <span class="group-title">{{ group.display_name }}</span>
+              <span class="group-meta">
+                {{ group.scenarios|length }} scenario{% if group.scenarios|length != 1 %}s{% endif %}
+              </span>
+            </summary>
+
+            <div class="group-body">
+              {% if group.description %}
+                <p class="group-description">{{ group.description }}</p>
+              {% endif %}
+
+              {% if group.scenarios %}
+                <div class="scenario-list">
+                  {% for scenario in group.scenarios %}
+                    <details class="scenario-card">
+                      <summary class="scenario-summary">
+                        <span class="scenario-title">{{ scenario.display_name }}</span>
+                        <span class="scenario-summary-meta">
+                          <span class="scenario-name">{{ scenario.name }}</span>
+                          <span class="scenario-step-count">
+                            {{ scenario.steps|length }} step{% if scenario.steps|length != 1 %}s{% endif %}
+                          </span>
+                        </span>
+                      </summary>
+
+                      <div class="scenario-body">
+                        {% if scenario.description %}
+                          <p class="scenario-description">
+                            {{ scenario.description }}
+                          </p>
+                        {% endif %}
+
+                        <div class="scenario-controls">
+                          <button
+                            type="button"
+                            class="run-scenario-button"
+                            data-scenario-run="{{ scenario.name }}"
+                          >
+                            Run scenario
+                          </button>
+                          <p
+                            class="scenario-run-status"
+                            data-scenario-status="{{ scenario.name }}"
+                          >
+                            Not run yet.
+                          </p>
+                        </div>
+
+                        <h3>Steps</h3>
+                        <ol class="step-list">
+                          {% if scenario.steps %}
+                            {% for step in scenario.steps %}
+                              <li class="step-item">
+                                <div class="step-line">
+                                  <strong>{{ step.display_name }}</strong>
+                                </div>
+                                {% if step.description %}
+                                  <p>{{ step.description }}</p>
+                                {% endif %}
+                              </li>
+                            {% endfor %}
+                          {% else %}
+                            <li class="step-item step-empty">No steps defined.</li>
+                          {% endif %}
+                        </ol>
+
+                        <div
+                          class="scenario-step-results"
+                          data-scenario-results="{{ scenario.name }}"
+                        >
+                          <p class="scenario-step-results-empty">
+                            Run this scenario to view step outcomes.
+                          </p>
+                        </div>
+                      </div>
+                    </details>
+                  {% endfor %}
+                </div>
+              {% else %}
+                <p class="empty-group">No scenarios are mapped to this group yet.</p>
+              {% endif %}
+            </div>
+          </details>
+        {% endfor %}
+      </section>
+    </main>
+    <script
+      type="module"
+      src="{{ request.url_for('dogfooding-static', path='dogfooding.js') }}"
+    ></script>
+  </body>
+</html>

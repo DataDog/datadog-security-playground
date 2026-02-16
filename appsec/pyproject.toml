@@ -1,0 +1,57 @@
+[build-system]
+requires = ["uv_build>=0.9.25,<0.10.0"]
+build-backend = "uv_build"
+
+[tool.uv.workspace]
+members = ["src/test_api_client"]
+
+[tool.uv.sources]
+"test-api-client" = { workspace = true }
+
+[project]
+name = "dogfooding_ui"
+version = "0.1.0"
+description = "AppSec Dogfooding setup"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "test-api-client",
+    "fastapi>=0.121.1",
+    "jinja2>=3.1.6",
+    "uvicorn>=0.38.0",
+]
+
+[project.scripts]
+start = "dogfooding_ui.start:main"
+dev = "dogfooding_ui.start:dev"
+
+[dependency-groups]
+dev = ["pyright>=1.1.408", "ruff>=0.15.1"]
+
+[tool.pyright]
+typeCheckingMode = "strict"
+include = ["src"]
+exclude = ["src/test_api_client"]
+
+[tool.ruff]
+include = ["src"]
+exclude = ["src/test_api_client"]
+
+[tool.ruff.lint]
+ignore = [
+    "D100",   # undocumented-public-module
+    "D101",   # undocumented-public-function
+    "D102",   # undocumented-public-method
+    "D103",   # undocumented-public-function
+    "D104",   # undocumented-public-package
+    "D203",   # incorrect-blank-line-before-class (redundant when using ruff as a formatter)
+    "D213",   # multi-line-summary-second-line (incompatible with D212)
+    "COM812", # missing-trailing-comma (redundant when using ruff as a formatter)
+]
+select = ["ALL"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = [
+    "PLR2004", # allow literal status code comparisons in tests
+    "S101",    # allow bare asserts in tests
+]

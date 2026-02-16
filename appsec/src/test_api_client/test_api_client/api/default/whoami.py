@@ -1,0 +1,162 @@
+from http import HTTPStatus
+from typing import Any
+
+import httpx
+
+from ... import errors
+from ...client import AuthenticatedClient, Client
+from ...models.detail_error_response import DetailErrorResponse
+from ...models.user import User
+from ...types import Response
+
+
+def _get_kwargs() -> dict[str, Any]:
+
+    _kwargs: dict[str, Any] = {
+        "method": "get",
+        "url": "/whoami",
+    }
+
+    return _kwargs
+
+
+def _parse_response(
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> DetailErrorResponse | User | None:
+    if response.status_code == 200:
+        response_200 = User.from_dict(response.json())
+
+        return response_200
+
+    if response.status_code == 403:
+        response_403 = DetailErrorResponse.from_dict(response.json())
+
+        return response_403
+
+    if client.raise_on_unexpected_status:
+        raise errors.UnexpectedStatus(response.status_code, response.content)
+    else:
+        return None
+
+
+def _build_response(
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> Response[DetailErrorResponse | User]:
+    return Response(
+        status_code=HTTPStatus(response.status_code),
+        content=response.content,
+        headers=response.headers,
+        parsed=_parse_response(client=client, response=response),
+    )
+
+
+def sync_detailed(
+    *,
+    client: AuthenticatedClient,
+) -> Response[DetailErrorResponse | User]:
+    """Return the currently authenticated user profile
+
+     Resolves the bearer token against `auth_sessions`.
+
+    Behavior:
+      - If token is missing, malformed, unknown, or mapped to a user no longer present,
+        return 403 with `detail: User not logged in`.
+      - On success, return the full user profile for the authenticated username.
+
+    Raises:
+        errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
+        httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+    Returns:
+        Response[DetailErrorResponse | User]
+    """
+
+    kwargs = _get_kwargs()
+
+    response = client.get_httpx_client().request(
+        **kwargs,
+    )
+
+    return _build_response(client=client, response=response)
+
+
+def sync(
+    *,
+    client: AuthenticatedClient,
+) -> DetailErrorResponse | User | None:
+    """Return the currently authenticated user profile
+
+     Resolves the bearer token against `auth_sessions`.
+
+    Behavior:
+      - If token is missing, malformed, unknown, or mapped to a user no longer present,
+        return 403 with `detail: User not logged in`.
+      - On success, return the full user profile for the authenticated username.
+
+    Raises:
+        errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
+        httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+    Returns:
+        DetailErrorResponse | User
+    """
+
+    return sync_detailed(
+        client=client,
+    ).parsed
+
+
+async def asyncio_detailed(
+    *,
+    client: AuthenticatedClient,
+) -> Response[DetailErrorResponse | User]:
+    """Return the currently authenticated user profile
+
+     Resolves the bearer token against `auth_sessions`.
+
+    Behavior:
+      - If token is missing, malformed, unknown, or mapped to a user no longer present,
+        return 403 with `detail: User not logged in`.
+      - On success, return the full user profile for the authenticated username.
+
+    Raises:
+        errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
+        httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+    Returns:
+        Response[DetailErrorResponse | User]
+    """
+
+    kwargs = _get_kwargs()
+
+    response = await client.get_async_httpx_client().request(**kwargs)
+
+    return _build_response(client=client, response=response)
+
+
+async def asyncio(
+    *,
+    client: AuthenticatedClient,
+) -> DetailErrorResponse | User | None:
+    """Return the currently authenticated user profile
+
+     Resolves the bearer token against `auth_sessions`.
+
+    Behavior:
+      - If token is missing, malformed, unknown, or mapped to a user no longer present,
+        return 403 with `detail: User not logged in`.
+      - On success, return the full user profile for the authenticated username.
+
+    Raises:
+        errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
+        httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+    Returns:
+        DetailErrorResponse | User
+    """
+
+    return (
+        await asyncio_detailed(
+            client=client,
+        )
+    ).parsed

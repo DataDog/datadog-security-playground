@@ -1,0 +1,406 @@
+openapi: 3.1.0
+info:
+  title: AppSec Test API
+  version: 1.0.0
+  description: |
+    OpenAPI contract for the in-memory AppSec dogfooding API.
+
+    Reimplementation notes:
+      - Keep state in process memory only:
+        - users: map username -> user record
+        - auth_sessions: map bearer token -> session {username, session_id}
+      - Seed two users at process startup:
+        - usernames: alice, bob
+        - password: dogfooding-password
+        - user_id: random UUIDv4 generated at startup
+        - email: "{username}@dogfooding.local"
+        - phone: from user_id using:
+          numeric_suffix = int(user_id_without_dashes[0:4], 16) % 10000
+          phone = "+1-202-555-{numeric_suffix:04d}"
+        - us_ssn: from user_id using:
+          seed = int(user_id_without_dashes[0:9], 16)
+          area = 100 + (seed % 900)
+          group = 10 + ((seed // 1000) % 90)
+          serial = 1000 + ((seed // 100000) % 9000)
+          us_ssn = "{area:03d}-{group:02d}-{serial:04d}"
+      - `/signup` and `/login` accept query parameters (not JSON request bodies).
+      - Authentication header parsing for protected routes:
+        - Read `Authorization` header and split on first space.
+        - Scheme must be `Bearer` (case-insensitive) and token must be non-empty.
+servers:
+  - url: http://localhost:8000/
+paths:
+  /signup:
+    post:
+      operationId: signup
+      summary: Create a user account
+      description: |
+        Creates a user in the in-memory `users` map.
+        Input is provided through query parameters.
+
+        Behavior:
+          - If `username` already exists, return 400.
+          - Otherwise create a user with generated `user_id`, `email`, `phone`, and `us_ssn`.
+      parameters:
+        - in: query
+          name: username
+          required: true
+          description: New username.
+          schema:
+            type: string
+            minLength: 1
+        - in: query
+          name: password
+          required: true
+          description: Plaintext password to store in memory.
+          schema:
+            type: string
+            minLength: 1
+      responses:
+        "200":
+          description: User created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SignupResponse"
+              examples:
+                success:
+                  value:
+                    message: User created successfully
+        "400":
+          description: Username already exists.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                alreadyExists:
+                  value:
+                    error: User already exists
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /login:
+    post:
+      operationId: login
+      summary: Authenticate and issue a bearer token
+      description: |
+        Validates username/password against the in-memory user store.
+        Input is provided through query parameters.
+
+        Behavior:
+          - Unknown username -> 403 with the same error message used for wrong password.
+          - Wrong password -> 403.
+          - Success -> generate a random token and store a session in `auth_sessions`.
+      parameters:
+        - in: query
+          name: username
+          required: true
+          description: Existing username.
+          schema:
+            type: string
+            minLength: 1
+        - in: query
+          name: password
+          required: true
+          description: Plaintext password.
+          schema:
+            type: string
+            minLength: 1
+      responses:
+        "200":
+          description: Login successful.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+              examples:
+                success:
+                  value:
+                    message: Login successful
+                    access_token: example-token-value
+                    token_type: bearer
+        "403":
+          description: Invalid username/password combination.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                invalidCredentials:
+                  value:
+                    error: Invalid user password combination
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /whoami:
+    get:
+      operationId: whoami
+      summary: Return the currently authenticated user profile
+      description: |
+        Resolves the bearer token against `auth_sessions`.
+
+        Behavior:
+          - If token is missing, malformed, unknown, or mapped to a user no longer present,
+            return 403 with `detail: User not logged in`.
+          - On success, return the full user profile for the authenticated username.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Current authenticated user profile.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "403":
+          description: User is not logged in.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DetailErrorResponse"
+              examples:
+                notLoggedIn:
+                  value:
+                    detail: User not logged in
+  /api1/users/{user_id}:
+    get:
+      operationId: api1_sensitive_user_by_predictable_id
+      summary: Return sensitive user data by predictable object ID
+      description: |
+        Returns sensitive data for one of the two seeded users based only on `user_id` parity.
+
+        Authorization behavior:
+          1. Parse `Authorization` as `Bearer <token>`.
+             - Missing or malformed bearer header -> 401 (`detail: Authentication required`).
+          2. If token exists in `auth_sessions` and session username exists in `users`, authorize.
+          3. Otherwise, attempt JWT-like fallback parsing:
+             - Split token as three parts using `token.split('.', maxsplit=2)` unpacking.
+             - Base64url-decode the middle segment (with '=' padding to a multiple of 4).
+             - Decode UTF-8 and parse JSON.
+             - Parsed payload content is not used for authorization decisions.
+
+        Target user mapping:
+          - even `user_id` -> `alice`
+          - odd `user_id` -> `bob`
+
+        Important:
+          - JWT fallback parsing errors are not wrapped; they bubble up as framework-default 500 responses.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: user_id
+          required: true
+          description: Predictable object ID used to choose a target user.
+          schema:
+            type: integer
+            minimum: 1000
+            maximum: 999999
+      responses:
+        "200":
+          description: Sensitive user data.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Api1SensitiveByIdResponse"
+              examples:
+                evenUserIdTargetsAlice:
+                  value:
+                    requested_user_id: 1000
+                    username: alice
+                    email: alice@dogfooding.local
+                    phone: +1-202-555-1234
+                    us_ssn: 123-45-6789
+                oddUserIdTargetsBob:
+                  value:
+                    requested_user_id: 1001
+                    username: bob
+                    email: bob@dogfooding.local
+                    phone: +1-202-555-9876
+                    us_ssn: 987-65-4321
+        "401":
+          description: Missing or malformed bearer authentication header.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DetailErrorResponse"
+              examples:
+                missingBearer:
+                  value:
+                    detail: Authentication required
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          description: |
+            Unhandled JWT fallback parsing error (for example: non-JWT token shape,
+            invalid base64url payload, invalid UTF-8, or invalid JSON payload).
+  /health:
+    get:
+      operationId: health
+      summary: Health endpoint
+      description: Returns service health and the `DD_SERVICE` environment variable value.
+      responses:
+        "200":
+          description: Service is healthy.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+              examples:
+                healthy:
+                  value:
+                    status: ok
+                    service_name: fastapi-service
+                healthyWithoutEnv:
+                  value:
+                    status: ok
+                    service_name: ""
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: opaque-or-jwt-like-token
+      description: |
+        Bearer token transport used by protected endpoints.
+        `/whoami` expects a token issued by `/login`.
+        `/api1/users/{user_id}` also accepts JWT-like tokens through fallback parsing.
+  responses:
+    ValidationError:
+      description: FastAPI request validation error.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ValidationErrorResponse"
+  schemas:
+    User:
+      type: object
+      required:
+        - user_id
+        - username
+        - email
+        - phone
+        - us_ssn
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+          pattern: ^\+1-202-555-\d{4}$
+        us_ssn:
+          type: string
+          pattern: ^\d{3}-\d{2}-\d{4}$
+      additionalProperties: false
+    Api1SensitiveByIdResponse:
+      type: object
+      required:
+        - requested_user_id
+        - username
+        - email
+        - phone
+        - us_ssn
+      properties:
+        requested_user_id:
+          type: integer
+          minimum: 1000
+          maximum: 999999
+        username:
+          type: string
+          enum: [alice, bob]
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+          pattern: ^\+1-202-555-\d{4}$
+        us_ssn:
+          type: string
+          pattern: ^\d{3}-\d{2}-\d{4}$
+      additionalProperties: false
+    SignupResponse:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          const: User created successfully
+      additionalProperties: false
+    LoginResponse:
+      type: object
+      required:
+        - message
+        - access_token
+        - token_type
+      properties:
+        message:
+          type: string
+          const: Login successful
+        access_token:
+          type: string
+          minLength: 1
+        token_type:
+          type: string
+          const: bearer
+      additionalProperties: false
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+      additionalProperties: false
+    DetailErrorResponse:
+      type: object
+      required:
+        - detail
+      properties:
+        detail:
+          type: string
+      additionalProperties: false
+    ValidationErrorResponse:
+      type: object
+      required:
+        - detail
+      properties:
+        detail:
+          type: array
+          items:
+            $ref: "#/components/schemas/ValidationErrorItem"
+      additionalProperties: false
+    ValidationErrorItem:
+      type: object
+      required:
+        - loc
+        - msg
+        - type
+      properties:
+        loc:
+          type: array
+          items:
+            oneOf:
+              - type: string
+              - type: integer
+        msg:
+          type: string
+        type:
+          type: string
+      additionalProperties: true
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - service_name
+      properties:
+        status:
+          type: string
+          const: ok
+        service_name:
+          type: string
+      additionalProperties: false
