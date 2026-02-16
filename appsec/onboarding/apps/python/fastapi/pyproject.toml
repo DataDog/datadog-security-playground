@@ -1,0 +1,34 @@
+[build-system]
+requires = ["uv_build>=0.9.25,<0.10.0"]
+build-backend = "uv_build"
+
+[project]
+name = "appsec_test_api"
+version = "0.1.0"
+description = "Python implementation of the AppSec Dogfooding Test API"
+requires-python = ">=3.14"
+dependencies = [
+    "ddtrace>=4.4.0",
+    "fastapi>=0.129.0",
+    "itsdangerous>=2.2.0",
+    "uvicorn>=0.40.0",
+]
+
+[dependency-groups]
+dev = ["pyright>=1.1.408", "ruff>=0.15.1"]
+
+[tool.pyright]
+typeCheckingMode = "strict"
+
+[tool.ruff.lint]
+ignore = [
+    "D100",   # undocumented-public-module
+    "D101",   # undocumented-public-function
+    "D102",   # undocumented-public-method
+    "D103",   # undocumented-public-function
+    "D104",   # undocumented-public-package
+    "D203",   # incorrect-blank-line-before-class (redundant when using ruff as a formatter)
+    "D213",   # multi-line-summary-second-line (incompatible with D212)
+    "COM812", # missing-trailing-comma (redundant when using ruff as a formatter)
+]
+select = ["ALL"]

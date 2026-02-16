@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AppSec Dogfooding Scenarios</title>
+    <link
+      rel="stylesheet"
+      href="{{ request.url_for('dogfooding-static', path='dogfooding.css') }}"
+    />
+  </head>
+  <body>
+    <template id="datadog-icon-template">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 140 110"
+        class="scenario-datadog-icon"
+        aria-hidden="true"
+        focusable="false"
+      >
+        <path d="M97.447 45.285c-.829-2.7-5.15-8.085-5.46-8.381-1.087-1.042.186-5.075-1.97-9.47-2.276-4.651-8.2-9.5-10.773-11.611.759.555 5.429 2.436 7.6 5.064.2-.273.289-1.683.477-2.039-1.866-2.446-2.014-6.809-2.014-7.968a13.253 13.253 0 0 0-1.087-4.557 7.3 7.3 0 0 1 2.354 4.029 16.457 16.457 0 0 0 3.4 7.409c3.046 3.8 5.8 5.743 7.188 4.339 1.664-1.685-1.686-9.221-5.969-13.432-5-4.9-6.306-4.272-9.234-3.224-2.34.833-3.605 7.476-9.7 7.345-1.033-.119-3.694-.186-5.008-.174.686-.956 1.271-1.7 1.271-1.7a30.929 30.929 0 0 0-3.787 1.866l-.133-.2a10.942 10.942 0 0 1 1.221-2.022 34.682 34.682 0 0 0-3.123 2.155A4.73 4.73 0 0 1 64 10.3s-2.065.373-4.7 3.264a32.092 32.092 0 0 0-6.089 2.41c-3.872-.84-5.7-2.209-7.44-4.718-1.327-1.916-3.684-2.208-6.1-1.213-3.515 1.451-7.963 3.436-7.963 3.436s1.446-.056 2.957.012a38.293 38.293 0 0 0-4.056 1.865s.97-.033 2.165-.013a20.348 20.348 0 0 1-2.067 1.533 29.381 29.381 0 0 0-3.424 2.957 20.725 20.725 0 0 1 2.435-.912c-.8 1.848-2.4 3.206-2.109 5.469.28 2.066 2.817 6.318 6.09 8.928.28.229 4.757 4.362 8.123 2.664s4.7-3.206 5.252-5.526c.653-2.662.28-4.671-1.11-10.446-.457-1.907-1.653-5.833-2.229-7.71l.128-.093a94.964 94.964 0 0 1 5.06 12.574c1.773 6.421 1.22 9.679.409 10.872-2.447 3.6-8.722 4.078-11.576 2.082-.437 6.914 1.108 9.957 1.63 11.491-.261 1.762.883 5.037.883 5.037a6.046 6.046 0 0 1 .653-2.272 14.874 14.874 0 0 0 1.022 3.824 7.19 7.19 0 0 1 .348-2.392 15.772 15.772 0 0 0 1.514 1.9 10.436 10.436 0 0 0 1.607 3.235 8.821 8.821 0 0 1-.079-2.047c2.617 2.519 3.067 6.182 3.328 9 .738 7.75-12.217 13.909-14.724 18.756-1.9 2.869-3.041 7.411.179 10.088 7.789 6.466 4.8 8.247 8.7 11.089 5.346 3.9 12.038 2.151 14.317-1.019 3.171-4.418 2.355-8.581 1.176-12.482-.919-3.049-3.421-8.115-6.517-10.074a13.514 13.514 0 0 0-8.842-2.109l.241-.279c3.748-.747 7.664-.335 10.5 1.492a18.788 18.788 0 0 1 7.7 11.053c1.745-.248 1.993-.362 3.59-.588l-3.6-28 7.6-.836a49.71 49.71 0 0 1-8.871-7.4c-.271-.2-.227-1.11-.227-1.11a49.843 49.843 0 0 0 13.9 7.425 11.34 11.34 0 0 0 8.719-.746 22.335 22.335 0 0 0 6.7-5.905l.3.524a13.489 13.489 0 0 1-1.154 2.72 7.4 7.4 0 0 0 1.993.723l5.3-.826a16.128 16.128 0 0 0 1.805-12.722zM68.77 38.108a22.634 22.634 0 0 0-4.087.948 20.6 20.6 0 0 0-2.533 1.006 6.259 6.259 0 0 1-.653-.495 4.909 4.909 0 0 1 .2-7.8c3.559-2.425 8.147-1.472 7.377-.746-1.463 1.393.485.981.7 3.553a4.437 4.437 0 0 1-1.004 3.534zm18.276-10.581c3.313 1.543 2.879 4.478 2.971 6.2a4.871 4.871 0 0 1-.026 1.059 4.475 4.475 0 0 0-2.332-.38 8.681 8.681 0 0 0-.98.1 6.927 6.927 0 0 1-2.621-3.3 5.545 5.545 0 0 1-.152-.348c-.017-.049-.041-.1-.059-.148-.008-.025-.014-.046-.023-.069-.366-1.164-.12-1.4.035-1.757s.757-.668-.126-.974a1.6 1.6 0 0 0-.28-.064c.586-.722 2.341-.9 3.593-.319zm6.378 20.754c-.858 1.977-2.074 4.157-3.451 4.336-2.243.3-4.366-.916-6.79-2.727a1.984 1.984 0 0 1-.227-3.129A18.726 18.726 0 0 1 89.258 45a12 12 0 0 1 3.894-.021c.862.471.862 1.942.272 3.302z" fill="#fff"></path>
+        <path d="M71.062 97.709l-.416-3.884 8.091-12.341 9.185 2.686 7.9-13.2 9.471 6.249 7.194-15.087 2.557 27.476zM115.144 56.5l-28.915 5.242a14.373 14.373 0 0 1-3.338 2.967 10.384 10.384 0 0 1-8.252.752 17.633 17.633 0 0 1-3.3-1.055l-7.058.971 4.283 35.741 49.529-8.93z" fill="#fff"></path>
+      </svg>
+    </template>
+    {% macro scenario_card(scenario) %}
+      <details class="scenario-card">
+        <summary class="scenario-summary">
+          <span class="scenario-title">{{ scenario.display_name }}</span>
+          <span class="scenario-summary-meta">
+            <span class="scenario-step-count">
+              {{ scenario.steps|length }} step{% if scenario.steps|length != 1 %}s{% endif %}
+            </span>
+          </span>
+          <span class="scenario-summary-actions">
+            <button
+              type="button"
+              class="run-scenario-button"
+              data-scenario-run="{{ scenario.name }}"
+              data-scenario-summary-action
+            >
+              <span class="run-scenario-glyph" aria-hidden="true">▶</span>
+              <span class="run-scenario-label">Run</span>
+            </button>
+            <span class="scenario-run-status" data-scenario-status="{{ scenario.name }}">
+              Not run yet.
+            </span>
+          </span>
+        </summary>
+
+        <div class="scenario-body">
+          {% if scenario.description %}
+            <p class="scenario-description">
+              {{ scenario.description }}
+            </p>
+          {% endif %}
+
+          <h3>Steps</h3>
+          <ol class="step-list">
+            {% if scenario.steps %}
+              {% for step in scenario.steps %}
+                {% set step_key = scenario.name ~ "::" ~ step.id %}
+                <li class="step-item" data-step-row="{{ step_key }}">
+                  <div class="step-line">
+                    <strong>{{ step.display_name }}</strong>
+                    <span
+                      class="step-inline-status step-inline-status-idle"
+                      data-step-status="{{ step_key }}"
+                      hidden
+                    ></span>
+                  </div>
+                  <p
+                    class="step-inline-message"
+                    data-step-message="{{ step_key }}"
+                    hidden
+                  ></p>
+                </li>
+              {% endfor %}
+            {% else %}
+              <li class="step-item step-empty">No steps defined.</li>
+            {% endif %}
+          </ol>
+
+          <div
+            class="scenario-step-results"
+            data-scenario-results="{{ scenario.name }}"
+          ></div>
+        </div>
+      </details>
+    {% endmacro %}
+    <main class="page-shell">
+      <header class="panel page-header">
+        <div class="brand-row">
+          <p class="eyebrow">Datadog AppSec Dogfooding</p>
+          <span class="brand-badge">API Security Lab</span>
+        </div>
+        <h1>Scenario Catalog</h1>
+        <p class="subtitle">
+          Use this UI to trigger AppSec test API scenarios.
+        </p>
+      </header>
+
+      <section class="group-list">
+        {% for scenario in global_scenarios %}
+          {{ scenario_card(scenario) }}
+        {% endfor %}
+
+        {% for group in groups %}
+          <details class="panel group-card" open>
+            <summary class="group-summary">
+              <span class="group-title">{{ group.display_name }}</span>
+              <span class="group-meta">
+                {{ group.scenarios|length }} scenario{% if group.scenarios|length != 1 %}s{% endif %}
+              </span>
+            </summary>
+
+            <div class="group-body">
+              {% if group.description %}
+                <p class="group-description">{{ group.description }}</p>
+              {% endif %}
+
+              {% if group.scenarios %}
+                <div class="scenario-list">
+                  {% for scenario in group.scenarios %}
+                    {{ scenario_card(scenario) }}
+                  {% endfor %}
+                </div>
+              {% else %}
+                <p class="empty-group">No scenarios are mapped to this group yet.</p>
+              {% endif %}
+            </div>
+          </details>
+        {% endfor %}
+      </section>
+    </main>
+    <script
+      type="module"
+      src="{{ request.url_for('dogfooding-static', path='dogfooding.js') }}"
+    ></script>
+  </body>
+</html>

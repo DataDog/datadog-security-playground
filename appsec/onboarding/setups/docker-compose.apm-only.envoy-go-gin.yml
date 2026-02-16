@@ -1,0 +1,39 @@
+name: appsec_dogfooding_onboarding_envoy_go_gin
+
+services:
+  datadog-agent:
+    image: gcr.io/datadoghq/agent:7
+    environment:
+      DD_HOSTNAME: appsec-dogfooding-${USER}
+      DD_API_KEY: ${DD_API_KEY:?DD_API_KEY must be set}
+      DD_APM_ENABLED: "true"
+      DD_APM_NON_LOCAL_TRAFFIC: "true"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /proc:/host/proc:ro
+      - /sys/fs/cgroup:/host/sys/fs/cgroup:ro
+
+  appsec-test-api:
+    build:
+      context: ../apps/go/gin
+      dockerfile: Dockerfile
+    environment:
+      DD_AGENT_HOST: datadog-agent
+      DD_SERVICE: appsec-dogfooding-api-${USER}
+      DD_ENV: ${USER}
+    depends_on:
+      - datadog-agent
+
+  envoy_proxy:
+    image: envoyproxy/envoy:v1.33-latest
+    environment:
+      DD_AGENT_HOST: datadog-agent
+      DD_TRACE_AGENT_PORT: "8126"
+      DD_ENV: ${USER}
+    depends_on:
+      - datadog-agent
+      - appsec-test-api
+    volumes:
+      - ./proxies/envoy/envoy.yaml:/etc/envoy/envoy.yaml:ro
+    ports:
+      - "8000:8080"
