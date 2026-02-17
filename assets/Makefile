@@ -6,11 +6,13 @@ docker-build-assets:
 	@echo "Extracting binaries from Docker image..."
 	@docker create --name temp-assets datadog-security-playground-assets:latest
 	@docker cp temp-assets:/output/bpfdoor/fake-bpfdoor.x64 ./bpfdoor/ || true
-	@docker cp temp-assets:/output/malware/malware.x64 ./malware/ || true
-	@docker cp temp-assets:/output/malware/malware.arm64 ./malware/ || true
+	@docker cp temp-assets:/output/rce-malware/malware.x64 ./rce-malware/ || true
+	@docker cp temp-assets:/output/rce-malware/malware.arm64 ./rce-malware/ || true
+	@docker cp temp-assets:/output/rce-malware/loader.x64 ./rce-malware/ || true
+	@docker cp temp-assets:/output/rce-malware/loader.arm64 ./rce-malware/ || true
 	@docker rm temp-assets
 	@echo "Binaries extracted successfully!"
-	@ls -lh bpfdoor/*.x64 rce-malware/malware.*
+	@ls -lh bpfdoor/*.x64 rce-malware/malware.* rce-malware/loader.*
 
 # Default target
 all: docker-build-assets
