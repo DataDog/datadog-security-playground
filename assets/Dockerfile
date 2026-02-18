@@ -29,10 +29,16 @@ RUN chmod +x build.sh && ./build.sh
 ###############################################################################
 FROM golang@sha256:81bf5927dc91aefb42e2bc3a5abdbe9bb3bae8ba8b107e2a4cf43ce3402534c6 AS malware-builder
 
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        gcc-x86-64-linux-gnu \
+        libc6-dev-amd64-cross \
+        gcc-aarch64-linux-gnu \
+        libc6-dev-arm64-cross
+
 WORKDIR /build
 COPY rce-malware/go.mod rce-malware/go.sum ./
 RUN go mod download
-COPY rce-malware/main.go rce-malware/build.sh ./
+COPY rce-malware/main.go rce-malware/preload.c rce-malware/build.sh ./
 RUN chmod +x build.sh && ./build.sh
 
 ###############################################################################
@@ -44,5 +50,7 @@ WORKDIR /output
 COPY --from=bpfdoor-builder /build/fake-bpfdoor.x64 ./bpfdoor/
 COPY --from=malware-builder /build/malware.x64 ./rce-malware/
 COPY --from=malware-builder /build/malware.arm64 ./rce-malware/
+COPY --from=malware-builder /build/preload.x64.so ./rce-malware/
+COPY --from=malware-builder /build/preload.arm64.so ./rce-malware/
 
 CMD ["ls", "-lhR", "/output/*"]
