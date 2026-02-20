@@ -8,9 +8,11 @@ docker-build-assets:
 	@docker cp temp-assets:/output/bpfdoor/fake-bpfdoor.x64 ./bpfdoor/ || true
 	@docker cp temp-assets:/output/rce-malware/malware.x64 ./rce-malware/ || true
 	@docker cp temp-assets:/output/rce-malware/malware.arm64 ./rce-malware/ || true
+	@docker cp temp-assets:/output/rce-malware/preload.x64.so ./rce-malware/ || true
+	@docker cp temp-assets:/output/rce-malware/preload.arm64.so ./rce-malware/ || true
 	@docker rm temp-assets
 	@echo "Binaries extracted successfully!"
-	@ls -lh bpfdoor/*.x64 rce-malware/malware.*
+	@ls -lh bpfdoor/*.x64 rce-malware/malware.* rce-malware/preload.*
 
 # Default target
 all: docker-build-assets
