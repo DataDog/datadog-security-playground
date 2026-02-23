@@ -4,3 +4,6 @@ terraform/eks/terraform.tfstate
 terraform/eks/terraform.tfstate.backup
 terraform/eks/terraform.tfstate.lock.info
 terraform/eks/terraform.tfstate.lock.info
+
+# macOS
+**/.DS_Store
