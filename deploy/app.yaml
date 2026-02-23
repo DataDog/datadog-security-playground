@@ -20,6 +20,8 @@ spec:
           env:
             - name: DD_SERVICE
               value: "playground-app"
+            - name: DD_ENV
+              value: "playground"
             - name: DD_APPSEC_ENABLED
               value: "true"
             - name: DD_AGENT_HOST
