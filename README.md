@@ -141,6 +141,13 @@ This removes the EKS cluster, VPC, IAM roles, and all Kubernetes resources deplo
 
 Explore the `scenarios/` folder for available attack scenarios with step-by-step instructions.
 
+| Scenario | Attack Vector | Source |
+|----------|---------------|--------|
+| [Full-Chain RCE to Cryptomining](#1-full-chain-rce-to-cryptomining) | Command injection | [`scenarios/rce-malware/`](scenarios/rce-malware/) |
+| [BPFDoor Network Backdoor](#2-bpfdoor-network-backdoor) | Command injection | [`scenarios/bpfdoor/`](scenarios/bpfdoor/) |
+| [Essential Linux Binary Modifications](#3-essential-linux-binary-modifications) | File system tampering | [`scenarios/findings-generator/`](scenarios/findings-generator/) |
+
+
 ### 1. Full-Chain RCE to Cryptomining
 
 - **Location**: `scenarios/rce-malware/`
@@ -178,6 +185,7 @@ kubectl exec -it deploy/playground-app -- /scenarios/findings-generator/detonate
 # Run a specific operation
 kubectl exec -it deploy/playground-app -- /scenarios/findings-generator/detonate.sh [chmod|chown|link|rename|open|unlink|utimes]
 ```
+
 
 ## Atomic Red Team Tests
 
