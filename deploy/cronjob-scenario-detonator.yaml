@@ -2,12 +2,12 @@
 # This generates recurring security signals in Datadog Workload Protection
 # for demonstration and testing purposes.
 #
-# Deploy with: kubectl apply -f deploy/cronjob-rce-malware.yaml
-# Delete with: kubectl delete -f deploy/cronjob-rce-malware.yaml
+# Deploy with: kubectl apply -f deploy/cronjob-scenario-detonator.yaml
+# Delete with: kubectl delete -f deploy/cronjob-scenario-detonator.yaml
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: rce-malware-detonator
+  name: scenario-detonator
   namespace: playground
 spec:
   # Run every hour on the hour
@@ -25,7 +25,7 @@ spec:
       template:
         metadata:
           labels:
-            app: rce-malware-detonator
+            app: scenario-detonator
             # Enable CWS instrumentation so the Datadog agent monitors this pod
             admission.datadoghq.com/cws-instrumentation.enabled: "true"
         spec:
