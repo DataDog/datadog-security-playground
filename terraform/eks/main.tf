@@ -102,7 +102,9 @@ module "eks" {
   cluster_name    = local.cluster_name
   cluster_version = "1.35"
 
-  cluster_endpoint_public_access           = true
+  cluster_endpoint_public_access           = var.cluster_endpoint_public_access_cidrs != null ? true : false
+  cluster_endpoint_public_access_cidrs    = var.cluster_endpoint_public_access_cidrs
+  cluster_endpoint_private_access          = var.cluster_endpoint_public_access_cidrs != null ? true : false
   enable_cluster_creator_admin_permissions = true
 
   # Enable audit logs only

@@ -31,6 +31,12 @@ variable "datadog_api_key" {
   sensitive   = true
 }
 
+variable "cluster_endpoint_public_access_cidrs" {
+  description = "List of CIDRs that can access the EKS cluster API server endpoint. If set, public access is automatically enabled and restricted to these CIDRs."
+  type        = list(string)
+  default     = null
+}
+
 variable "datadog_site" {
   description = "Datadog site (e.g., datadoghq.com, datadoghq.eu, us3.datadoghq.com)"
   type        = string
