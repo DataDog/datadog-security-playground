@@ -4,6 +4,19 @@
 IMDS_IP="169.254.169.254"
 IMDS_BASE_URL="http://${IMDS_IP}/latest/meta-data/iam/security-credentials/"
 
+# Perform raw IMDS credential requests to generate detection signals.
+# These direct curl calls hit the IMDS endpoint and are visible to runtime
+# security monitoring, independently of whether they succeed or not.
+
+# Retrieve IMDS v1 credentials
+curl --connect-timeout 5.0 http://${IMDS_IP}/latest/meta-data/iam/security-credentials/example-role-name || true
+
+# Retrieve IMDS v2 credentials
+TOKEN=$(curl --connect-timeout 5.0 -s -X PUT "http://${IMDS_IP}/latest/api/token" \
+    -H "X-aws-ec2-metadata-token-ttl-seconds: 21600") \
+    && curl --connect-timeout 5.0 -H "X-aws-ec2-metadata-token: $TOKEN" \
+    http://${IMDS_IP}/latest/meta-data/iam/security-credentials/example-role-name || true
+
 # Check for 'jq' dependency
 if ! command -v jq &> /dev/null
 then
@@ -14,20 +27,20 @@ fi
 # Function to retrieve credentials from IMDS
 get_imds_credentials() {
     echo "Attempting to retrieve credentials from IMDS..." >&2
-    
+
     # Try IMDSv2 first
     echo "Trying IMDSv2 ..." >&2
     TOKEN=$(curl -s -X PUT "http://${IMDS_IP}/latest/api/token" \
         -H "X-aws-ec2-metadata-token-ttl-seconds: 21600" --connect-timeout 2 --max-time 5)
-    
+
     if [ -n "$TOKEN" ]; then
         echo "IMDSv2 token retrieved successfully" >&2
         ROLE_NAME=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" "${IMDS_BASE_URL}" --connect-timeout 2 --max-time 5)
-        
+
         if [ -n "$ROLE_NAME" ]; then
             echo "Retrieved IAM Role Name: ${ROLE_NAME}" >&2
             CREDENTIALS_JSON=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" "${IMDS_BASE_URL}${ROLE_NAME}" --connect-timeout 2 --max-time 5)
-            
+
             if [ -n "$CREDENTIALS_JSON" ]; then
                 export AWS_ACCESS_KEY_ID=$(echo "$CREDENTIALS_JSON" | jq -r '.AccessKeyId')
                 export AWS_SECRET_ACCESS_KEY=$(echo "$CREDENTIALS_JSON" | jq -r '.SecretAccessKey')
@@ -38,15 +51,15 @@ get_imds_credentials() {
             fi
         fi
     fi
-    
+
     # Fall back to IMDSv1
     echo "IMDSv2 failed, trying IMDSv1 ..." >&2
     ROLE_NAME=$(curl -s "${IMDS_BASE_URL}" --connect-timeout 2 --max-time 5)
-    
+
     if [ -n "$ROLE_NAME" ]; then
         echo "Retrieved IAM Role Name: ${ROLE_NAME}" >&2
         CREDENTIALS_JSON=$(curl -s "${IMDS_BASE_URL}${ROLE_NAME}" --connect-timeout 2 --max-time 5)
-        
+
         if [ -n "$CREDENTIALS_JSON" ]; then
             export AWS_ACCESS_KEY_ID=$(echo "$CREDENTIALS_JSON" | jq -r '.AccessKeyId')
             export AWS_SECRET_ACCESS_KEY=$(echo "$CREDENTIALS_JSON" | jq -r '.SecretAccessKey')
@@ -56,7 +69,7 @@ get_imds_credentials() {
             return 0
         fi
     fi
-    
+
     echo "Failed to retrieve credentials from IMDS" >&2
     return 1
 }

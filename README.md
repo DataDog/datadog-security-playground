@@ -175,9 +175,9 @@ Navigate to the `scenarios/` folder to explore available attack scenarios. Each 
 
 #### 1. Full chain RCE to malware download, persistence and cryptomining
 - **Location**: `scenarios/rce-malware/`
-- **Description**: Simulates a command injection attack that deploys a payload containing a cryptominer via file download, achieve persistence, and attempts to lateral move to the cloud. The aim is to showcase a complete compromise and generate a signal describing the full attack.
+- **Description**: Simulates a command injection attack that deploys a payload containing a cryptominer via file download and achieve persistence. The aim is to showcase a complete compromise and generate a signal describing the full attack.
 - **Attack Vector**: Command injection vulnerability
-- **Impact**:
+- **Impact**: Malware execution, establishing persistence, cryptocurrency mining
 - **Detection**: Workload Protection signals for backdoor execution, network behavior, file modifications, and persistence mechanisms
 - **Prerequisites**: Before running this scenario, you must first create the correlation detection rule in Datadog by running `assets/correlation/create-rule.sh` with the `DD_API_KEY`, `DD_APP_KEY`, and `DD_API_SITE` environment variables set. The `security_monitoring_rules_write` permission should be assigned to the `DD_APP_KEY`. The `DD_API_SITE` should be set to the Datadog site your are using, refer to the [Datadog documentation](https://docs.datadoghq.com/getting_started/site/#access-the-datadog-site) for available sites).
 
@@ -187,7 +187,20 @@ Navigate to the `scenarios/` folder to explore available attack scenarios. Each 
 kubectl exec -it deploy/playground-app -- /scenarios/rce-malware/detonate.sh --wait
 ```
 
-#### 2. BPFDoor Network Backdoor Attack
+#### 2. Cloud Access - AWS Credential Theft and Resource Abuse
+- **Location**: `scenarios/cloud-access/`
+- **Description**: Simulates cloud credential theft and resource abuse by retrieving AWS credentials from the Instance Metadata Service (IMDS) and attempting to launch expensive EC2 instances across multiple regions. This demonstrates how attackers pivot from workload compromise to cloud infrastructure abuse.
+- **Attack Vector**: IMDS credential theft, unauthorized EC2 instance launches
+- **Impact**: Cloud credential theft, unauthorized resource provisioning, financial abuse
+- **Detection**: CloudTrail events for unauthorized EC2 RunInstances calls, IMDS access patterns
+
+**How to Run:**
+```bash
+# Execute the attack simulation from within the playground-app pod
+kubectl exec -it deploy/playground-app -- /scenarios/cloud-access/detonate.sh --wait
+```
+
+#### 3. BPFDoor Network Backdoor Attack
 - **Location**: `scenarios/bpfdoor/`
 - **Description**: Simulates a command injection attack that deploys a persistent BPFDoor network backdoor
 - **Attack Vector**: Command injection vulnerability
@@ -201,7 +214,7 @@ kubectl exec -it deploy/playground-app -- /scenarios/rce-malware/detonate.sh --w
 kubectl exec -it deploy/playground-app -- /scenarios/bpfdoor/detonate.sh --wait
 ```
 
-#### 3. Essential Linux Binary Modified - Findings Generator
+#### 4. Essential Linux Binary Modified - Findings Generator
 - **Location**: `scenarios/findings-generator/`
 - **Description**: Essential system binaries in containers are executable files that perform operating system functions and administrative tasks. These binaries typically reside in protected system directories such as `/bin`, `/sbin`, `/usr/bin`, and `/usr/sbin`. In containerized environments, these binaries are part of the container image layers and should be immutable during runtime. 
 - **Attack Vector**: File system modifications to critical binaries
