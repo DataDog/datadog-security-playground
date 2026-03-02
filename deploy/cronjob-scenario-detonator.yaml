@@ -1,0 +1,74 @@
+# CronJob that periodically detonates the RCE malware scenario.
+# This generates recurring security signals in Datadog Workload Protection
+# for demonstration and testing purposes.
+#
+# Deploy with: kubectl apply -f deploy/cronjob-scenario-detonator.yaml
+# Delete with: kubectl delete -f deploy/cronjob-scenario-detonator.yaml
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: scenario-detonator
+  namespace: playground
+spec:
+  # Run every hour on the hour
+  schedule: "0 * * * *"
+  # Prevent overlapping detonations if a previous run is still in progress
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 4
+  failedJobsHistoryLimit: 4
+  jobTemplate:
+    spec:
+      # Terminate the job if it runs longer than 2 minutes
+      activeDeadlineSeconds: 120
+      # Do not retry on failure — a failed detonation should not be re-attempted
+      backoffLimit: 0
+      template:
+        metadata:
+          labels:
+            app: scenario-detonator
+            # Enable CWS instrumentation so the Datadog agent monitors this pod
+            admission.datadoghq.com/cws-instrumentation.enabled: "true"
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: playground-app
+              image: docker.io/datadog/datadog-security-playground:latest
+              imagePullPolicy: IfNotPresent
+              command: ["/bin/sh", "-c"]
+              args:
+                - |
+                  # Start the app server in the background
+                  python /app/app.py &
+                  APP_PID=$!
+
+                  # Wait for the app to be ready
+                  until curl -sf http://localhost:5000/ > /dev/null 2>&1; do
+                    sleep 1
+                  done
+
+                  # Detonate the rce-malware scenario
+                  /scenarios/rce-malware/detonate.sh
+
+                  # Stop the app server and exit cleanly
+                  kill $APP_PID 2>/dev/null
+                  wait $APP_PID 2>/dev/null
+                  exit 0
+              env:
+                # Datadog APM configuration — matches the main playground-app deployment
+                - name: DD_SERVICE
+                  value: "playground-app"
+                - name: DD_APPSEC_ENABLED
+                  value: "true"
+                - name: DD_AGENT_HOST
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: status.hostIP
+                - name: DD_TRACE_AGENT_PORT
+                  value: "8126"
+              resources:
+                requests:
+                  memory: "128Mi"
+                  cpu: "250m"
+                limits:
+                  memory: "4Gi"
+                  cpu: "2"
