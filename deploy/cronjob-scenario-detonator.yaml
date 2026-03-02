@@ -1,4 +1,4 @@
-# CronJob that periodically detonates the RCE malware scenario in silent mode.
+# CronJob that periodically detonates the RCE malware scenario.
 # This generates recurring security signals in Datadog Workload Protection
 # for demonstration and testing purposes.
 #
