@@ -33,7 +33,7 @@ spec:
           containers:
             - name: playground-app
               image: docker.io/datadog/datadog-security-playground:latest
-              imagePullPolicy: IfNotPresent
+              imagePullPolicy: Always
               command: ["/bin/sh", "-c"]
               args:
                 - |
