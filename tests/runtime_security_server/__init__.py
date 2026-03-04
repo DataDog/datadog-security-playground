@@ -1,3 +1,3 @@
-from runtime_security_server.server import EventStore, StoredEvent, TestServer
+from runtime_security_server.server import EventStore, StoredEvent, EventServer
 
-__all__ = ["EventStore", "StoredEvent", "TestServer"]
+__all__ = ["EventStore", "StoredEvent", "EventServer"]

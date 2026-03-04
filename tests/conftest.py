@@ -10,7 +10,7 @@ import pytest
 from rich.logging import RichHandler
 
 from app_client import AppClient
-from runtime_security_server import TestServer
+from runtime_security_server import EventServer
 
 # Configure rich logging
 logging.basicConfig(
@@ -47,7 +47,7 @@ def test_server():
     verbose = os.environ.get("TEST_SERVER_VERBOSE", "").lower() in ("1", "true", "yes")
     timeout = float(os.environ.get("CONNECTION_TIMEOUT", CONNECTION_TIMEOUT))
 
-    server = TestServer(port=port, verbose=verbose)
+    server = EventServer(port=port, verbose=verbose)
     server.start()
 
     logger.info(f"Test server started on port {port}")

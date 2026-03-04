@@ -104,12 +104,12 @@ class TestServicer(api_pb2_grpc.SecurityAgentAPIServicer):
         return empty_pb2.Empty()
 
 
-class TestServer:
+class EventServer:
     """
     gRPC test server that receives security events from the DD Agent.
 
     Usage:
-        server = TestServer(port=10000)
+        server = EventServer(port=10000)
         server.start()
         server.wait_for_connection(timeout=120)
         # ... run tests ...
