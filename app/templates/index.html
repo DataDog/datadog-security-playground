@@ -96,7 +96,21 @@
 
     <!-- Main Content -->
     <main class="max-w-6xl mx-auto px-6 py-10">
-        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+
+        <!-- Tabs -->
+        <div class="flex gap-1 mb-8 border-b border-gray-200">
+            <button id="tab-appsec" onclick="switchTab('appsec')"
+                class="tab-btn px-5 py-2.5 text-sm font-medium rounded-t-lg transition-colors -mb-px border-b-2 border-datadog-purple text-datadog-purple bg-white">
+                Application Security
+            </button>
+            <button id="tab-aisec" onclick="switchTab('aisec')"
+                class="tab-btn px-5 py-2.5 text-sm font-medium rounded-t-lg transition-colors -mb-px border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                AI Security
+            </button>
+        </div>
+
+        <!-- Tab: Application Security -->
+        <div id="panel-appsec" class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
 
             <!-- Command Injection Card -->
             <div class="card-hover bg-white rounded-2xl border border-gray-200 overflow-hidden">
@@ -237,9 +251,135 @@
                     <p class="text-xs font-medium text-gray-500 mb-2">Response</p>
                     <pre id="sqli-output" class="text-sm text-gray-800 font-mono bg-white rounded-lg p-3 border border-gray-200 max-h-48 overflow-auto"></pre>
                 </div>
-            </div>
+            </div><!-- /sqli card -->
+        </div><!-- /panel-appsec -->
 
-        </div>
+        <!-- Tab: AI Security -->
+        <div id="panel-aisec" class="hidden">
+            <div class="card-hover bg-white rounded-2xl border border-gray-200 overflow-hidden">
+                <div class="p-6">
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="w-10 h-10 rounded-lg bg-datadog-purple/10 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-datadog-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-3 3-3-3z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-semibold text-gray-900">AI Guard</h2>
+                            <p class="text-xs text-gray-500 font-mono">/llm</p>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 text-sm mb-5">Send a system prompt and user prompt to AI Guard.</p>
+
+                    <!-- Two-panel layout -->
+                    <div class="grid md:grid-cols-2 border border-gray-200 rounded-xl overflow-hidden min-h-[360px]">
+
+                        <!-- Left: Input -->
+                        <div class="border-r border-gray-200 flex flex-col">
+                            <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50/70">
+                                <span class="font-semibold text-gray-900 text-sm">Input</span>
+                                <button onclick="resetAIGuard()" class="flex items-center gap-1.5 text-xs text-gray-600 hover:text-gray-900 px-2.5 py-1.5 rounded-lg hover:bg-gray-100 transition-colors">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                    </svg>
+                                    Reset
+                                </button>
+                            </div>
+
+                            <!-- Scenario selector -->
+                            <div class="px-4 py-3 border-b border-gray-100 bg-gray-50/40">
+                                <label class="block text-xs font-medium text-gray-500 mb-1.5">Scenario</label>
+                                <select id="ai-guard-scenario" onchange="applyAIGuardScenario()" class="input-focus w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-datadog-purple transition-colors text-gray-700 bg-white">
+                                    <option value="">— Select a scenario —</option>
+                                    <option value="clean_pass">✅ Clean Prompt (expected: ALLOW)</option>
+                                    <option value="bootstrap_poisoning">Bootstrap Poisoning</option>
+                                    <option value="ci_pivot">CI Pivot</option>
+                                    <option value="dependency_poisoning">Dependency Poisoning</option>
+                                    <option value="friendly">Friendly (Hidden Injection)</option>
+                                    <option value="global_memory_poisoning">Global Memory Poisoning</option>
+                                    <option value="guard_tamper">Guard Tamper</option>
+                                    <option value="incremental_escalation">Incremental Escalation</option>
+                                    <option value="localhost_pivot">Localhost Pivot</option>
+                                    <option value="path_hijack">PATH Hijack</option>
+                                    <option value="publisher_compromise">Publisher Compromise</option>
+                                    <option value="symlink_traversal">Symlink Traversal</option>
+                                    <option value="tool_output_injection">Tool Output Injection</option>
+                                    <option value="unicode_obfuscation">Unicode Obfuscation</option>
+                                </select>
+                            </div>
+
+                            <!-- Sections -->
+                            <div id="ai-guard-sections" class="flex-1 divide-y divide-gray-100">
+                                <!-- System Prompt -->
+                                <div class="ai-guard-section">
+                                    <button onclick="toggleAISection(this)" class="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors">
+                                        <span class="text-xs font-medium px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-700">System Prompt</span>
+                                        <svg class="section-chevron w-4 h-4 text-gray-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                        </svg>
+                                    </button>
+                                    <div class="section-content px-4 pb-4">
+                                        <textarea rows="3" placeholder="Enter system prompt..."
+                                            class="input-focus w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-datadog-purple transition-colors resize-none text-gray-700 placeholder-gray-400"></textarea>
+                                    </div>
+                                </div>
+                                <!-- User -->
+                                <div class="ai-guard-section">
+                                    <button onclick="toggleAISection(this)" class="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors">
+                                        <span class="text-xs font-medium px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-700">User</span>
+                                        <svg class="section-chevron w-4 h-4 text-gray-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                        </svg>
+                                    </button>
+                                    <div class="section-content px-4 pb-4">
+                                        <textarea rows="3" placeholder="Enter user input..."
+                                            class="input-focus w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-datadog-purple transition-colors resize-none text-gray-700 placeholder-gray-400"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Run -->
+                            <div class="p-4 border-t border-gray-100">
+                                <button id="ai-guard-run-btn" onclick="executeAIGuard()" class="btn-pulse w-full py-2.5 bg-datadog-purple hover:bg-datadog-purple-dark text-white font-medium rounded-xl transition-colors text-sm">
+                                    Run
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Right: Output -->
+                        <div class="flex flex-col">
+                            <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50/70">
+                                <span class="font-semibold text-gray-900 text-sm">Output</span>
+                                <button class="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <!-- Placeholder -->
+                            <div id="ai-guard-placeholder" class="flex-1 flex flex-col items-center justify-center py-12 px-6 text-center">
+                                <div class="relative w-12 h-12 mb-4">
+                                    <svg class="absolute right-0 top-0 w-7 h-7 text-datadog-purple" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M12 2l1.8 7.2L21 8l-7.2 1.8L12 17l-1.8-7.2L3 8l7.2-1.8z"/>
+                                    </svg>
+                                    <svg class="absolute left-0 bottom-0 w-5 h-5 text-datadog-grape opacity-70" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M12 2l1.8 7.2L21 8l-7.2 1.8L12 17l-1.8-7.2L3 8l7.2-1.8z"/>
+                                    </svg>
+                                </div>
+                                <p class="text-gray-700 font-medium mb-1">Your output will appear here</p>
+                                <p class="text-gray-400 text-sm">Compose input on the left, then run it to view results.</p>
+                            </div>
+                            <!-- Output content (hidden until run) -->
+                            <div id="ai-guard-output" class="hidden flex-1 p-4 fade-in">
+                                <div id="ai-guard-output-content"></div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div><!-- /ai guard card -->
+        </div><!-- /panel-aisec -->
     </main>
 
     <!-- Footer -->
@@ -252,93 +392,7 @@
         </div>
     </footer>
 
-    <script>
-        async function executeInject() {
-            const cmd = document.getElementById('inject-cmd').value;
-            const resultDiv = document.getElementById('inject-result');
-            const outputPre = document.getElementById('inject-output');
-            
-            try {
-                const response = await fetch('/inject?cmd=' + encodeURIComponent(cmd));
-                const text = await response.text();
-                outputPre.textContent = text || '(empty response)';
-                resultDiv.classList.remove('hidden');
-                resultDiv.classList.add('fade-in');
-            } catch (error) {
-                outputPre.textContent = 'Error: ' + error.message;
-                resultDiv.classList.remove('hidden');
-            }
-        }
-
-        async function executeLfi() {
-            const file = document.getElementById('lfi-file').value;
-            const resultDiv = document.getElementById('lfi-result');
-            const outputPre = document.getElementById('lfi-output');
-            
-            try {
-                const response = await fetch('/lfi?filename=' + encodeURIComponent(file));
-                const text = await response.text();
-                outputPre.textContent = text || '(empty response)';
-                resultDiv.classList.remove('hidden');
-                resultDiv.classList.add('fade-in');
-            } catch (error) {
-                outputPre.textContent = 'Error: ' + error.message;
-                resultDiv.classList.remove('hidden');
-            }
-        }
-
-        async function executeSsrf() {
-            const url = document.getElementById('ssrf-url').value;
-            const resultDiv = document.getElementById('ssrf-result');
-            const outputPre = document.getElementById('ssrf-output');
-            
-            try {
-                const response = await fetch('/ssrf?url=' + encodeURIComponent(url));
-                const text = await response.text();
-                outputPre.textContent = text || '(empty response)';
-                resultDiv.classList.remove('hidden');
-                resultDiv.classList.add('fade-in');
-            } catch (error) {
-                outputPre.textContent = 'Error: ' + error.message;
-                resultDiv.classList.remove('hidden');
-            }
-        }
-
-        async function executeLogin() {
-            const login = document.getElementById('sqli-login').value;
-            const password = document.getElementById('sqli-password').value;
-            const resultDiv = document.getElementById('sqli-result');
-            const outputPre = document.getElementById('sqli-output');
-
-            try {
-                const response = await fetch('/login?login=' + encodeURIComponent(login) + '&password=' + encodeURIComponent(password));
-                const text = await response.text();
-                outputPre.textContent = text || '(empty response)';
-                resultDiv.classList.remove('hidden');
-                resultDiv.classList.add('fade-in');
-            } catch (error) {
-                outputPre.textContent = 'Error: ' + error.message;
-                resultDiv.classList.remove('hidden');
-            }
-        }
-
-        // Allow Enter key to submit
-        document.getElementById('inject-cmd').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') executeInject();
-        });
-        document.getElementById('lfi-file').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') executeLfi();
-        });
-        document.getElementById('ssrf-url').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') executeSsrf();
-        });
-        document.getElementById('sqli-login').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') executeLogin();
-        });
-        document.getElementById('sqli-password').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') executeLogin();
-        });
-    </script>
+    <script src="/assets/playground.js"></script>
 </body>
 </html>
 

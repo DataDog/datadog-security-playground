@@ -6,7 +6,7 @@ import requests
 
 from datetime import datetime
 
-from flask import Flask, request, send_from_directory, render_template
+from flask import Flask, request, send_from_directory, render_template, jsonify
 
 # Configure logging
 logging.basicConfig(
@@ -146,6 +146,40 @@ def login():
     except Exception as e:
         logger.error(f"Error executing login: {str(e)}", exc_info=True)
         raise
+
+
+@app.route("/llm", methods=["POST"])
+def llm():
+    from ddtrace.appsec.ai_guard import AIGuardAbortError, Message, Options, new_ai_guard_client
+
+    data = request.get_json()
+    system_prompt = (data or {}).get("system", "")
+    user_prompt = (data or {}).get("user", "")
+
+    logger.info(f"Received AI Guard request from {request.remote_addr}")
+
+    messages = []
+    if system_prompt:
+        messages.append(Message(role="system", content=system_prompt))
+    if user_prompt:
+        messages.append(Message(role="user", content=user_prompt))
+
+    if not messages:
+        return jsonify({"error": "No prompts provided"}), 400
+
+    block_sdk = True
+    try:
+        client = new_ai_guard_client()
+        result = client.evaluate(messages=messages, options=Options(block=block_sdk))
+        action = result['action'] if isinstance(result, dict) else result.action
+        tags = (result.get('tags') or []) if isinstance(result, dict) else (getattr(result, 'tags', None) or [])
+        return jsonify({"action": action, "tags": tags, "blocked": False, "block_sdk": block_sdk})
+    except AIGuardAbortError as e:
+        tags = getattr(e, 'tags', []) or []
+        return jsonify({"action": "DENY", "tags": tags, "blocked": True, "block_sdk": block_sdk})
+    except Exception as e:
+        logger.error(f"AI Guard error: {str(e)}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route("/assets/<path:filename>", methods=["GET"])
