@@ -1,0 +1,18 @@
+[project]
+name = "regression-tests"
+version = "0.1.0"
+description = "Regression tests for datadog-security-playground"
+requires-python = ">=3.12"
+dependencies = [
+    "pytest>=8.0.0",
+    "grpcio>=1.76.0",
+    "grpcio-tools>=1.76.0",
+    "protobuf>=6.31.0",
+    "requests>=2.31.0",
+    "rich>=13.0.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["."]
+log_cli = true
+log_cli_level = "INFO"
