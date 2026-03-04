@@ -1,6 +1,5 @@
 """Generate gRPC Python stubs from api.proto and fix import paths."""
 
-import re
 import subprocess
 import sys
 from pathlib import Path
@@ -15,12 +14,11 @@ OUT_DIR = SCRIPT_DIR / "grpc_gen"
 # Import path replacements applied to generated files
 REPLACEMENTS = {
     "api_pb2_grpc.py": [
-        ("from server import api_pb2", f"from {PACKAGE}.grpc_gen import api_pb2"),
-        ("server/api_pb2_grpc.py", f"{PACKAGE}/grpc_gen/api_pb2_grpc.py"),
+        ("import api_pb2 as api__pb2", f"from {PACKAGE}.grpc_gen import api_pb2 as api__pb2"),
+        ("api_pb2_grpc.py", f"{PACKAGE}/grpc_gen/api_pb2_grpc.py"),
     ],
     "api_pb2.py": [
-        ("'server.api_pb2'", f"'{PACKAGE}.grpc_gen.api_pb2'"),
-        ("'server/api.proto'", f"'{PACKAGE}/grpc_gen/api.proto'"),
+        ("'api_pb2'", f"'{PACKAGE}.grpc_gen.api_pb2'"),
     ],
 }
 
