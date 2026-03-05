@@ -1,0 +1,51 @@
+[build-system]
+requires = ["uv_build>=0.9.25,<0.10.0"]
+build-backend = "uv_build"
+
+[project]
+name = "traffic_generator"
+version = "0.1.0"
+description = "Traffic generator for the AppSec Dogfooding setup"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "fastapi>=0.121.1",
+    "httpx>=0.28.1",
+    "jinja2>=3.1.6",
+    "questionary>=2.1.1",
+    "uvicorn>=0.38.0",
+]
+
+[project.scripts]
+start = "traffic_generator.start:main"
+dev = "traffic_generator.start:dev"
+start-stack = "traffic_generator.start_stack:main"
+
+[dependency-groups]
+dev = ["pyright>=1.1.408", "ruff>=0.15.1"]
+
+[tool.pyright]
+typeCheckingMode = "strict"
+include = ["src"]
+
+[tool.ruff]
+include = ["src/**/*.py"]
+
+[tool.ruff.lint]
+ignore = [
+    "D100",   # undocumented-public-module
+    "D101",   # undocumented-public-function
+    "D102",   # undocumented-public-method
+    "D103",   # undocumented-public-function
+    "D104",   # undocumented-public-package
+    "D203",   # incorrect-blank-line-before-class (redundant when using ruff as a formatter)
+    "D213",   # multi-line-summary-second-line (incompatible with D212)
+    "COM812", # missing-trailing-comma (redundant when using ruff as a formatter)
+]
+select = ["ALL"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = [
+    "PLR2004", # allow literal status code comparisons in tests
+    "S101",    # allow bare asserts in tests
+]

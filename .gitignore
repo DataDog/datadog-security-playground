@@ -4,3 +4,8 @@ terraform/eks/terraform.tfstate
 terraform/eks/terraform.tfstate.backup
 terraform/eks/terraform.tfstate.lock.info
 terraform/eks/terraform.tfstate.lock.info
+
+# python
+__pycache__/
+.ruff_cache/
+.venv/

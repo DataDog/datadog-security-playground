@@ -1,0 +1,36 @@
+name: appsec_dogfooding_onboarding_haproxy_go_gin
+
+services:
+  datadog-agent:
+    image: gcr.io/datadoghq/agent:7
+    environment:
+      DD_HOSTNAME: appsec-dogfooding-${USER}
+      DD_API_KEY: ${DD_API_KEY:?DD_API_KEY must be set}
+      DD_APM_ENABLED: "true"
+      DD_APM_NON_LOCAL_TRAFFIC: "true"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /proc:/host/proc:ro
+      - /sys/fs/cgroup:/host/sys/fs/cgroup:ro
+
+  appsec-test-api:
+    build:
+      context: ../apps/go/gin
+      dockerfile: Dockerfile
+    environment:
+      DD_SERVICE: appsec-dogfooding-api-${USER}
+      DD_AGENT_HOST: datadog-agent
+      DD_ENV: ${USER}
+    depends_on:
+      - datadog-agent
+    expose:
+      - "8000"
+
+  haproxy_proxy:
+    image: haproxytech/haproxy-alpine:3.2
+    depends_on:
+      - appsec-test-api
+    volumes:
+      - ./proxies/haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    ports:
+      - "8000:8080"

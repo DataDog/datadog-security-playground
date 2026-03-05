@@ -1,0 +1,58 @@
+name: appsec_dogfooding
+
+x-test_api_common: &test_api_common
+  container_name: appsec-test-api
+  environment:
+    # Service Configuration goes here
+    DD_SERVICE: appsec-dogfooding-api-${USER}
+    DD_AGENT_HOST: datadog-agent
+    DD_ENV: ${DD_ENV:-${USER}}
+
+    DD_APPSEC_ENABLED: "true"
+  depends_on:
+    - datadog-agent
+  ports:
+    - "8000:8000"
+
+services:
+  datadog-agent:
+    image: gcr.io/datadoghq/agent:7
+    environment:
+      # Agent Configuration goes here
+      DD_HOSTNAME: appsec-dogfooding-${USER}
+      DD_API_KEY: ${DD_API_KEY:?DD_API_KEY must be set}
+      DD_SITE: ${DD_SITE:-datadoghq.com}
+      DD_ENV: ${DD_ENV:-${USER}}
+      DD_APM_NON_LOCAL_TRAFFIC: "true"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /proc:/host/proc:ro
+      - /sys/fs/cgroup:/host/sys/fs/cgroup:ro
+
+  python_fastapi:
+    <<: *test_api_common
+    build:
+      context: test_apis/python/fastapi
+      dockerfile: Dockerfile
+    profiles: ["python/fastapi"]
+
+  go_gin:
+    <<: *test_api_common
+    build:
+      context: test_apis/go/gin
+      dockerfile: Dockerfile
+    profiles: ["go/gin"]
+
+  appsec_dogfooding_web:
+    container_name: appsec-dogfooding-web
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      DD_SITE: ${DD_SITE:-datadoghq.com}
+      DOGFOODING_TEST_API_BASE_URL: http://appsec-test-api:8000/
+      DOGFOODING_WEB_HOST: 0.0.0.0
+      DOGFOODING_WEB_PORT: "8080"
+      DD_INSTRUMENT_SERVICE_WITH_APM: "false"
+    ports:
+      - "8080:8080"
