@@ -1,6 +1,6 @@
-# Regression Tests
+# Tests
 
-Regression tests that verify the Datadog Agent detects security events triggered by playground scenarios.
+These tests verify the Datadog Agent properly detects security events triggered by playground scenarios.
 
 ## Architecture
 
@@ -16,7 +16,7 @@ pytest process
 - Python 3.12+
 - Docker
 
-## Setup
+## Dependencies
 
 ```bash
 cd tests
@@ -70,7 +70,7 @@ docker run -d \
 
 ```bash
 cd tests
-pytest test_rce_malware.py -v -s
+python -m pytest test_rce_malware.py -v -s
 ```
 
 ### 4. Cleanup
