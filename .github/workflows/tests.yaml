@@ -1,4 +1,4 @@
-name: Regression Tests
+name: Tests
 
 on:
   push:
@@ -9,10 +9,10 @@ permissions:
   contents: read
 
 jobs:
-  regression-tests:
-    name: Event Detection
+  runtime-security-tests:
+    name: Runtime Security Tests
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
       - name: Checkout
@@ -46,16 +46,18 @@ jobs:
             --cap-add=IPC_LOCK \
             --cap-add=CHOWN \
             -v /var/run/docker.sock:/var/run/docker.sock:ro \
-            -v /proc/:/host/proc/:ro \
-            -v /sys/fs/cgroup/:/host/sys/fs/cgroup:ro \
+            -v /etc/os-release:/host/etc/os-release:ro \
             -v /etc/passwd:/etc/passwd:ro \
             -v /etc/group:/etc/group:ro \
+            -v /sys/fs/cgroup/:/host/sys/fs/cgroup:ro \
+            -v /proc/:/host/proc/:ro \
             -v /:/host/root:ro \
-            -v /etc/os-release:/host/etc/os-release:ro \
             -v /sys/kernel/debug:/sys/kernel/debug \
+            -v $(pwd)/tests/agent_config/system-probe.yaml:/etc/datadog-agent/system-probe.yaml:ro \
             -e DD_RUNTIME_SECURITY_CONFIG_ENABLED=true \
-            -e DD_RUNTIME_SECURITY_CONFIG_EVENT_GRPC_SERVER=security-agent \
-            -e DD_RUNTIME_SECURITY_CONFIG_SOCKET=localhost:10000 \
+            -e DD_API_KEY=dummy \
+            -e HOST_PROC=/host/proc \
+            -e HOST_ROOT=/host/root \
             datadog/agent:latest
 
       - name: Start playground app container
@@ -73,25 +75,25 @@ jobs:
               echo "Playground app is ready"
               exit 0
             fi
-            sleep 2
+            sleep 1
           done
           echo "Playground app did not become ready"
           exit 1
 
-      - name: Run regression tests
+      - name: Run tests
         working-directory: tests
-        run: pytest test_rce_malware.py -v -s
+        run: python -m pytest test_rce_malware.py -v -s
 
-      - name: Collect agent logs
-        if: failure()
+      - name: Collect logs
+        if: ${{ failure() }}
         run: |
           echo "=== DD Agent logs ==="
-          docker logs dd-agent 2>&1 | tail -200
+          docker logs dd-agent 2>&1 | tail -1000
           echo ""
           echo "=== Playground app logs ==="
-          docker logs playground-app 2>&1 | tail -100
+          docker logs playground-app 2>&1 | tail -1000
 
       - name: Cleanup containers
-        if: always()
+        if: ${{ always() }}
         run: |
           docker rm -f dd-agent playground-app 2>/dev/null || true
