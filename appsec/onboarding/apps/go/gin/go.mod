@@ -2,6 +2,8 @@ module appsec_test_api_go
 
 go 1.24.0
 
+toolchain go1.26.0
+
 require (
 	github.com/DataDog/dd-trace-go/contrib/gin-gonic/gin/v2 v2.4.0
 	github.com/DataDog/dd-trace-go/v2 v2.4.0
