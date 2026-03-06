@@ -1,0 +1,3 @@
+runtime_security_config:
+  event_grpc_server: security-agent
+  socket: localhost:10000
