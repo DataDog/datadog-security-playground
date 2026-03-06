@@ -15,7 +15,7 @@ from google.protobuf import empty_pb2
 
 from runtime_security_server.grpc_gen import api_pb2_grpc
 
-logger = logging.getLogger("regression-tests.server")
+logger = logging.getLogger("runtime-security-server")
 
 
 @dataclass
