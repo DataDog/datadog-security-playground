@@ -13,7 +13,7 @@ pytest process
 
 ## Prerequisites
 
-- Python 3.12+ or PyEnv
+- Python 3.12+
 - Docker
 
 ## Setup
@@ -51,17 +51,18 @@ docker run -d \
   --cap-add=IPC_LOCK \
   --cap-add=CHOWN \
   -v /var/run/docker.sock:/var/run/docker.sock:ro \
-  -v /proc/:/host/proc/:ro \
-  -v /sys/fs/cgroup/:/host/sys/fs/cgroup:ro \
+  -v /etc/os-release:/host/etc/os-release:ro \
   -v /etc/passwd:/etc/passwd:ro \
   -v /etc/group:/etc/group:ro \
+  -v /sys/fs/cgroup/:/host/sys/fs/cgroup:ro \
+  -v /proc/:/host/proc/:ro \
   -v /:/host/root:ro \
-  -v /etc/os-release:/host/etc/os-release:ro \
   -v /sys/kernel/debug:/sys/kernel/debug \
-  -e DD_API_KEY=dummy \
+  -v $(pwd)/tests/agent_config/system-probe.yaml:/etc/datadog-agent/system-probe.yaml:ro \
   -e DD_RUNTIME_SECURITY_CONFIG_ENABLED=true \
-  -e DD_RUNTIME_SECURITY_CONFIG_EVENT_GRPC_SERVER=security-agent \
-  -e DD_RUNTIME_SECURITY_CONFIG_SOCKET=localhost:10000 \
+  -e DD_API_KEY=dummy \
+  -e HOST_PROC=/host/proc \
+  -e HOST_ROOT=/host/root \
   datadog/agent:latest
 ```
 
