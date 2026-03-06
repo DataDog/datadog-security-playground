@@ -1,8 +1,5 @@
 """
-Test Server - gRPC server that receives security events from the DD Agent.
-
-Adapted from correlation-test-suite/test_server.py.
-Receives events from system-probe via the SecurityAgentAPI.SendEvent RPC
+Event Server - gRPC server that receives security events from the DD Agent
 and stores them for test verification.
 """
 
