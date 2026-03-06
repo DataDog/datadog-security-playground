@@ -1,5 +1,5 @@
 """
-Pytest configuration and fixtures for regression tests.
+Pytest configuration and fixtures for tests.
 """
 
 import logging
@@ -19,7 +19,7 @@ logging.basicConfig(
     datefmt="[%X]",
     handlers=[RichHandler(rich_tracebacks=True, show_path=False)],
 )
-logger = logging.getLogger("regression-tests")
+logger = logging.getLogger("tests")
 
 # =============================================================================
 # Configuration
