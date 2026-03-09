@@ -1,12 +1,11 @@
 #!/bin/bash
 # Build script for fake-bpfdoor binary
-# This script compiles the BPFDoor simulator using gcc
+# This script compiles the BPFDoor simulator for x64 and arm64
 
 set -e  # Exit on error
 set -u  # Exit on undefined variable
 
 # Configuration
-BINARY_NAME="fake-bpfdoor.x64"
 SOURCE_FILE="fake-bpfdoor.c"
 
 # Colors for output
@@ -24,25 +23,27 @@ if [ ! -f "$SOURCE_FILE" ]; then
     exit 1
 fi
 
-# Display build info
-echo "Source: $SOURCE_FILE"
-echo "Target: $BINARY_NAME"
-echo "Compiler: $(gcc --version | head -n1)"
-echo ""
+build_target() {
+    local binary="$1"
+    local cc="$2"
 
-# Compile
-echo "Compiling..."
-gcc -o "$BINARY_NAME" "$SOURCE_FILE"
-
-# Verify binary was created
-if [ -f "$BINARY_NAME" ]; then
-    echo -e "${GREEN}✓ Build successful!${NC}"
+    echo "Source: $SOURCE_FILE"
+    echo "Target: $binary"
+    echo "Compiler: $($cc --version | head -n1)"
     echo ""
-    echo "Binary information:"
-    ls -lh "$BINARY_NAME"
-    file "$BINARY_NAME" || true
-    exit 0
-else
-    echo -e "${RED}✗ Build failed!${NC}"
-    exit 1
-fi
+    echo "Compiling..."
+    $cc -o "$binary" "$SOURCE_FILE"
+
+    if [ -f "$binary" ]; then
+        echo -e "${GREEN}✓ Build successful: $binary${NC}"
+        ls -lh "$binary"
+        file "$binary" || true
+        echo ""
+    else
+        echo -e "${RED}✗ Build failed: $binary${NC}"
+        exit 1
+    fi
+}
+
+build_target "fake-bpfdoor.x64"  "gcc"
+build_target "fake-bpfdoor.arm64" "aarch64-linux-gnu-gcc"

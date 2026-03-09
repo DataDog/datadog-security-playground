@@ -29,7 +29,8 @@ This project is a **fake** and **educational** implementation of a "BPFDoor" - a
 
 - **fake-bpfdoor.c**: Main source code
 - **Makefile**: Compilation script
-- **fake-bpfdoor.x86**: Compiled binary
+- **fake-bpfdoor.x64**: Compiled binary
+- **fake-bpfdoor.arm64**: Compiled binary
 
 ## Compilation
 
@@ -40,7 +41,7 @@ make
 or directly:
 
 ```bash
-gcc -o fake-bpfdoor.x86 fake-bpfdoor.c
+gcc -o fake-bpfdoor.x64 fake-bpfdoor.c
 ```
 
 ## Usage
@@ -50,13 +51,13 @@ gcc -o fake-bpfdoor.x86 fake-bpfdoor.c
 ### Run the fake program
 
 ```bash
-sudo ./fake-bpfdoor.x86
+sudo ./fake-bpfdoor.x64
 ```
 
 ### Clean up (remove fake PID file)
 
 ```bash
-sudo ./fake-bpfdoor.x86 clean
+sudo ./fake-bpfdoor.x64 clean
 ```
 
 ## Technical Analysis
