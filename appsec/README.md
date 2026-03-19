@@ -27,9 +27,6 @@ Required tools:
 - Docker: [installation instructions](https://docs.docker.com/get-started/get-docker/)
 - uv: [installation instructions](https://docs.astral.sh/uv/getting-started/installation/)
 
-Required credentials:
-- Datadog API key (`DD_API_KEY`) ->
-
 ## Quick Start
 
 From this `appsec/` directory:
@@ -56,9 +53,7 @@ When prompted, choose an implementation of the test API:
 
 ### 3. Open the UI
 
-Navigate to:
-
-`http://localhost:8080/dogfooding`
+The traffic generator should automatically open in your browser otherwise navigate to: [http://localhost:8080](http://localhost:8080/dogfooding)
 
 Then:
 1. Expand a scenario.
