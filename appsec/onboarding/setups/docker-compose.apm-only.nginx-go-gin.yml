@@ -6,6 +6,7 @@ services:
     environment:
       DD_HOSTNAME: appsec-dogfooding-${USER}
       DD_API_KEY: ${DD_API_KEY:?DD_API_KEY must be set}
+      DD_SITE: ${DD_SITE:-datadoghq.com}
       DD_APM_ENABLED: "true"
       DD_APM_NON_LOCAL_TRAFFIC: "true"
     volumes:
@@ -20,7 +21,7 @@ services:
     environment:
       DD_SERVICE: appsec-dogfooding-api-${USER}
       DD_AGENT_HOST: datadog-agent
-      DD_ENV: ${USER}
+      DD_ENV: ${DD_ENV:-${USER}}
     depends_on:
       - datadog-agent
     expose:
@@ -31,7 +32,7 @@ services:
       context: ./proxies/nginx
       dockerfile: Dockerfile
     environment:
-      DD_ENV: ${USER}
+      DD_ENV: ${DD_ENV:-${USER}}
       DD_SERVICE: appsec-dogfooding-${USER}-nginx
     depends_on:
       - datadog-agent

@@ -6,6 +6,7 @@ services:
     environment:
       DD_HOSTNAME: appsec-dogfooding-${USER}
       DD_API_KEY: ${DD_API_KEY:?DD_API_KEY must be set}
+      DD_SITE: ${DD_SITE:-datadoghq.com}
       DD_APM_ENABLED: "true"
       DD_APM_NON_LOCAL_TRAFFIC: "true"
     volumes:
@@ -29,7 +30,7 @@ services:
     environment:
       DD_AGENT_HOST: datadog-agent
       DD_TRACE_AGENT_PORT: "8126"
-      DD_ENV: ${USER}
+      DD_ENV: ${DD_ENV:-${USER}}
     depends_on:
       - datadog-agent
       - appsec-test-api
