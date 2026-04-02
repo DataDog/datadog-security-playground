@@ -1,6 +1,6 @@
-pytest>=8.0.0
-grpcio>=1.76.0
-grpcio-tools>=1.76.0
-protobuf>=6.31.0
-requests>=2.31.0
-rich>=13.0.0
+pytest>=8.0.2
+grpcio>=1.80.0
+grpcio-tools>=1.80.0
+protobuf>=6.33.6
+requests>=2.33.1
+rich>=13.0.1
