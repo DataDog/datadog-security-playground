@@ -8,8 +8,8 @@ version = "0.1.0"
 description = "Python implementation of the AppSec Dogfooding Test API"
 requires-python = ">=3.14"
 dependencies = [
-    "ddtrace>=4.4.0",
-    "fastapi>=0.129.0",
+    "ddtrace>=4.6.5",
+    "fastapi>=0.129.2",
     "itsdangerous>=2.2.0",
     "uvicorn>=0.40.0",
 ]
