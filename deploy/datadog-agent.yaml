@@ -1,5 +1,4 @@
 datadog:
-  site: "datadoghq.com"
   apiKeyExistingSecret: "datadog-api-secret"
   
   apm:
