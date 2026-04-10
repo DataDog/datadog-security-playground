@@ -31,22 +31,18 @@ You can deploy this playground on:
 
 ### Step 1: Deploy Datadog Agent
 
-1. **Set up API Secret:**
+1. **Create Datadog API Key Secret:**
    ```bash
    export DATADOG_API_SECRET_NAME=datadog-api-secret
-   ```
-
-2. **Create Datadog API Key Secret:**
-   ```bash
    kubectl create secret generic $DATADOG_API_SECRET_NAME --from-literal api-key="<YOUR_DATADOG_API_KEY>"
    ```
 
-3. **Set your Datadog site:**
+2. **Set your Datadog site:**
    ```bash
    export DD_SITE=datadoghq.com  # replace with your site if not US1 - see https://docs.datadoghq.com/getting_started/site/
    ```
 
-4. **Install Datadog Agent:**
+3. **Install Datadog Agent:**
    ```bash
    helm repo add datadog https://helm.datadoghq.com
    helm repo update
@@ -57,7 +53,7 @@ You can deploy this playground on:
      datadog/datadog
    ```
 
-5. **Verify Datadog Agent Deployment:**
+4. **Verify Datadog Agent Deployment:**
    ```bash
    kubectl get pods
    ```
