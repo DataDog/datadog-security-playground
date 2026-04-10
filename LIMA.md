@@ -36,17 +36,21 @@ export KUBECONFIG=$(limactl list k8s --format 'unix://{{.Dir}}/copied-from-guest
    helm repo update
    kubectl create secret generic datadog-api-secret --from-literal api-key="<YOUR_DATADOG_API_KEY>"
    ```
-
-2. **Set your Datadog site and install the Datadog Agent:**
+   
+2. **Set your Datadog site:**
    ```bash
    export DD_SITE=datadoghq.com  # replace with your site if not US1 - see https://docs.datadoghq.com/getting_started/site/
+   ```
+
+3. **Install the Datadog Agent with the playground configuration:**
+   ```bash
    helm install datadog-agent \
      --set datadog.site=$DD_SITE \
      -f deploy/datadog-agent.yaml \
      datadog/datadog
    ```
 
-3. **Wait until the agent pods are running before proceeding:**
+4. **Wait until the agent pods are running before proceeding:**
    ```bash
    kubectl get pods -w -A
    ```
