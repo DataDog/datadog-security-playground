@@ -1,2 +1,3 @@
 * @DataDog/agent-security @DataDog/pde-cws @DataDog/pde-asm
+/.github/ @DataDog/agent-security @DataDog/pde-cws @DataDog/pde-asm
 appsec/ @DataDog/k9-security-ecosystems
