@@ -69,3 +69,27 @@ kubectl port-forward -n playground deployments/playground-app 5000:5000
 ```
 
 The playground is now accessible at [http://localhost:5000](http://localhost:5000).
+
+## 🐳 Building and Loading Docker Image (Optional)
+
+This step is optional and only needed if you want to deploy a locally built version of the playground application instead of the published image. If so, you need to build the Docker image and load it into the Lima VM before deploying the app.
+
+### Step 1: Build the Docker Image
+
+```bash
+# add multiarch support
+docker buildx create --use
+```
+
+```bash
+# Build the Python application image
+make build
+```
+
+### Step 2: Load Image into Lima
+
+The Lima Kubernetes template uses `containerd` as the container runtime. Save the image from your local Docker daemon and import it into the VM's `k8s.io` containerd namespace:
+
+```bash
+docker save datadog/datadog-security-playground:latest | limactl shell k8s sudo ctr --namespace=k8s.io images import -
+```
