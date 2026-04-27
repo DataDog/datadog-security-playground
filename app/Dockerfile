@@ -1,6 +1,6 @@
 FROM python:3.12-slim
 
-ARG ATOMIC_RED_TEAM=true
+ARG ATOMIC_RED_TEAM=false
 ARG PORT=5000
 
 RUN \
