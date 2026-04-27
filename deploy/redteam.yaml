@@ -16,7 +16,7 @@ spec:
       containers:
         - name: playground-redteam
           image: docker.io/datadog/datadog-security-playground:redteam
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           env:
             - name: DD_SERVICE
               value: "playground-redteam"
