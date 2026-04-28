@@ -30,19 +30,29 @@ export KUBECONFIG=$(limactl list k8s --format 'unix://{{.Dir}}/copied-from-guest
 
 ### Step 3: Deploy Datadog Agent
 
-1. **Add the Datadog Helm repository and create the API key secret:**
+1. **Export your Datadog credentials** (change `DD_SITE` if you're not on US1 — see [Datadog site documentation](https://docs.datadoghq.com/getting_started/site/#access-the-datadog-site) for valid values):
+   ```bash
+   export DD_SITE=datadoghq.com
+   export DD_API_KEY=<your API key>              # https://app.datadoghq.com/organization-settings/api-keys
+   export DD_APP_KEY=<your application key>      # only needed for scenario 1 (rce-malware); requires security_monitoring_rules_write scope
+   ```
+
+2. **Add the Datadog Helm repository and create the API key secret:**
    ```bash
    helm repo add datadog https://helm.datadoghq.com
    helm repo update
-   kubectl create secret generic datadog-api-secret --from-literal api-key="<YOUR_DATADOG_API_KEY>"
+   kubectl create secret generic datadog-api-secret --from-literal api-key="$DD_API_KEY"
    ```
 
-2. **Install the Datadog Agent with the playground configuration:**
+3. **Install the Datadog Agent with the playground configuration:**
    ```bash
-   helm install datadog-agent -f deploy/datadog-agent.yaml datadog/datadog
+   helm install datadog-agent \
+     --set datadog.site=$DD_SITE \
+     -f deploy/datadog-agent.yaml \
+     datadog/datadog
    ```
 
-3. **Wait until the agent pods are running before proceeding:**
+4. **Wait until the agent pods are running before proceeding:**
    ```bash
    kubectl get pods -w -A
    ```

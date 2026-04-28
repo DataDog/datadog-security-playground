@@ -27,6 +27,16 @@ You can deploy this playground on:
 3. **Local Lima VM** - See [LIMA.md](LIMA.md)
 4. **Local Minikube cluster** - For developers, see [DEVELOPER.md](DEVELOPER.md)
 
+## 🌍 Configuration
+
+Set these environment variables **once** before running any setup steps — they're referenced throughout this guide and by the correlation rule script. `DD_SITE` controls which Datadog data center your agent ships telemetry to; change it if you're not on US1. See [Datadog site documentation](https://docs.datadoghq.com/getting_started/site/#access-the-datadog-site) for the full list of valid values.
+
+```bash
+export DD_SITE=datadoghq.com                  # your Datadog site
+export DD_API_KEY=<your API key>              # https://app.datadoghq.com/organization-settings/api-keys
+export DD_APP_KEY=<your application key>      # only needed for scenario 1 (rce-malware); requires security_monitoring_rules_write scope
+```
+
 ## 🚀 Deployment Guide
 
 ### Step 1: Deploy Datadog Agent
@@ -38,7 +48,7 @@ You can deploy this playground on:
 
 2. **Create Datadog API Key Secret:**
    ```bash
-   kubectl create secret generic $DATADOG_API_SECRET_NAME --from-literal api-key="<YOUR_DATADOG_API_KEY>"
+   kubectl create secret generic $DATADOG_API_SECRET_NAME --from-literal api-key="$DD_API_KEY"
    ```
 
 3. **Install Datadog Agent:**
@@ -47,7 +57,7 @@ You can deploy this playground on:
    helm repo update
    helm install datadog-agent \
      --set datadog.apiKeyExistingSecret=$DATADOG_API_SECRET_NAME \
-     --set datadog.site=datadoghq.com \
+     --set datadog.site=$DD_SITE \
      -f deploy/datadog-agent.yaml \
      datadog/datadog
    ```
@@ -179,12 +189,12 @@ Navigate to the `scenarios/` folder to explore available attack scenarios. Each 
 - **Attack Vector**: Command injection vulnerability
 - **Impact**: Malware execution, establishing persistence, cryptocurrency mining
 - **Detection**: Workload Protection signals for backdoor execution, network behavior, file modifications, and persistence mechanisms
-- **Prerequisites**: Before running this scenario, you must first create the correlation detection rule in Datadog by running `assets/correlation/create-rule.sh` with the `DD_API_KEY`, `DD_APP_KEY`, and `DD_API_SITE` environment variables set. The `security_monitoring_rules_write` permission should be assigned to the `DD_APP_KEY`. The `DD_API_SITE` should be set to the Datadog site your are using, refer to the [Datadog documentation](https://docs.datadoghq.com/getting_started/site/#access-the-datadog-site) for available sites).
+- **Prerequisites**: Before running this scenario, you must first create the correlation detection rule in Datadog by running `assets/correlation/create-rule.sh` with `DD_API_KEY`, `DD_APP_KEY`, and `DD_SITE` exported (all three are covered by the [Configuration](#-configuration) section). The `DD_APP_KEY` must have the `security_monitoring_rules_write` scope.
 
 **How to Run:**
 ```bash
 # Execute the attack simulation from within the playground-app pod
-kubectl exec -it deploy/playground-app -- /scenarios/rce-malware/detonate.sh --wait
+kubectl exec -it -n playground deploy/playground-app -- /scenarios/rce-malware/detonate.sh --wait
 ```
 
 #### 2. Cloud Access - AWS Credential Theft and Resource Abuse
@@ -197,7 +207,7 @@ kubectl exec -it deploy/playground-app -- /scenarios/rce-malware/detonate.sh --w
 **How to Run:**
 ```bash
 # Execute the attack simulation from within the playground-app pod
-kubectl exec -it deploy/playground-app -- /scenarios/cloud-access/detonate.sh --wait
+kubectl exec -it -n playground deploy/playground-app -- /scenarios/cloud-access/detonate.sh --wait
 ```
 
 #### 3. BPFDoor Network Backdoor Attack
@@ -211,7 +221,7 @@ kubectl exec -it deploy/playground-app -- /scenarios/cloud-access/detonate.sh --
 **How to Run:**
 ```bash
 # Execute the attack simulation from within the playground-app pod
-kubectl exec -it deploy/playground-app -- /scenarios/bpfdoor/detonate.sh --wait
+kubectl exec -it -n playground deploy/playground-app -- /scenarios/bpfdoor/detonate.sh --wait
 ```
 
 #### 4. Essential Linux Binary Modified - Findings Generator
@@ -219,16 +229,16 @@ kubectl exec -it deploy/playground-app -- /scenarios/bpfdoor/detonate.sh --wait
 - **Description**: Essential system binaries in containers are executable files that perform operating system functions and administrative tasks. These binaries typically reside in protected system directories such as `/bin`, `/sbin`, `/usr/bin`, and `/usr/sbin`. In containerized environments, these binaries are part of the container image layers and should be immutable during runtime. 
 - **Attack Vector**: File system modifications to critical binaries
 - **Impact**: Demonstrates detection of unauthorized changes to system binaries including download third party binaries, permission changes, ownership modifications, file renames, deletions, and timestamp tampering
-- **Detection**: Workload Protection findings for Essential Linux binary modified on container (PCI DSS 11.5 compliance)
+- **Detection**: Workload Protection findings for Essential Linux binary modified in container (PCI DSS 11.5 compliance)
 - **Operations**: chmod, chown, link, rename, open/modify, unlink, and utimes operations
 
 **How to Run:**
 ```bash
 # Execute all file operations (recommended)
-kubectl exec -it deploy/playground-app -- /scenarios/findings-generator/detonate.sh
+kubectl exec -it -n playground deploy/playground-app -- /scenarios/findings-generator/detonate.sh
 
 # Or run a specific operation
-kubectl exec -it deploy/playground-app -- /scenarios/findings-generator/detonate.sh [chmod|chown|link|rename|open|unlink|utimes]
+kubectl exec -it -n playground deploy/playground-app -- /scenarios/findings-generator/detonate.sh [chmod|chown|link|rename|open|unlink|utimes]
 ```
 
 ## 🎯 Atomic test organization
