@@ -5,17 +5,18 @@ APP_IMG_TAG?=latest
 APP_HOSTNAME=localhost
 APP_PORT=5000
 ATOMIC_RED_TEAM?=false
+PLATFORM?=linux/amd64,linux/arm64
 
 all: build load
 
 build:
-	docker buildx build --platform linux/amd64,linux/arm64 . -t $(APP_IMG_NAME):$(APP_IMG_TAG) -f app/Dockerfile --build-arg ATOMIC_RED_TEAM=$(ATOMIC_RED_TEAM) --build-arg APP_PORT=$(APP_PORT) $(EXTRA_ARGS)
+	docker buildx build --platform $(PLATFORM) . -t $(APP_IMG_NAME):$(APP_IMG_TAG) -f app/Dockerfile --build-arg ATOMIC_RED_TEAM=$(ATOMIC_RED_TEAM) --build-arg APP_PORT=$(APP_PORT) $(EXTRA_ARGS) --load
 
 push:
 	$(MAKE) build EXTRA_ARGS="--push"
 
 build-redteam:
-	$(MAKE) build ATOMIC_RED_TEAM=true APP_IMG_TAG=redteam
+	$(MAKE) build ATOMIC_RED_TEAM=true APP_IMG_TAG=redteam PLATFORM=linux/amd64
 
 clean:
 	docker image rm $(APP_IMG_NAME)
