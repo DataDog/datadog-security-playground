@@ -62,5 +62,5 @@ RUN \
 RUN \
     chown -R app:app /app
 
-ENTRYPOINT ["python", "/app/app.py" ]
+ENTRYPOINT ["gunicorn", "-b", ":5000", "app:app"]
 EXPOSE $PORT

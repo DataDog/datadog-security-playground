@@ -23,6 +23,10 @@ spec:
               value: "playground-app"
             - name: DD_APPSEC_ENABLED
               value: "true"
+            - name: DD_IAST_ENABLED
+              value: "true"
+            - name: DD_APPSEC_SCA_ENABLED
+              value: "true"
             - name: DD_AGENT_HOST
               valueFrom:
                 fieldRef:
