@@ -37,6 +37,8 @@ datadog:
       value: "true"
     - name: DD_SBOM_CONTAINER_IMAGE_ALLOW_MISSING_REPODIGEST
       value: "true"
+    - name: DD_REMOTE_CONFIGURATION_REFRESH_INTERVAL
+      value: "5s"
     - name: DD_RUNTIME_SECURITY_CONFIG_HASH_RESOLVER_REPLACE
       value: >-
         {
