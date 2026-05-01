@@ -62,5 +62,6 @@ RUN \
 RUN \
     chown -R app:app /app
 
-ENTRYPOINT ["python", "/app/app.py" ]
+# Gunicorn's sync worker aborts the request after --timeout (default 30) and kills the worker; using 600 to pass test cases.
+ENTRYPOINT ["gunicorn", "-b", ":5000", "--timeout", "600", "app:app"]
 EXPOSE $PORT
