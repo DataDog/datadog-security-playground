@@ -62,6 +62,8 @@ RUN \
 RUN \
     chown -R app:app /app
 
-# Gunicorn's sync worker aborts the request after --timeout (default 30) and kills the worker; using 600 to pass test cases.
-ENTRYPOINT ["gunicorn", "-b", ":5000", "--timeout", "600", "app:app"]
+# --threads 4 enables the gthread worker so nested /inject calls from detonate scripts
+# (which curl back into /inject for each attack step) don't deadlock on a single sync worker.
+# --timeout 600 because the sync timeout would otherwise kill long-running scenario steps.
+ENTRYPOINT ["gunicorn", "-b", ":5000", "--timeout", "600", "--threads", "4", "app:app"]
 EXPOSE $PORT
