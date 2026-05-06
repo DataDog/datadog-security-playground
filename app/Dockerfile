@@ -62,5 +62,8 @@ RUN \
 RUN \
     chown -R app:app /app
 
-ENTRYPOINT ["python", "/app/app.py" ]
+# --threads 4 enables the gthread worker so nested /inject calls from detonate scripts
+# (which curl back into /inject for each attack step) don't deadlock on a single sync worker.
+# --timeout 600 because the sync timeout would otherwise kill long-running scenario steps.
+ENTRYPOINT ["gunicorn", "-b", ":5000", "--timeout", "600", "--threads", "4", "app:app"]
 EXPOSE $PORT
