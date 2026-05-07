@@ -77,7 +77,69 @@ wait_for_confirmation
 inject "sudo /app/fake-bpfdoor.x64"
 
 print <<EOF
-${GREEN}Demostration simulation completed successfully!\033[0m
+${GREEN}Demonstration simulation completed successfully!\033[0m
 
 ${YELLOW}You can now view the signals in the DataDog Workload Protection App.\033[0m
+EOF
+
+step <<EOF
+\033[1;35mC2 Beaconing - Backdoor Establishes Command & Control Communication\033[0m
+
+${PURPLE}With the backdoor active and listening on the raw socket, it simulates \
+receiving a magic activation packet (signature 960051513) and begins beaconing \
+outbound to its command & control infrastructure. The attacker receives system \
+information and can now issue remote commands. Datadog Workload Protection \
+detects these suspicious outbound network connections from the masqueraded process.\033[0m
+EOF
+
+print <<EOF
+\033[1;31m# Remediation: Network Isolation\033[0m
+
+${PURPLE}Datadog Workload Protection has detected the BPFDoor backdoor and its \
+outbound C2 communications. Trigger network isolation on the signal from \
+the Datadog Security UI to contain the breach.\033[0m
+
+${YELLOW}The script will automatically detect when isolation is applied and verify \
+that all external connections are blocked.\033[0m
+EOF
+
+wait_for_confirmation
+
+inject "curl -s --connect-timeout 10 https://ifconfig.me"
+
+ISOLATED=false
+SPIN=0
+LAST_IP=""
+TMPFILE=$(mktemp)
+
+spin() {
+    SPIN=$(( (SPIN + 1) % 4 ))
+    case $SPIN in 0) SPINNER="|" ;; 1) SPINNER="/" ;; 2) SPINNER="-" ;; 3) SPINNER="\\" ;; esac
+    printf "\r${YELLOW}%s Beacon: %-20s${NC}" "$SPINNER" "$LAST_IP"
+    sleep 0.1
+}
+
+while [ "$ISOLATED" = "false" ]; do
+    curl -s -X POST -d "curl -s --connect-timeout 5 https://ifconfig.me 2>&1" \
+        "${ENDPOINT}/inject" > "$TMPFILE" 2>/dev/null &
+    CURL_PID=$!
+    while kill -0 "$CURL_PID" 2>/dev/null; do spin; done
+    wait "$CURL_PID"
+
+    RESULT=$(cat "$TMPFILE")
+    if echo "$RESULT" | grep -qE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+'; then
+        LAST_IP=$(echo "$RESULT" | tr -d '\n')
+        i=0; while [ $i -lt 40 ]; do spin; i=$(( i + 1 )); done
+    else
+        ISOLATED=true
+        printf "\r${GREEN}⛔ Connection blocked%-20s${NC}\n" ""
+    fi
+done
+
+rm -f "$TMPFILE"
+
+print <<EOF
+${GREEN}Remediation applied successfully!\033[0m
+
+${YELLOW}You can now view the timeline of this simulation in the DataDog Workload Protection App.\033[0m
 EOF
