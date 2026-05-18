@@ -39,7 +39,7 @@ jobs:
           push: false
           tags: playground-app
           build-args: | # Pass GIT_SHA to allow for reproducible scenarios when downloading payloads from Github
-            GIT_SHA=${{ github.event.pull_request.head.sha || github.sha }}
+            GIT_SHA=${{ github.sha }}
 
       - name: Save image to tarball
         if: matrix.platform == 'linux/amd64'
