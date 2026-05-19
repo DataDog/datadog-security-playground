@@ -76,17 +76,17 @@ export DD_APP_KEY=<your application key>      # only needed for scenario 1 (rce-
 
 ### Step 2: Deploy Vulnerable Application
 
-0. **Add the Kubernetes Namespace:**
+1. **Add the Kubernetes Namespace:**
    ```bash
    kubectl apply -f deploy/namespace.yaml
    ```
    
-1. **Deploy the Application:**
+2. **Deploy the Application:**
    ```bash
    kubectl apply -f deploy/app.yaml
    ```
 
-2. **Wait for Application to be Ready:**
+3. **Wait for Application to be Ready:**
    ```bash
    kubectl get pods
    ```
