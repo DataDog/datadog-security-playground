@@ -83,15 +83,13 @@ export DD_APP_KEY=<your application key>      # only needed for scenario 1 (rce-
 
 2. **Wait for Application to be Ready:**
    ```bash
-   kubectl get pods
+   kubectl get pods -n playground
    ```
    
    Expected output:
    ```
    NAME                                           READY   STATUS              RESTARTS   AGE
-   datadog-agent-cluster-agent-7697f8cf97-mrsrg   1/1     Running             0          4m18s
-   datadog-agent-rzxs2                            4/4     Running             0          4m18s
-   playground-app-deployment-87b8d4b88-2hmzx             1/1     Running             0          1m30s
+   playground-app-deployment-87b8d4b88-2hmzx      1/1     Running             0          1m30s
    ```
 
 ### Cleanup
