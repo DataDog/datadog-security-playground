@@ -23,7 +23,11 @@ datadog:
             php: "1"
             dotnet: "3"
             ruby: "2"
-  
+
+  sbom:
+    containerImage:
+      enabled: true
+
   env:
     - name: DD_ENV
       value: "playground-env"
@@ -31,10 +35,6 @@ datadog:
       value: "playground-cluster"
     - name: DD_KUBELET_TLS_VERIFY
       value: "false"
-    - name: DD_SBOM_ENABLED
-      value: "true"
-    - name: DD_SBOM_CONTAINER_IMAGE_ENABLED
-      value: "true"
     - name: DD_SBOM_CONTAINER_IMAGE_ALLOW_MISSING_REPODIGEST
       value: "true"
     - name: DD_REMOTE_CONFIGURATION_REFRESH_INTERVAL
