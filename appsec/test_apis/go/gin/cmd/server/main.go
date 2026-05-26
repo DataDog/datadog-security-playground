@@ -15,7 +15,6 @@ import (
 	"sync"
 	"time"
 
-	gintrace "github.com/DataDog/dd-trace-go/contrib/gin-gonic/gin/v2"
 	"github.com/DataDog/dd-trace-go/v2/appsec"
 	"github.com/DataDog/dd-trace-go/v2/ddtrace/tracer"
 	"github.com/gin-gonic/gin"
@@ -70,6 +69,7 @@ type raspProbeResponse struct {
 	Status string `json:"status"`
 	Sink   string `json:"sink"`
 	Input  string `json:"input"`
+	Output string `json:"output,omitempty"`
 	Error  string `json:"error,omitempty"`
 }
 
@@ -339,13 +339,13 @@ func raspSHIHandler(c *gin.Context) {
 	execCtx, cancel := context.WithTimeout(c.Request.Context(), 300*time.Millisecond)
 	defer cancel()
 
-	err := runShellCommand(execCtx, dangerousCommand)
+	out, err := runShellCommand(execCtx, dangerousCommand)
 	if err != nil {
-		c.JSON(http.StatusOK, raspProbeResponse{Status: "ok", Sink: "shi", Input: commandInput, Error: err.Error()})
+		c.JSON(http.StatusOK, raspProbeResponse{Status: "ok", Sink: "shi", Input: commandInput, Output: string(out), Error: err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, raspProbeResponse{Status: "ok", Sink: "shi", Input: commandInput})
+	c.JSON(http.StatusOK, raspProbeResponse{Status: "ok", Sink: "shi", Input: commandInput, Output: string(out)})
 }
 
 func raspLFIHandler(c *gin.Context) {
@@ -359,37 +359,30 @@ func raspLFIHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, raspProbeResponse{Status: "ok", Sink: "lfi", Input: pathInput})
 }
 
-func runShellCommand(ctx context.Context, command string) error {
+func runShellCommand(ctx context.Context, command string) ([]byte, error) {
 	shellCandidates := []string{"/bin/sh", "/busybox/sh", "sh"}
 	var lastErr error
 
 	for _, shellPath := range shellCandidates {
-		_, err := exec.CommandContext(ctx, shellPath, "-c", command).CombinedOutput()
+		out, err := exec.CommandContext(ctx, shellPath, "-c", command).CombinedOutput()
 		if err == nil {
-			return nil
+			return out, nil
 		}
 
 		lastErr = err
 		if !errors.Is(err, exec.ErrNotFound) && !strings.Contains(err.Error(), "no such file or directory") {
-			return err
+			return out, err
 		}
 	}
 
-	return lastErr
+	return nil, lastErr
 }
 
 func main() {
-	tracer.Start(
-		tracer.WithService(serviceName()),
-		tracer.WithAppSecEnabled(true),
-	)
-	defer tracer.Stop()
-
 	seedDemoUsers()
 
 	router := gin.New()
 	router.Use(gin.Recovery())
-	router.Use(gintrace.Middleware(serviceName()))
 	router.Use(appsecUserTrackingMiddleware)
 
 	router.POST("/signup", signupHandler)

@@ -1,13 +1,14 @@
-FROM golang:1.24-bookworm AS builder
+FROM golang:1.25-bookworm AS builder
 WORKDIR /src
 
-COPY go.mod ./
-RUN go mod download
+RUN go install github.com/DataDog/orchestrion@latest
 
 COPY . .
-RUN CGO_ENABLED=1 go build -o /out/appsec-test-api-go ./cmd/server
+RUN orchestrion pin
 
-FROM gcr.io/distroless/base-debian12
+RUN CGO_ENABLED=1 orchestrion go build -o /out/appsec-test-api-go ./cmd/server
+
+FROM debian:bookworm-slim
 WORKDIR /app
 
 COPY --from=builder /out/appsec-test-api-go /app/appsec-test-api-go
