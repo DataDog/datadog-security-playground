@@ -6,11 +6,12 @@ APP_HOSTNAME=localhost
 APP_PORT=5000
 ATOMIC_RED_TEAM?=false
 PLATFORM?=linux/amd64,linux/arm64
+GIT_SHA?=$(shell git rev-parse HEAD 2>/dev/null || echo main)
 
 all: build load
 
 build:
-	docker buildx build --platform $(PLATFORM) . -t $(APP_IMG_NAME):$(APP_IMG_TAG) -f app/Dockerfile --build-arg ATOMIC_RED_TEAM=$(ATOMIC_RED_TEAM) --build-arg APP_PORT=$(APP_PORT) $(EXTRA_ARGS) --load
+	docker buildx build --platform $(PLATFORM) . -t $(APP_IMG_NAME):$(APP_IMG_TAG) -f app/Dockerfile --build-arg ATOMIC_RED_TEAM=$(ATOMIC_RED_TEAM) --build-arg APP_PORT=$(APP_PORT) --build-arg GIT_SHA=$(GIT_SHA) $(EXTRA_ARGS) --load
 
 push:
 	$(MAKE) build EXTRA_ARGS="--push"

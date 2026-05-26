@@ -37,7 +37,8 @@ multiple regions. This demonstrates how attackers pivot from workload compromise
 to cloud resource abuse.\033[0m
 EOF
 wait_for_confirmation
-inject "curl -O https://raw.githubusercontent.com/DataDog/datadog-security-playground/main/assets/cloud-access/cloud-access.sh"
+# The GIT_SHA environment variable is set at container build time in app/Dockerfile
+inject "curl -O https://raw.githubusercontent.com/DataDog/datadog-security-playground/${GIT_SHA}/assets/cloud-access/cloud-access.sh"
 
 step <<EOF
 \033[1;35mMake Cloud Access Script Executable\033[0m

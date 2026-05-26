@@ -3,6 +3,12 @@ FROM python:3.12-slim
 ARG ATOMIC_RED_TEAM=false
 ARG PORT=5000
 
+# GIT_SHA pins payload downloads from Github to the commit the image was built from
+# so scenarios stay reproducible as main moves forward. Defaults to "main" for
+# bare `docker build` invocations; Github CI Workflows pass the real SHA.
+ARG GIT_SHA=main
+ENV GIT_SHA=${GIT_SHA}
+
 RUN \
     touch /etc/rc.common
 COPY \
