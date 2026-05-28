@@ -183,6 +183,9 @@ func appsecUserTrackingMiddleware(c *gin.Context) {
 			c.Request.Context(),
 			user.UserID,
 			tracer.WithUserLogin(user.Username),
+			tracer.WithUserEmail(user.Email),
+			tracer.WithUserMetadata("phone", user.Phone),
+			tracer.WithUserMetadata("SSN", user.USSSN),
 			tracer.WithUserSessionID(session.SessionID),
 		)
 		if err != nil {
