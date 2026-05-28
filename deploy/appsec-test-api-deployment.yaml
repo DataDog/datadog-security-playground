@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: appsec-test-api
+  namespace: playground
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: appsec-test-api
+  template:
+    metadata:
+      labels:
+        app: appsec-test-api
+        admission.datadoghq.com/cws-instrumentation.enabled: "true"
+    spec:
+      containers:
+        - name: appsec-test-api
+          image: ghcr.io/datadog/datadog-security-playground/appsec-test-api-go:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8000
+          env:
+            - name: DD_SERVICE
+              value: "appsec-test-api"
+            - name: DD_APPSEC_ENABLED
+              value: "true"
+            - name: DD_IAST_ENABLED
+              value: "true"
+            - name: DD_APPSEC_SCA_ENABLED
+              value: "true"
+            - name: DD_AGENT_HOST
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            - name: DD_TRACE_AGENT_PORT
+              value: "8126"
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "250m"
+            limits:
+              memory: "4Gi"
+              cpu: "2"

@@ -113,7 +113,7 @@ resource "helm_release" "datadog_agent" {
 # Deploy playground app using existing manifest
 resource "kubernetes_manifest" "playground_app" {
   depends_on = [kubernetes_namespace.playground, helm_release.datadog_agent]
-  
+
   manifest = merge(
     yamldecode(file("${path.module}/../../deploy/app.yaml")),
     {
@@ -122,6 +122,41 @@ resource "kubernetes_manifest" "playground_app" {
         {
           namespace = kubernetes_namespace.playground.metadata[0].name
           name = "playground-app"
+        }
+      )
+    }
+  )
+}
+
+# Deploy the AppSec Go test API alongside the playground app. The
+# shi-rce-malware scenario exploits this service's /rasp/shi handler
+# from the playground-app pod over cluster DNS.
+resource "kubernetes_manifest" "appsec_test_api_deployment" {
+  depends_on = [kubernetes_namespace.playground, helm_release.datadog_agent]
+
+  manifest = merge(
+    yamldecode(file("${path.module}/../../deploy/appsec-test-api-deployment.yaml")),
+    {
+      metadata = merge(
+        yamldecode(file("${path.module}/../../deploy/appsec-test-api-deployment.yaml")).metadata,
+        {
+          namespace = kubernetes_namespace.playground.metadata[0].name
+        }
+      )
+    }
+  )
+}
+
+resource "kubernetes_manifest" "appsec_test_api_service" {
+  depends_on = [kubernetes_namespace.playground, helm_release.datadog_agent]
+
+  manifest = merge(
+    yamldecode(file("${path.module}/../../deploy/appsec-test-api-service.yaml")),
+    {
+      metadata = merge(
+        yamldecode(file("${path.module}/../../deploy/appsec-test-api-service.yaml")).metadata,
+        {
+          namespace = kubernetes_namespace.playground.metadata[0].name
         }
       )
     }
