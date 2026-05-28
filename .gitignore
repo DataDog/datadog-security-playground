@@ -9,3 +9,4 @@ terraform/eks/terraform.tfstate.lock.info
 __pycache__/
 .ruff_cache/
 .venv/
+.idea/
