@@ -222,7 +222,22 @@ kubectl exec -it -n playground deploy/playground-app -- /scenarios/cloud-access/
 kubectl exec -it -n playground deploy/playground-app -- /scenarios/bpfdoor/detonate.sh --wait
 ```
 
-#### 4. Essential Linux Binary Modified - Findings Generator
+#### 4. Shell Injection to RCE Malware - Full-Stack (AppSec + Workload Protection)
+- **Location**: `scenarios/shi-rce-malware/`
+- **Description**: Chains two Datadog product detections on a single kill chain. The attacker exploits a real Shell Injection vulnerability in the Go appsec test API's `raspSHIHandler` (`/rasp/shi`) — caught by Application Security (RASP) — and uses the resulting RCE to deploy the same simulated cryptominer payload as scenario 1, generating Workload Protection signals on the appsec pod.
+- **Attack Vector**: Shell injection in the Go Gin appsec test API, chained into post-exploitation malware deployment
+- **Impact**: Application-layer exploitation pivoting into malware execution, persistence, and cryptocurrency mining
+- **Detection**: Application Security (RASP) signal for the SHI exploit, plus Workload Protection signals for package install, file download, binary execution, mining-pool DNS, SSH key tampering, and startup-script persistence
+- **Prerequisites**: The AppSec Go test API must be deployed alongside the playground app. With Terraform applied, this happens automatically (see `deploy/appsec-test-api-deployment.yaml` and `deploy/appsec-test-api-service.yaml`). For non-Terraform deployments, apply both files directly: `kubectl apply -f deploy/appsec-test-api-deployment.yaml -f deploy/appsec-test-api-service.yaml`.
+
+**How to Run:**
+```bash
+# Execute the attack simulation from within the playground-app pod;
+# detonate.sh reaches the appsec-test-api service over cluster DNS.
+kubectl exec -it -n playground deploy/playground-app -- /scenarios/shi-rce-malware/detonate.sh --wait
+```
+
+#### 5. Essential Linux Binary Modified - Findings Generator
 - **Location**: `scenarios/findings-generator/`
 - **Description**: Essential system binaries in containers are executable files that perform operating system functions and administrative tasks. These binaries typically reside in protected system directories such as `/bin`, `/sbin`, `/usr/bin`, and `/usr/sbin`. In containerized environments, these binaries are part of the container image layers and should be immutable during runtime. 
 - **Attack Vector**: File system modifications to critical binaries

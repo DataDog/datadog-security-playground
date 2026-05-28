@@ -1,0 +1,109 @@
+name: Publish appsec Go test API image
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Image tag to publish (e.g. 1.2.4-hotfix). Validated; 'latest' is rejected."
+        required: true
+        type: string
+
+# Serialize all runs to prevent races on shared image tags — most importantly :latest,
+# which two concurrent non-prerelease releases could otherwise move out of order.
+concurrency:
+  group: publish-appsec-go-image
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Build and push image
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: protected-main-env
+      url: https://ghcr.io/datadog/datadog-security-playground/appsec-test-api-go
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Validate release tag is semver
+        if: github.event_name == 'release'
+        env:
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          SEMVER_RE='^v?[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?$'
+          if [[ ! "$TAG_NAME" =~ $SEMVER_RE ]]; then
+            echo "::error::Release tag '$TAG_NAME' is not semver. Refusing to publish — :latest would move without a paired version tag."
+            exit 1
+          fi
+
+      - name: Validate tag input
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          if [[ ! "$TAG" =~ ^[a-zA-Z0-9][a-zA-Z0-9._-]{0,63}$ ]]; then
+            echo "::error::Invalid tag format: $TAG"
+            exit 1
+          fi
+          if [[ "$TAG" == "latest" ]]; then
+            echo "::error::Tag 'latest' is reserved for non-prerelease releases."
+            exit 1
+          fi
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a # v4.0.0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
+
+      - name: Log in to GHCR
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute image metadata
+        id: meta
+        uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf # v6.0.0
+        env:
+          DISPATCH_TAG: ${{ inputs.tag }}
+        with:
+          images: ghcr.io/datadog/datadog-security-playground/appsec-test-api-go
+          tags: |
+            type=semver,pattern={{version}},enable=${{ github.event_name == 'release' }}
+            type=raw,value=latest,enable=${{ github.event_name == 'release' && github.event.release.prerelease == false }}
+            type=raw,value=${{ env.DISPATCH_TAG }},enable=${{ github.event_name == 'workflow_dispatch' }}
+
+      - name: Build and push image
+        id: push
+        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7.1.0
+        with:
+          context: ./appsec/test_apis/go/gin
+          file: ./appsec/test_apis/go/gin/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: | # Pass GIT_SHA to allow for reproducible scenarios when downloading payloads from Github
+            GIT_SHA=${{ github.sha }}
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
+        with:
+          subject-name: ghcr.io/datadog/datadog-security-playground/appsec-test-api-go
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true

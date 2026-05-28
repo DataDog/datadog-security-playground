@@ -336,10 +336,8 @@ func raspSSRFHandler(c *gin.Context) {
 func raspSHIHandler(c *gin.Context) {
 	commandInput := c.Query("command")
 	dangerousCommand := "echo " + commandInput
-	execCtx, cancel := context.WithTimeout(c.Request.Context(), 300*time.Millisecond)
-	defer cancel()
 
-	out, err := runShellCommand(execCtx, dangerousCommand)
+	out, err := runShellCommand(context.Background(), dangerousCommand)
 	if err != nil {
 		c.JSON(http.StatusOK, raspProbeResponse{Status: "ok", Sink: "shi", Input: commandInput, Output: string(out), Error: err.Error()})
 		return
