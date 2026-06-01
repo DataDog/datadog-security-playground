@@ -58,7 +58,11 @@ data "aws_iam_policy_document" "assume_role" {
 }
 
 resource "aws_iam_role" "playground" {
-  name               = "eks-pod-identity-playground"
+  # Suffix with the cluster-suffix random string so multiple clusters can
+  # coexist in the same AWS account — IAM role names are globally unique
+  # per account, and the prior bare "eks-pod-identity-playground" would
+  # collide with any sibling deployment.
+  name               = "eks-pod-identity-playground-${random_string.suffix.result}"
   assume_role_policy = data.aws_iam_policy_document.assume_role.json
 }
 
@@ -131,6 +135,19 @@ module "eks" {
 
   eks_managed_node_group_defaults = {
     ami_type = "AL2023_x86_64_STANDARD"
+
+    # IMDS hop limit 2 lets pods running on the node reach the node's IMDS at
+    # 169.254.169.254 (default in `terraform-aws-modules/eks/aws` v20.x is
+    # already 2, but pinning it here makes the requirement explicit and
+    # survives module upgrades). Required by the shi-cloud-access-rce-malware scenario so
+    # the appsec-test-api pod can retrieve the worker-node-role credentials
+    # via IMDS and exercise the AWS API path that produces CloudTrail events.
+    metadata_options = {
+      http_endpoint               = "enabled"
+      http_tokens                 = "required"
+      http_put_response_hop_limit = 2
+      instance_metadata_tags      = "disabled"
+    }
   }
 
   eks_managed_node_groups = {

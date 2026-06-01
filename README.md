@@ -239,7 +239,26 @@ kubectl exec -it -n playground deploy/playground-app -- /scenarios/bpfdoor/deton
 kubectl exec -it -n playground deploy/playground-app -- /scenarios/shi-rce-malware/detonate.sh --wait
 ```
 
-#### 5. Essential Linux Binary Modified - Findings Generator
+#### 5. Shell Injection to Cloud-Access + RCE Malware - Full-Stack (AppSec + Workload Protection + Cloud SIEM)
+- **Location**: `scenarios/shi-cloud-access-rce-malware/`
+- **Description**: Chains three Datadog product detections on a single kill chain. The attacker exploits a real Shell Injection in the Go appsec test API (Application Security), then the resulting RCE runs an orchestrator that executes two phases inside the compromised pod: phase 1 steals EKS worker-node-role credentials from IMDS and attempts multi-region EC2 `RunInstances` calls (Cloud SIEM rules `def-000-la6` and `169-fd7-41b`); phase 2 deploys a simulated cryptocurrency miner with SSH-key and `/etc/rc.common` persistence plus mining-pool DNS lookups (Workload Protection).
+- **Attack Vector**: Shell injection in the Go Gin appsec test API, chained into IMDS credential theft, multi-region cloud-control-plane abuse, and on-pod malware deployment
+- **Impact**: Demonstrates the full attack path from application-layer exploit through runtime credential theft and malware deployment to attempted cloud resource provisioning, all attributable to a single user in the Datadog UI (with an anonymous cleanup step at the end for trace-attribution contrast)
+- **Detection**: Application Security WAF signal for each SHI request; Workload Protection signals for package install, file downloads, IMDS access, malware binary execution, SSH `authorized_keys` modification, startup-script (`/etc/rc.common`) modification, mining-pool DNS, and `executable_bit_added`; Cloud SIEM signals for multi-region EC2 `RunInstances` attempts and the AccessDenied spike
+- **Prerequisites**: 
+  - The AppSec Go test API must be deployed (same as scenario 4 — provisioned automatically by `terraform apply`).
+  - **CloudTrail → Datadog pipeline must be configured** (one-time per AWS account): a multi-region CloudTrail trail must be writing to S3, the [Datadog AWS integration](https://docs.datadoghq.com/integrations/amazon_web_services/) must be enabled with the `DatadogIntegrationRole` IAM role, CloudTrail logs must be forwarded to Datadog (via the [Datadog Forwarder Lambda](https://docs.datadoghq.com/logs/guide/forwarder/), log autosubscription, or Amazon Data Firehose), and Cloud SIEM with the Amazon CloudTrail content pack must be enabled in the Datadog UI. Without this pipeline, the Cloud SIEM portion of the kill chain is silent (AppSec + Workload Protection still fire). See `scenarios/shi-cloud-access-rce-malware/README.md` for the detailed setup walkthrough.
+  - The EKS node group must have `http_put_response_hop_limit = 2` on its IMDS metadata options so pods can reach the node's IMDS — pinned in `terraform/eks/main.tf`.
+
+**How to Run:**
+```bash
+# Execute the attack simulation from within the playground-app pod;
+# detonate.sh reaches the appsec-test-api service over cluster DNS and the
+# SHI'd commands run inside the appsec-test-api pod.
+kubectl exec -it -n playground deploy/playground-app -- /scenarios/shi-cloud-access-rce-malware/detonate.sh --wait
+```
+
+#### 6. Essential Linux Binary Modified - Findings Generator
 - **Location**: `scenarios/findings-generator/`
 - **Description**: Essential system binaries in containers are executable files that perform operating system functions and administrative tasks. These binaries typically reside in protected system directories such as `/bin`, `/sbin`, `/usr/bin`, and `/usr/sbin`. In containerized environments, these binaries are part of the container image layers and should be immutable during runtime. 
 - **Attack Vector**: File system modifications to critical binaries
