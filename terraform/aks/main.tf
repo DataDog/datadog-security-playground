@@ -49,12 +49,11 @@ resource "azurerm_user_assigned_identity" "playground" {
 
 # Federated credential linking the K8s service account to the managed identity
 resource "azurerm_federated_identity_credential" "playground" {
-  name                = "playground-federated-credential"
-  resource_group_name = azurerm_resource_group.playground.name
-  parent_id           = azurerm_user_assigned_identity.playground.id
-  audience            = ["api://AzureADTokenExchange"]
-  issuer              = azurerm_kubernetes_cluster.playground.oidc_issuer_url
-  subject             = "system:serviceaccount:${var.playground_namespace}:${var.service_account_name}"
+  name                      = "playground-federated-credential"
+  user_assigned_identity_id = azurerm_user_assigned_identity.playground.id
+  audience                  = ["api://AzureADTokenExchange"]
+  issuer                    = azurerm_kubernetes_cluster.playground.oidc_issuer_url
+  subject                   = "system:serviceaccount:${var.playground_namespace}:${var.service_account_name}"
 }
 
 resource "azurerm_kubernetes_cluster" "playground" {
@@ -87,8 +86,11 @@ resource "azurerm_kubernetes_cluster" "playground" {
   monitor_metrics {}
 
   network_profile {
-    network_plugin    = "azure"
+    network_plugin = "azure"
     load_balancer_sku = "standard"
+    # Explicit service CIDR avoids overlap with VNet address space (10.0.0.0/16)
+    service_cidr   = "10.96.0.0/16"
+    dns_service_ip = "10.96.0.10"
   }
 
   tags = {

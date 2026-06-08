@@ -79,7 +79,7 @@ make aks-creds
 | `cluster_name` | `security-playground` | AKS cluster name |
 | `node_count` | `1` | Nodes per pool |
 | `vm_size` | `Standard_D2s_v3` | Node VM size |
-| `kubernetes_version` | `1.31` | Kubernetes version |
+| `kubernetes_version` | `1.34` | Kubernetes version |
 | `playground_namespace` | `playground` | App namespace |
 | `datadog_namespace` | `datadog` | Datadog agent namespace |
 | `datadog_api_key` | — | **Required** — your Datadog API key |

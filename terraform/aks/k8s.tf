@@ -116,20 +116,26 @@ resource "helm_release" "datadog_agent" {
   ]
 }
 
-# Deploy playground app using existing manifest
-resource "kubernetes_manifest" "playground_app" {
-  depends_on = [kubernetes_namespace.playground, helm_release.datadog_agent]
+# Write cluster kubeconfig to a temp file so local-exec can use it
+resource "local_sensitive_file" "kubeconfig" {
+  content         = azurerm_kubernetes_cluster.playground.kube_config_raw
+  filename        = "${path.module}/kubeconfig.yaml"
+  file_permission = "0600"
+}
 
-  manifest = merge(
-    yamldecode(file("${path.module}/../../deploy/app.yaml")),
-    {
-      metadata = merge(
-        yamldecode(file("${path.module}/../../deploy/app.yaml")).metadata,
-        {
-          namespace = kubernetes_namespace.playground.metadata[0].name
-          name      = "playground-app"
-        }
-      )
+# Deploy playground app — app.yaml is multi-document so we use kubectl apply
+# rather than kubernetes_manifest (which only handles single-document YAML).
+resource "null_resource" "playground_app" {
+  depends_on = [kubernetes_namespace.playground, helm_release.datadog_agent, local_sensitive_file.kubeconfig]
+
+  provisioner "local-exec" {
+    command = "kubectl apply -f ${path.module}/../../deploy/app.yaml"
+    environment = {
+      KUBECONFIG = local_sensitive_file.kubeconfig.filename
     }
-  )
+  }
+
+  triggers = {
+    app_yaml_hash = filemd5("${path.module}/../../deploy/app.yaml")
+  }
 }
