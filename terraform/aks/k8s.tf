@@ -110,6 +110,22 @@ resource "helm_release" "datadog_agent" {
     name  = "datadog.site"
     value = var.datadog_site
   }
+  # Override cluster name so AKS and EKS deployments appear separately in Datadog.
+  # On AKS the agent auto-discovers the cluster name from Azure metadata; we must
+  # inject DD_CLUSTER_NAME explicitly to override it. datadog.clusterName alone is
+  # not sufficient on managed AKS clusters.
+  set {
+    name  = "datadog.clusterName"
+    value = var.datadog_cluster_name
+  }
+  set {
+    name  = "datadog.env[5].name"
+    value = "DD_CLUSTER_NAME"
+  }
+  set {
+    name  = "datadog.env[5].value"
+    value = var.datadog_cluster_name
+  }
 
   values = [
     file("${path.module}/../../deploy/datadog-agent.yaml")

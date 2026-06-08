@@ -55,6 +55,12 @@ variable "service_account_name" {
   default     = "playground-sa"
 }
 
+variable "datadog_cluster_name" {
+  description = "Cluster name tag reported to Datadog (overrides DD_CLUSTER_NAME in datadog-agent.yaml)"
+  type        = string
+  default     = "playground-cluster-aks"
+}
+
 variable "datadog_api_key" {
   description = "Datadog API key for agent authentication"
   type        = string

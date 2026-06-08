@@ -24,6 +24,10 @@ datadog:
             dotnet: "3"
             ruby: "2"
 
+  logs:
+    enabled: true
+    containerCollectAll: true
+
   sbom:
     containerImage:
       enabled: true
@@ -31,8 +35,6 @@ datadog:
   env:
     - name: DD_ENV
       value: "playground-env"
-    - name: DD_CLUSTER_NAME
-      value: "playground-cluster"
     - name: DD_KUBELET_TLS_VERIFY
       value: "false"
     - name: DD_SBOM_CONTAINER_IMAGE_ALLOW_MISSING_REPODIGEST
