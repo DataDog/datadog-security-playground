@@ -41,38 +41,7 @@ export DD_APP_KEY=<your application key>      # only needed for scenario 1 (rce-
 
 ### Step 1: Deploy Datadog Agent
 
-1. **Set up API Secret:**
-   ```bash
-   export DATADOG_API_SECRET_NAME=datadog-api-secret
-   ```
-
-2. **Create Datadog API Key Secret:**
-   ```bash
-   kubectl create secret generic $DATADOG_API_SECRET_NAME --from-literal api-key="$DD_API_KEY"
-   ```
-
-3. **Install Datadog Agent:**
-   ```bash
-   helm repo add datadog https://helm.datadoghq.com
-   helm repo update
-   helm install datadog-agent \
-     --set datadog.apiKeyExistingSecret=$DATADOG_API_SECRET_NAME \
-     --set datadog.site=$DD_SITE \
-     -f deploy/datadog-agent.yaml \
-     datadog/datadog
-   ```
-
-4. **Verify Datadog Agent Deployment:**
-   ```bash
-   kubectl get pods
-   ```
-   
-   Expected output:
-   ```
-   NAME                                           READY   STATUS    RESTARTS   AGE
-   datadog-agent-cluster-agent-7697f8cf97-mrsrg   1/1     Running   0          2m8s
-   datadog-agent-rzxs2                            4/4     Running   0          2m8s
-   ```
+Follow [AGENT.md](AGENT.md) to deploy the Datadog Agent with the playground configuration on your Kubernetes cluster.
 
 ### Step 2: Deploy Vulnerable Application
 
@@ -101,15 +70,7 @@ To remove the playground from your cluster:
    kubectl delete -f deploy/app.yaml
    ```
 
-2. **Uninstall the Datadog Agent:**
-   ```bash
-   helm uninstall datadog-agent
-   ```
-
-3. **Delete the API Key Secret:**
-   ```bash
-   kubectl delete secret $DATADOG_API_SECRET_NAME
-   ```
+2. **Uninstall the Datadog Agent and delete the API key secret** — see the [Cleanup](AGENT.md#-cleanup) section of AGENT.md.
 
 ## ☁️ Terraform EKS Setup (Optional)
 
