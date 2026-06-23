@@ -17,8 +17,10 @@ This guide walks you through setting up the Datadog Security Playground locally 
 ### Step 1: Create a Kubernetes VM with Lima
 
 ```bash
-limactl start template:k8s
+limactl start --name k8s k8s-noble.yaml
 ```
+
+> **Note:** This pins the VM to Ubuntu 24.04 (kernel 6.8). The default `template:k8s` currently uses Ubuntu 26.04 (kernel 7.x), which is incompatible with the Datadog agent's CWS eBPF probes.
 
 ### Step 2: Configure kubectl
 

@@ -1,0 +1,16 @@
+# Lima k8s template pinned to Ubuntu 24.04 (kernel 6.8).
+# Required until datadog-agent handles attach_recursive_mnt.isra.0 on kernels >= 6.11.
+# See: https://github.com/DataDog/datadog-agent/pull/36918
+# Ref fix pattern: https://github.com/DataDog/datadog-agent/pull/46311
+base: template:k8s
+images:
+- location: "https://cloud-images.ubuntu.com/releases/noble/release-20260518/ubuntu-24.04-server-cloudimg-amd64.img"
+  arch: "x86_64"
+  digest: "sha256:53fdde898feed8b027d94baa9cfe8229867f330a1d9c49dc7d84465ee7f229f7"
+- location: "https://cloud-images.ubuntu.com/releases/noble/release-20260518/ubuntu-24.04-server-cloudimg-arm64.img"
+  arch: "aarch64"
+  digest: "sha256:6a61b967ba4a27dd1966f835a67643073ed55c2860ce3dc1cb0517282e6b8bec"
+- location: https://cloud-images.ubuntu.com/releases/noble/release/ubuntu-24.04-server-cloudimg-amd64.img
+  arch: x86_64
+- location: https://cloud-images.ubuntu.com/releases/noble/release/ubuntu-24.04-server-cloudimg-arm64.img
+  arch: aarch64
