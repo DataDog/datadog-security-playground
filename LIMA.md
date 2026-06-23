@@ -167,8 +167,8 @@ docker save datadog/datadog-security-playground:latest | limactl shell k8s sudo 
 
 ### Colima
 
-Colima K3s also uses `containerd`. Save from whichever Docker context holds the image and import it into the `k8s` VM:
+Colima K3s uses Docker (via cri-dockerd) as the container runtime. Load the image directly into the `colima-k8s` Docker context — K3s will find it there:
 
 ```bash
-docker save datadog/datadog-security-playground:latest | colima ssh --profile k8s -- sudo ctr --namespace=k8s.io images import -
+docker --context colima save datadog/datadog-security-playground:latest | docker --context colima-k8s load
 ```
