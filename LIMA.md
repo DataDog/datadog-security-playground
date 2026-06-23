@@ -14,7 +14,12 @@ This guide walks you through setting up the Datadog Security Playground locally 
 
 ## 🚀 Setup
 
-### Step 1: Create a Kubernetes VM with Lima
+### Step 1: Clone the `datadog-security-playground` repo
+```bash
+git clone https://github.com/DataDog/datadog-security-playground.git
+```
+
+### Step 2: Create a Kubernetes VM with Lima
 
 ```bash
 limactl start --name k8s k8s-noble.yaml
@@ -22,7 +27,7 @@ limactl start --name k8s k8s-noble.yaml
 
 > **Note:** This pins the VM to Ubuntu 24.04 (kernel 6.8). The default `template:k8s` currently uses Ubuntu 26.04 (kernel 7.x), which is incompatible with the Datadog agent's CWS eBPF probes.
 
-### Step 2: Configure kubectl
+### Step 3: Configure kubectl
 
 Set the `KUBECONFIG` environment variable so `kubectl` connects to the Lima Kubernetes cluster:
 
@@ -30,7 +35,7 @@ Set the `KUBECONFIG` environment variable so `kubectl` connects to the Lima Kube
 export KUBECONFIG=$(limactl list k8s --format 'unix://{{.Dir}}/copied-from-guest/kubeconfig.yaml')
 ```
 
-### Step 3: Deploy Datadog Agent
+### Step 4: Deploy Datadog Agent
 
 1. **Export your Datadog credentials** (change `DD_SITE` if you're not on US1 — see [Datadog site documentation](https://docs.datadoghq.com/getting_started/site/#access-the-datadog-site) for valid values):
    ```bash
@@ -59,20 +64,20 @@ export KUBECONFIG=$(limactl list k8s --format 'unix://{{.Dir}}/copied-from-guest
    kubectl get pods -w -A
    ```
 
-### Step 4: Deploy the Playground Application
+### Step 5: Deploy the Playground Application
 
 ```bash
 kubectl apply -f deploy/namespace.yaml
 kubectl apply -f deploy/app.yaml
 ```
 
-### Step 5: Validate the Deployment
+### Step 6: Validate the Deployment
 
 ```bash
 kubectl get pods -n playground -w
 ```
 
-### Step 6: Access the Playground
+### Step 7: Access the Playground
 
 Set up port-forwarding to access the UI:
 
