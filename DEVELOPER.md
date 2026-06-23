@@ -19,7 +19,7 @@ This guide is for developers who want to run the Datadog Security Playground loc
 minikube config set kubernetes-version v1.33.1
 ```
 
-Using a VM-based Minikube driver is mandatory, as the Docker driver will not provide the Linux kernel needed by the Datadog Agent.
+**A VM-based Minikube driver is mandatory.** The Docker driver (`--driver=docker`) runs Kubernetes inside a Docker container, which prevents the Datadog Agent's CWS eBPF probes from attaching to the host kernel. The agent will start but CWS self-tests will fail and no Workload Protection signals will be generated.
 
 For details on which drivers are supported on Linux and macOS, please see the [Minikube drivers documentation](https://minikube.sigs.k8s.io/docs/drivers/).
 
@@ -37,17 +37,26 @@ minikube start --driver=qemu
 
 ### macOS Setup
 
-**VirtualBox Driver (Recommended):**
-
-First, install VirtualBox:
+**Option 1 - QEMU Driver:**
 ```bash
-# Install VirtualBox via Homebrew
-brew install --cask virtualbox
+brew install qemu
+minikube start --driver=qemu
 ```
 
-Then start Minikube:
+**Option 2 - VirtualBox Driver:**
 ```bash
+brew install --cask virtualbox
 minikube start --driver=virtualbox
+```
+
+### Helm Repository
+
+Make sure the `datadog` Helm repository points to the public chart index:
+```bash
+# Remove any existing entry (e.g. an internal registry) and add the public one
+helm repo remove datadog 2>/dev/null || true
+helm repo add datadog https://helm.datadoghq.com
+helm repo update datadog
 ```
 
 ## 🐳 Building and Loading Docker Image
