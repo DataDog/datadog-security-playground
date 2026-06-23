@@ -31,7 +31,7 @@ fi
 echo "Creating detection rule from $RULE_FILE..."
 
 # Make the API request
-response=$(curl -X POST "https://$DD_SITE/api/v2/security_monitoring/rules" \
+response=$(curl -X POST "https://api.$DD_SITE/api/v2/security_monitoring/rules" \
     -H "DD-API-KEY: $DD_API_KEY" \
     -H "DD-APPLICATION-KEY: $DD_APP_KEY" \
     -H "Content-Type: application/json" \
