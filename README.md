@@ -22,9 +22,9 @@ A comprehensive educational security simulation environment designed to demonstr
 
 You can deploy this playground on:
 
-1. **Your existing Kubernetes cluster** - Follow the deployment guide below
-2. **Amazon EKS using Terraform** - See [Terraform EKS Setup](#-terraform-eks-setup-optional) section
-3. **Local Lima VM** - See [LIMA.md](LIMA.md)
+1. **Your existing Kubernetes cluster** - If you already have a working environment, you can directly jump to the [Configuration](#-configuration) section.
+2. **Amazon EKS using Terraform** - See [TERRAFORM.md](TERRAFORM.md)
+3. **Local Lima Kubernetes VM** - See [LIMA.md](LIMA.md)
 4. **Local Minikube cluster** - For developers, see [DEVELOPER.md](DEVELOPER.md)
 
 ## 🌍 Configuration
@@ -71,10 +71,6 @@ To remove the playground from your cluster:
    ```
 
 2. **Uninstall the Datadog Agent and delete the API key secret** — see the [Cleanup](AGENT.md#-cleanup) section of AGENT.md.
-
-## ☁️ Terraform EKS Setup (Optional)
-
-If you don't have an existing Kubernetes cluster, you can use Terraform to create an Amazon EKS cluster with the playground application and Datadog Agent pre-configured. See [TERRAFORM.md](TERRAFORM.md).
 
 ## 🎯 Available Attack Scenarios
 
