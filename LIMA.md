@@ -30,34 +30,9 @@ Set the `KUBECONFIG` environment variable so `kubectl` connects to the Lima Kube
 export KUBECONFIG=$(limactl list k8s --format 'unix://{{.Dir}}/copied-from-guest/kubeconfig.yaml')
 ```
 
-### Step 3: Deploy Datadog Agent
+### Step 3: Deploy the Datadog Agent
 
-1. **Export your Datadog credentials** (change `DD_SITE` if you're not on US1 — see [Datadog site documentation](https://docs.datadoghq.com/getting_started/site/#access-the-datadog-site) for valid values):
-   ```bash
-   export DD_SITE=datadoghq.com
-   export DD_API_KEY=<your API key>              # https://app.datadoghq.com/organization-settings/api-keys
-   export DD_APP_KEY=<your application key>      # only needed for scenario 1 (rce-malware); requires security_monitoring_rules_write scope
-   ```
-
-2. **Add the Datadog Helm repository and create the API key secret:**
-   ```bash
-   helm repo add datadog https://helm.datadoghq.com
-   helm repo update
-   kubectl create secret generic datadog-api-secret --from-literal api-key="$DD_API_KEY"
-   ```
-
-3. **Install the Datadog Agent with the playground configuration:**
-   ```bash
-   helm install datadog-agent \
-     --set datadog.site=$DD_SITE \
-     -f deploy/datadog-agent.yaml \
-     datadog/datadog
-   ```
-
-4. **Wait until the agent pods are running before proceeding:**
-   ```bash
-   kubectl get pods -w -A
-   ```
+Follow [AGENT.md](AGENT.md) to deploy the Datadog Agent on the Lima Kubernetes cluster. Make sure the `KUBECONFIG` you exported in Step 2 is still set so the agent is installed into the Lima VM.
 
 ### Step 4: Deploy the Playground Application
 
