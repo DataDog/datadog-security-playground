@@ -1,12 +1,9 @@
-FROM golang:1.25-bookworm AS builder
+FROM golang:1.26-bookworm AS builder
 WORKDIR /src
 
-RUN go install github.com/DataDog/orchestrion@latest
-
 COPY . .
-RUN orchestrion pin
 
-RUN CGO_ENABLED=1 orchestrion go build -o /out/appsec-test-api-go ./cmd/server
+RUN CGO_ENABLED=1 go tool orchestrion go build -o /out/appsec-test-api-go ./cmd/server
 
 FROM debian:bookworm-slim
 
