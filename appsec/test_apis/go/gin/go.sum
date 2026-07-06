@@ -141,10 +141,10 @@ github.com/DataDog/dd-trace-go/contrib/valyala/fasthttp/v2 v2.11.0-dev h1:h9H8mN
 github.com/DataDog/dd-trace-go/contrib/valyala/fasthttp/v2 v2.11.0-dev/go.mod h1:JdM2EITDz6K6jpQmJaD7Kd+SWCEZUc/MKZWQT9tiTMI=
 github.com/DataDog/dd-trace-go/instrumentation/testutils/grpc/v2 v2.11.0-dev h1:jQFH1+D0ISnAUSoqFjVHpwpz6KaHhbGcoAgAEm8FXsM=
 github.com/DataDog/dd-trace-go/instrumentation/testutils/grpc/v2 v2.11.0-dev/go.mod h1:EW0voF4wA1Lt/RDvTBGIlMZKg2LdvmU8UD+XkYp4VnM=
-github.com/DataDog/dd-trace-go/orchestrion/all/v2 v2.11.0-dev.0.20260703080544-6b801cd948a9 h1:GggGaZ/jjMmC/EcHLUcErMDCHj5OqUd79d2speJJJX4=
-github.com/DataDog/dd-trace-go/orchestrion/all/v2 v2.11.0-dev.0.20260703080544-6b801cd948a9/go.mod h1:x5tMToE14L3h9oNO89lRJ8WPhYF7Y+Huea4hZo4yeOk=
-github.com/DataDog/dd-trace-go/v2 v2.11.0-dev.0.20260703080544-6b801cd948a9 h1:+c2VbVSnAQoTfgOPs25Lqa/tDff15x/C5Ekf357+vNc=
-github.com/DataDog/dd-trace-go/v2 v2.11.0-dev.0.20260703080544-6b801cd948a9/go.mod h1:7skdmn5tMbfqwO+N//cvdWkqV3iBWR6IbCGlQJ6zefo=
+github.com/DataDog/dd-trace-go/orchestrion/all/v2 v2.11.0-dev.0.20260702160028-c2bd25085ea1 h1:/A6xwyU6ubrtCxQoDSlDmeWzYsMxE1tZ+DYszwOdzT4=
+github.com/DataDog/dd-trace-go/orchestrion/all/v2 v2.11.0-dev.0.20260702160028-c2bd25085ea1/go.mod h1:x5tMToE14L3h9oNO89lRJ8WPhYF7Y+Huea4hZo4yeOk=
+github.com/DataDog/dd-trace-go/v2 v2.11.0-dev.0.20260702160028-c2bd25085ea1 h1:HTWRJjvzSiGecrsW65byWTkKVdOTEyfqPof+amie1AA=
+github.com/DataDog/dd-trace-go/v2 v2.11.0-dev.0.20260702160028-c2bd25085ea1/go.mod h1:7skdmn5tMbfqwO+N//cvdWkqV3iBWR6IbCGlQJ6zefo=
 github.com/DataDog/go-libddwaf/v5 v5.0.0-rc.2 h1:R/L+SjlxhRtOzChHJgc3wq9VCDi31SygZUTtGV1ONww=
 github.com/DataDog/go-libddwaf/v5 v5.0.0-rc.2/go.mod h1:/UzdsIsO8qk8fmbqNnk6Na7MsaNvU2R7SlBRHEgSIOQ=
 github.com/DataDog/go-runtime-metrics-internal v0.0.4-0.20260317103029-7c129975f019 h1:3P6gc+c48LgiOCZW6R7v4/Rvarx/MBnIEzGGZwOUaPY=

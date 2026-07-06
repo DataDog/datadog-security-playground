@@ -3,7 +3,7 @@ module appsec_test_api_go
 go 1.26.0
 
 require (
-	github.com/DataDog/dd-trace-go/v2 v2.11.0-dev.0.20260703080544-6b801cd948a9
+	github.com/DataDog/dd-trace-go/v2 v2.11.0-dev.0.20260702160028-c2bd25085ea1
 	github.com/gin-gonic/gin v1.12.0
 )
 
@@ -232,7 +232,7 @@ require (
 	github.com/DataDog/datadog-agent/pkg/trace/stats v0.80.4 // indirect
 	github.com/DataDog/datadog-agent/pkg/trace/traceutil v0.80.4 // indirect
 	github.com/DataDog/datadog-go/v5 v5.9.0 // indirect
-	github.com/DataDog/dd-trace-go/orchestrion/all/v2 v2.11.0-dev.0.20260703080544-6b801cd948a9
+	github.com/DataDog/dd-trace-go/orchestrion/all/v2 v2.11.0-dev.0.20260702160028-c2bd25085ea1
 	github.com/DataDog/go-libddwaf/v5 v5.0.0-rc.2 // indirect
 	github.com/DataDog/go-runtime-metrics-internal v0.0.4-0.20260317103029-7c129975f019 // indirect
 	github.com/DataDog/go-sqllexer v0.2.2 // indirect
@@ -314,6 +314,12 @@ require (
 	google.golang.org/protobuf v1.36.11 // indirect
 )
 
-replace github.com/DataDog/dd-trace-go/v2 => github.com/DataDog/dd-trace-go/v2 v2.11.0-dev.0.20260703080544-6b801cd948a9
+// Pinned to the eliottness/command-injection dd-trace-go branch: it implements
+// the RASP command-injection detector (rasp-932-110) that makes /rasp/shi emit
+// the AppSec "Command injection exploited" signal. Do NOT "upgrade" this to a
+// newer-looking dd-trace-go main/release pseudo-version until CMDi is merged
+// upstream — a plain main commit lacks the detector and silently drops the
+// AppSec half of the shi-rce-malware scenario (WP signals still fire).
+replace github.com/DataDog/dd-trace-go/v2 => github.com/DataDog/dd-trace-go/v2 v2.11.0-dev.0.20260702160028-c2bd25085ea1
 
 tool github.com/DataDog/orchestrion

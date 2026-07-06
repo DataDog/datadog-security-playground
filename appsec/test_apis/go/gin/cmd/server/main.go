@@ -340,7 +340,7 @@ func raspSHIHandler(c *gin.Context) {
 	commandInput := c.Query("command")
 	dangerousCommand := "echo " + commandInput
 
-	out, err := runShellCommand(context.Background(), dangerousCommand)
+	out, err := runShellCommand(c.Request.Context(), dangerousCommand)
 	if err != nil {
 		c.JSON(http.StatusOK, raspProbeResponse{Status: "ok", Sink: "shi", Input: commandInput, Output: string(out), Error: err.Error()})
 		return

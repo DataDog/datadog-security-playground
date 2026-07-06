@@ -26,6 +26,14 @@ spec:
               value: "appsec-test-api"
             - name: DD_APPSEC_ENABLED
               value: "true"
+            - name: DD_APPSEC_RASP_ENABLED
+              value: "true"
+            # Raise the per-request WAF eval budget: on slower nodes the default
+            # budget is exceeded ("WAF timeout value reached"), so no attack is
+            # detected and no AppSec signal fires. 5s is a safe ceiling (only
+            # consumed under pathological slowness), not a fixed per-request cost.
+            - name: DD_APPSEC_WAF_TIMEOUT
+              value: "5s"
             - name: DD_IAST_ENABLED
               value: "true"
             - name: DD_APPSEC_SCA_ENABLED
