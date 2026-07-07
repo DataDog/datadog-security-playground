@@ -1,0 +1,31 @@
+{{- if .Values.langflowVulnerable.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: langflow-vulnerable
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: langflow-vulnerable
+  template:
+    metadata:
+      labels:
+        app: langflow-vulnerable
+        admission.datadoghq.com/cws-instrumentation.enabled: "true"
+    spec:
+      containers:
+        - name: langflow-vulnerable
+          image: "{{ .Values.langflowVulnerable.image.repository }}@{{ .Values.langflowVulnerable.image.digest }}"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 7860
+          resources:
+            requests:
+              memory: {{ .Values.langflowVulnerable.resources.requests.memory | quote }}
+              cpu: {{ .Values.langflowVulnerable.resources.requests.cpu | quote }}
+            limits:
+              memory: {{ .Values.langflowVulnerable.resources.limits.memory | quote }}
+              cpu: {{ .Values.langflowVulnerable.resources.limits.cpu | quote }}
+{{- end }}
