@@ -10,13 +10,6 @@ resource "kubernetes_namespace" "playground" {
   }
 }
 
-# Create Kubernetes namespace for the Datadog agent
-resource "kubernetes_namespace" "datadog" {
-  metadata {
-    name = var.datadog_namespace
-  }
-}
-
 # Create Kubernetes service account
 resource "kubernetes_service_account" "playground" {
   metadata {
@@ -69,62 +62,5 @@ resource "kubernetes_pod" "playground" {
     
     restart_policy = "Never"
   }
-}
-
-# Create Kubernetes secret for Datadog API key
-resource "kubernetes_secret" "datadog_api_key" {
-  depends_on = [kubernetes_namespace.datadog]
-  
-  metadata {
-    name      = "datadog-api-secret"
-    namespace = kubernetes_namespace.datadog.metadata[0].name
-  }
-  
-  data = {
-    api-key = var.datadog_api_key
-  }
-  
-  type = "Opaque"
-}
-
-# Deploy Datadog Agent using Helm
-resource "helm_release" "datadog_agent" {
-  depends_on = [kubernetes_secret.datadog_api_key]
-  
-  name       = "datadog-agent"
-  repository = "https://helm.datadoghq.com"
-  chart      = "datadog"
-  namespace  = kubernetes_namespace.datadog.metadata[0].name
-  
-  set {
-        name  = "datadog.apiKeyExistingSecret"
-        value = kubernetes_secret.datadog_api_key.metadata[0].name
-  }
-  set {
-        name  = "datadog.site"
-        value = var.datadog_site
-    }
-  
-  values = [
-    file("${path.module}/../../deploy/datadog-agent.yaml")
-  ]
-}
-
-# Deploy playground app using existing manifest
-resource "kubernetes_manifest" "playground_app" {
-  depends_on = [kubernetes_namespace.playground, helm_release.datadog_agent]
-  
-  manifest = merge(
-    yamldecode(file("${path.module}/../../deploy/app.yaml")),
-    {
-      metadata = merge(
-        yamldecode(file("${path.module}/../../deploy/app.yaml")).metadata,
-        {
-          namespace = kubernetes_namespace.playground.metadata[0].name
-          name = "playground-app"
-        }
-      )
-    }
-  )
 }
 
