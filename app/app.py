@@ -1,12 +1,19 @@
 import os
+import secrets
 import subprocess
 import logging
 import sqlite3
 import requests
 
 from datetime import datetime
+from uuid import uuid4
 
-from flask import Flask, request, send_from_directory, render_template
+from flask import Flask, jsonify, request, send_from_directory, render_template
+from ddtrace.appsec.track_user_sdk import (
+    track_login_failure,
+    track_login_success,
+    track_user,
+)
 
 # Configure logging
 logging.basicConfig(
@@ -53,6 +60,33 @@ def init_db():
 
 init_db()
 
+# Seeded users + session store for the shi-rce-malware-python scenario. Kept
+# separate from the sqlite `users` table used by the legacy /login route
+# (which stays deliberately SQL-injectable) so the two demos don't interact.
+RASP_DEMO_PASSWORD = 'dogfooding-password'
+rasp_users = {
+    'alice': {'user_id': str(uuid4())},
+    'bob': {'user_id': str(uuid4())},
+}
+rasp_sessions = {}
+
+
+@app.before_request
+def track_rasp_user():
+    # Attributes RASP-scenario requests to a real account (usr.id / usr.login /
+    # usr.session_id) when a valid bearer token is presented, mirroring the
+    # appsec.SetUser call in the Go appsec-test-api's auth middleware.
+    authorization = request.headers.get('Authorization', '')
+    scheme, _, token = authorization.partition(' ')
+    if scheme.lower() != 'bearer' or not token:
+        return
+
+    session = rasp_sessions.get(token)
+    if session is None:
+        return
+
+    track_user(session['username'], session['user_id'], session_id=session['session_id'])
+
 
 @app.route("/", methods=["GET"])
 def index():
@@ -95,6 +129,51 @@ def inject():
     except Exception as e:
         logger.error(f"Error executing command: {str(e)}", exc_info=True)
         raise
+
+
+@app.route("/rasp/login", methods=["POST"])
+def rasp_login():
+    username = request.args.get("username", "")
+    password = request.args.get("password", "")
+    logger.info(f"RASP login attempt for user: {username}")
+
+    user = rasp_users.get(username)
+    if user is None or password != RASP_DEMO_PASSWORD:
+        track_login_failure(username, exists=user is not None)
+        return jsonify({"error": "Invalid user password combination"}), 403
+
+    track_login_success(username, user["user_id"])
+    token = secrets.token_urlsafe(32)
+    rasp_sessions[token] = {
+        "username": username,
+        "user_id": user["user_id"],
+        "session_id": str(uuid4()),
+    }
+    return jsonify({
+        "message": "Login successful",
+        "access_token": token,
+        "token_type": "bearer",
+    })
+
+
+@app.route("/rasp/shi", methods=["GET"])
+def rasp_shi():
+    # Deliberately vulnerable to Shell Injection, mirroring raspSHIHandler in
+    # the Go appsec-test-api (appsec/test_apis/go/gin/cmd/server/main.go):
+    # user input is concatenated into a shell command with no sanitization.
+    command = request.args.get("command", "")
+    logger.info(f"RASP SHI probe with command: {command}")
+    try:
+        result = subprocess.run(
+            f"echo {command}",
+            shell=True,
+            capture_output=True,
+            text=True,
+            timeout=0.3,
+        )
+        return jsonify({"status": "ok", "sink": "shi", "input": command, "output": result.stdout})
+    except (OSError, subprocess.SubprocessError) as e:
+        return jsonify({"status": "ok", "sink": "shi", "input": command, "error": str(e)})
 
 
 @app.route("/ssrf", methods=["GET"])

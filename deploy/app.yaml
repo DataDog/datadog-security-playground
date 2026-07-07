@@ -19,11 +19,25 @@ spec:
       labels:
         app: playground-app
         admission.datadoghq.com/cws-instrumentation.enabled: "true"
+        # Opt this pod out of Datadog Single-Step Instrumentation. SSI's
+        # admission controller injects a pinned ddtrace build via PYTHONPATH,
+        # which takes priority over and effectively overrides the custom
+        # dd-trace-py wheel (DataDog/dd-trace-py#18872, OTel thread-context
+        # publishing) installed into this image. CWS instrumentation above is
+        # unaffected — that's a separate injection path.
+        admission.datadoghq.com/enabled: "false"
     spec:
       containers:
         - name: playground-app
-          image: docker.io/datadog/datadog-security-playground:latest
-          imagePullPolicy: IfNotPresent
+          # Built from app/Dockerfile with the custom dd-trace-py wheel
+          # (DataDog/dd-trace-py#18872) baked in, instead of the public
+          # docker.io/datadog/datadog-security-playground:latest image.
+          # TODO: this is a sandbox-account ECR repo, not pullable outside
+          # that account. Swap back to the public image once
+          # DataDog/dd-trace-py#18872 merges and ships in a public ddtrace
+          # release.
+          image: 147649276342.dkr.ecr.us-east-1.amazonaws.com/playground-app-otel-4947:custom-wheel
+          imagePullPolicy: Always
           env:
             - name: DD_SERVICE
               value: "playground-app"

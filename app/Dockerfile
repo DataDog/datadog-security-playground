@@ -65,11 +65,26 @@ COPY app/templates /app/templates
 COPY app/requirements.txt /app/requirements.txt
 RUN \
     pip install --no-cache-dir -r /app/requirements.txt
+
+# Custom dd-trace-py build (DataDog/dd-trace-py#18872) that publishes the OTel
+# thread-local context CWS reads to correlate APM traces with security events
+# (datadog-agent#48446). This page is a flat links page, not a PEP 503 index
+# root, so it must be passed via --find-links, not --index-url/
+# --extra-index-url (which appends "/<pkg>/" to the URL and 404s, silently
+# falling back to PyPI). Also pinned to the exact build version — pip
+# excludes pre-releases like this "rc1" build by default.
+RUN \
+    pip install --no-cache-dir \
+        --find-links https://dd-trace-py-builds.s3.amazonaws.com/3581ca6284299ab47a20c534f50ac833df60c0ea/index-manylinux2014_x86_64.html \
+        "ddtrace==4.12.0rc1+g3581ca6"
 RUN \
     chown -R app:app /app
 
 # --threads 4 enables the gthread worker so nested /inject calls from detonate scripts
 # (which curl back into /inject for each attack step) don't deadlock on a single sync worker.
 # --timeout 600 because the sync timeout would otherwise kill long-running scenario steps.
-ENTRYPOINT ["gunicorn", "-b", ":5000", "--timeout", "600", "--threads", "4", "app:app"]
+# ddtrace-run wraps the process for manual instrumentation now that this pod
+# opts out of SSI (see admission-controller exclusion label) — SSI would
+# otherwise inject its own tracer and clobber the custom dd-trace-py wheel.
+ENTRYPOINT ["ddtrace-run", "gunicorn", "-b", ":5000", "--timeout", "600", "--threads", "4", "app:app"]
 EXPOSE $PORT
