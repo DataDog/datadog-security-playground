@@ -1,7 +1,7 @@
 datadog:
   site: "datadoghq.com"
   apiKeyExistingSecret: "datadog-api-secret"
-  
+
   apm:
     portEnabled: true
     port: 8126
@@ -29,8 +29,11 @@ datadog:
       enabled: true
 
   env:
+    # TODO: personal value, left in place because it's what was verified
+    # working — revert to a shared value (e.g. "playground-env") once this
+    # is running the merged, upstream datadog-agent build.
     - name: DD_ENV
-      value: "playground-env"
+      value: "florentin.labelle"
     - name: DD_CLUSTER_NAME
       value: "playground-cluster"
     - name: DD_KUBELET_TLS_VERIFY
@@ -55,6 +58,22 @@ datadog:
       enabled: true
     iast:
       enabled: true
+
+# Custom agent build for DataDog/datadog-agent#48446 (OTel thread-context /
+# CWS-APM correlation, not yet merged), built from that PR's branch and
+# pushed to this sandbox-account ECR repo for testing.
+# TODO: this is a sandbox-account ECR repo, not pullable outside that
+# account. Drop this `agents.image` override (falling back to the chart's
+# default public agent image) once #48446 merges and ships in a release.
+agents:
+  image:
+    repository: 147649276342.dkr.ecr.us-east-1.amazonaws.com/datadog-agent-otel-4947
+    # Chart parses this tag as a semver to decide which agent-version-gated
+    # template branches to render (see get-agent-version in _helpers.tpl), so
+    # it must stay a valid version string. 7.80.4 matches the actual
+    # org.opencontainers.image.version baked into this custom build.
+    tag: "7.80.4-otel4947"
+    pullPolicy: Always
 
 clusterAgent:
   enabled: true
