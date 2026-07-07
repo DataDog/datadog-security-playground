@@ -110,15 +110,28 @@ resource "helm_release" "datadog_agent" {
   ]
 }
 
+# deploy/app.yaml is a multi-document manifest (Namespace + Deployment) so it
+# can be applied directly with `kubectl apply -f` for local dev (see
+# LIMA.md); yamldecode() only handles a single document, so split on the
+# document separator and pick out the Deployment. The Namespace document is
+# intentionally skipped here — kubernetes_namespace.playground already
+# manages that namespace.
+locals {
+  playground_app_manifest = one([
+    for doc in split("---", file("${path.module}/../../deploy/app.yaml")) :
+    yamldecode(doc) if trimspace(doc) != "" && yamldecode(doc).kind == "Deployment"
+  ])
+}
+
 # Deploy playground app using existing manifest
 resource "kubernetes_manifest" "playground_app" {
   depends_on = [kubernetes_namespace.playground, helm_release.datadog_agent]
 
   manifest = merge(
-    yamldecode(file("${path.module}/../../deploy/app.yaml")),
+    local.playground_app_manifest,
     {
       metadata = merge(
-        yamldecode(file("${path.module}/../../deploy/app.yaml")).metadata,
+        local.playground_app_manifest.metadata,
         {
           namespace = kubernetes_namespace.playground.metadata[0].name
           name = "playground-app"
