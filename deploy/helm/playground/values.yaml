@@ -12,3 +12,19 @@ playgroundApp:
     limits:
       memory: "4Gi"
       cpu: "2"
+
+# CVE-2025-3248: unauthenticated exec() on user-supplied code via
+# POST /api/v1/validate/code, fixed in 1.3.0. Pinned by digest to the
+# last vulnerable published image (langflowai/langflow:1.2.0).
+langflowVulnerable:
+  enabled: true
+  image:
+    repository: docker.io/langflowai/langflow
+    digest: "sha256:1e9cfdb0e1565b1187bdd3c6849493ecbd81627645214ab0537d7cbcdbdb454a"
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "2Gi"
+      cpu: "1"

