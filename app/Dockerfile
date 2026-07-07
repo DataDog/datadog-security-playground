@@ -72,11 +72,14 @@ RUN \
 # root, so it must be passed via --find-links, not --index-url/
 # --extra-index-url (which appends "/<pkg>/" to the URL and 404s, silently
 # falling back to PyPI). Also pinned to the exact build version — pip
-# excludes pre-releases like this "rc1" build by default.
+# excludes pre-releases like this "rc1" build by default. Uses the
+# unqualified index.html (not index-manylinux2014_x86_64.html) since it
+# lists both x86_64 and aarch64 wheels, so this Dockerfile builds on either
+# arch instead of just amd64.
 RUN \
     pip install --no-cache-dir \
-        --find-links https://dd-trace-py-builds.s3.amazonaws.com/3581ca6284299ab47a20c534f50ac833df60c0ea/index-manylinux2014_x86_64.html \
-        "ddtrace==4.12.0rc1+g3581ca6"
+        --find-links https://dd-trace-py-builds.s3.amazonaws.com/97c1f5ce4336a82030f01056ede78c9c13c992f7/index.html \
+        "ddtrace==4.12.0rc1+g97c1f5c"
 RUN \
     chown -R app:app /app
 
