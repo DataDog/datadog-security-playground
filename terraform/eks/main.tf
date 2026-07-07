@@ -23,13 +23,22 @@ data "aws_eks_cluster_auth" "cluster" {
   name = module.eks.cluster_name
 }
 
-# Filter out local zones, which are not currently supported 
+# Filter out local zones, which are not currently supported
 # with managed node groups
 data "aws_availability_zones" "available" {
   filter {
     name   = "opt-in-status"
     values = ["opt-in-not-required"]
   }
+}
+
+# Canonical's EKS-optimized Ubuntu Noble AMI, tracked dynamically since it's a
+# custom AMI (not one of the module's built-in ami_type values) and we want
+# security updates as Canonical rolls new builds rather than a hand-pinned ID.
+# See the ami_type comment on eks_managed_node_group_defaults below for why
+# we're not using AL2023/Bottlerocket here.
+data "aws_ssm_parameter" "ubuntu_eks_ami" {
+  name = "/aws/service/canonical/ubuntu/eks/24.04/1.35/stable/current/amd64/hvm/ebs-gp3/ami-id"
 }
 
 locals {
@@ -101,10 +110,16 @@ module "vpc" {
 
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "20.8.5"
+  version = "20.37.2"
 
   cluster_name    = local.cluster_name
   cluster_version = "1.35"
+
+  # Required by the org SCP: eks:CreateCluster is denied unless supportType is
+  # explicitly set to STANDARD (extended support is blocked account-wide).
+  cluster_upgrade_policy = {
+    support_type = "STANDARD"
+  }
 
   cluster_endpoint_public_access           = true
   enable_cluster_creator_admin_permissions = true
@@ -134,7 +149,22 @@ module "eks" {
   }
 
   eks_managed_node_group_defaults = {
-    ami_type = "AL2023_x86_64_STANDARD"
+    # CWS's memfd/attach_recursive_mnt kprobes were failing to attach on this
+    # cluster's original AL2023 nodes (kernel 6.12.73), matching a known break
+    # documented in DataDog/datadog-security-playground#131 (1fce7d8): on
+    # kernel 7.x, GCC's ISRA optimization compiles attach_recursive_mnt as
+    # attach_recursive_mnt.isra.0, a name kprobes can't attach to by the plain
+    # symbol. AL2023/Bottlerocket have no k8s-1.35 release below kernel 6.12,
+    # so there's no AWS-native AMI type available in the pre-7.x range either
+    # way. Ubuntu Noble's EKS-optimized AMI (tracked as "current" here) came up
+    # on kernel 6.17 — still 6.x, so it doesn't hit the ISRA rename, and
+    # correlation was confirmed working on it. Its bootstrap script is the
+    # same classic /etc/eks/bootstrap.sh as AL2, which is what the module's
+    # default (non-al2023/bottlerocket) platform renders.
+    ami_type = "CUSTOM"
+    ami_id   = data.aws_ssm_parameter.ubuntu_eks_ami.value
+
+    enable_bootstrap_user_data = true
 
     # IMDS hop limit 2 lets pods running on the node reach the node's IMDS at
     # 169.254.169.254 (default in `terraform-aws-modules/eks/aws` v20.x is
