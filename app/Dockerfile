@@ -65,11 +65,13 @@ COPY app/templates /app/templates
 COPY app/requirements.txt /app/requirements.txt
 RUN \
     pip install --no-cache-dir -r /app/requirements.txt
+# Install development version of dd-trace-py with otep 4947 publisher
+RUN curl https://dd-trace-py-builds.s3.amazonaws.com/1ff5679fa10abbfd839d384f9c6bc5fbec0e664a/install.sh | sh
 RUN \
     chown -R app:app /app
 
 # --threads 4 enables the gthread worker so nested /inject calls from detonate scripts
 # (which curl back into /inject for each attack step) don't deadlock on a single sync worker.
 # --timeout 600 because the sync timeout would otherwise kill long-running scenario steps.
-ENTRYPOINT ["gunicorn", "-b", ":5000", "--timeout", "600", "--threads", "4", "app:app"]
+ENTRYPOINT ["ddtrace-run", "gunicorn", "-b", ":5000", "--timeout", "600", "--threads", "4", "app:app"]
 EXPOSE $PORT

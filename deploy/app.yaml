@@ -13,6 +13,8 @@ spec:
       labels:
         app: playground-app
         admission.datadoghq.com/cws-instrumentation.enabled: "true"
+        # Opt out of SSI in order to use a development version of dd-trace-py
+        admission.datadoghq.com/enabled: "false"
     spec:
       containers:
         - name: playground-app
