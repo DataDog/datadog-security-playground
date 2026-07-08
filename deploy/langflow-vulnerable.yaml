@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: langflow-vulnerable
+  namespace: playground
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: langflow-vulnerable
+  template:
+    metadata:
+      labels:
+        app: langflow-vulnerable
+        admission.datadoghq.com/cws-instrumentation.enabled: "true"
+        # Opt this pod out of Datadog Single-Step Instrumentation, same as
+        # playground-app (see deploy/app.yaml) -- SSI's admission controller
+        # injects a pinned ddtrace build via PYTHONPATH, which takes priority
+        # over and effectively overrides the custom dd-trace-py wheel
+        # (DataDog/dd-trace-py#18872, OTel thread-context publishing) baked
+        # into this image. CWS instrumentation above is unaffected -- that's
+        # a separate injection path.
+        admission.datadoghq.com/enabled: "false"
+    spec:
+      containers:
+        - name: langflow-vulnerable
+          # Built from langflow-vulnerable/Dockerfile: the real, upstream
+          # Langflow image pinned by digest to the last version affected by
+          # CVE-2025-3248 (unauthenticated exec() on user-supplied code via
+          # POST /api/v1/validate/code, fixed in 1.3.0), with the same custom
+          # dd-trace-py wheel baked in as playground-app.
+          # TODO: this is a sandbox-account ECR repo, not pullable outside
+          # that account. Swap back to the plain pinned-by-digest upstream
+          # image (with SSI instead of the custom wheel) once
+          # DataDog/dd-trace-py#18872 merges and ships in a public ddtrace
+          # release.
+          image: 147649276342.dkr.ecr.us-east-1.amazonaws.com/langflow-vulnerable-otel-4947:custom-wheel
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 7860
+          env:
+            - name: DD_SERVICE
+              value: "langflow-vulnerable"
+            - name: DD_APPSEC_ENABLED
+              value: "true"
+            - name: DD_IAST_ENABLED
+              value: "true"
+            - name: DD_APPSEC_SCA_ENABLED
+              value: "true"
+            - name: DD_AGENT_HOST
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            - name: DD_TRACE_AGENT_PORT
+              value: "8126"
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "2Gi"
+              cpu: "1"
