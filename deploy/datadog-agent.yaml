@@ -61,13 +61,13 @@ datadog:
 
 # Custom agent build for DataDog/datadog-agent#48446 (OTel thread-context /
 # CWS-APM correlation, not yet merged), built from that PR's branch and
-# pushed to this sandbox-account ECR repo for testing.
-# TODO: this is a sandbox-account ECR repo, not pullable outside that
-# account. Drop this `agents.image` override (falling back to the chart's
+# re-hosted in a personal ECR repo for testing (original sandbox-account
+# repo wasn't pullable outside that account).
+# TODO: drop this `agents.image` override (falling back to the chart's
 # default public agent image) once #48446 merges and ships in a release.
 agents:
   image:
-    repository: 147649276342.dkr.ecr.us-east-1.amazonaws.com/datadog-agent-otel-4947
+    repository: 042128958095.dkr.ecr.us-east-1.amazonaws.com/datadog-agent-otel-4947
     # Chart parses this tag as a semver to decide which agent-version-gated
     # template branches to render (see get-agent-version in _helpers.tpl), so
     # it must stay a valid version string. 7.80.4 matches the actual
