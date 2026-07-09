@@ -5,6 +5,30 @@
 # Datadog Single-Step Instrumentation.
 FROM langflowai/langflow@sha256:1e9cfdb0e1565b1187bdd3c6849493ecbd81627645214ab0537d7cbcdbdb454a
 
+# GIT_SHA pins payload downloads from Github to the commit the image was built from
+# so scenarios stay reproducible as main moves forward. Defaults to "main" for
+# bare `docker build` invocations; Github CI Workflows pass the real SHA.
+ARG GIT_SHA=main
+ENV GIT_SHA=${GIT_SHA}
+
+# The upstream image runs as a non-root "user" (uid 1000) with no sudo/curl/jq/
+# awscli, which breaks the rce-malware and cloud-access scenario scripts
+# (assets/rce-malware/payload.sh, assets/cloud-access/cloud-access.sh) at
+# runtime -- apt has no network egress or write perms from inside the exploited
+# pod. Bake the same dependencies playground-app bakes (see app/Dockerfile) at
+# build time instead, when root + network are actually available, and run the
+# container as root so the scenario scripts work unmodified.
+#
+# curl:     download payloads and IMDS access in rce-malware and cloud-access
+# jq:       parse IMDS JSON credentials in rce-malware/cloud-access
+# awscli:   AWS API calls (ec2 run-instances) in cloud-access
+# dnsutils: dig to mining pools in rce-malware/payload
+# procps:   pkill for cleanup in rce-malware
+USER root
+RUN apt update && apt install -y \
+    curl jq awscli dnsutils procps && \
+    touch /etc/rc.common
+
 # Custom dd-trace-py build (DataDog/dd-trace-py#18872) that publishes the OTel
 # thread-local context CWS reads to correlate APM traces with security events
 # (datadog-agent#48446) -- same build used for playground-app. The upstream

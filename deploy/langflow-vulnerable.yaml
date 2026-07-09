@@ -33,7 +33,7 @@ spec:
           # (with SSI instead of the custom wheel) once
           # DataDog/dd-trace-py#18872 merges and ships in a public ddtrace
           # release.
-          image: ghcr.io/loresuso/langflow-vulnerable:custom-wheel
+          image: 042128958095.dkr.ecr.eu-west-3.amazonaws.com/langflow-vulnerable:custom-wheel
           imagePullPolicy: Always
           ports:
             - name: http
