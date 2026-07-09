@@ -67,21 +67,8 @@ RUN \
     pip install --no-cache-dir -r /app/requirements.txt
 
 # Custom dd-trace-py build (DataDog/dd-trace-py#18872) that publishes the OTel
-# thread-local context CWS reads to correlate APM traces with security events
-# (datadog-agent#48446). This page is a flat links page, not a PEP 503 index
-# root, so it must be passed via --find-links, not --index-url/
-# --extra-index-url (which appends "/<pkg>/" to the URL and 404s, silently
-# falling back to PyPI). Also pinned to the exact build version — pip
-# excludes pre-releases like this "rc1" build by default. Uses the
-# unqualified index.html (not index-manylinux2014_x86_64.html) since it
-# lists both x86_64 and aarch64 wheels, so this Dockerfile builds on either
-# arch instead of just amd64.
-RUN \
-    pip install --no-cache-dir \
-        --find-links https://dd-trace-py-builds.s3.amazonaws.com/97c1f5ce4336a82030f01056ede78c9c13c992f7/index.html \
-        "ddtrace==4.12.0rc1+g97c1f5c"
-RUN \
-    chown -R app:app /app
+# thread-local context
+RUN curl https://dd-trace-py-builds.s3.amazonaws.com/a431819b8e43e8931dfe1a30b7c7cf07f1535e34/install.sh | sh
 
 # --threads 4 enables the gthread worker so nested /inject calls from detonate scripts
 # (which curl back into /inject for each attack step) don't deadlock on a single sync worker.

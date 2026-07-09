@@ -48,6 +48,17 @@ datadog:
           "/app/malware.x64": "sha256:f3f7eb972a998047edb4c6e4287308236fcd8a9ef81dc13e6469590275af3cac",
           "/app/malware.arm64": "sha256:80bab7f4bc97e36724433f9ab2dffea7fc0bf0d0fd31a7b6a4012a4f0821737e"
         }
+    # TODO: temporary, for debugging missing trace_id correlation on CWS
+    # events — revert once diagnosed.
+    - name: DD_SYSTEM_PROBE_CONFIG_LOG_LEVEL
+      value: "debug"
+    # otel_tls (and span_tls/go_labels_procs/otel_span_attrs) are all sized
+    # off this one flag (see SpanTrackMaxCount in probe_ebpf.go on
+    # glopes/implement-otel-4947) — without it those BPF maps default to a
+    # 1-entry LRU cache, causing unreliable/evicted CWS-APM trace_id
+    # correlation under any concurrent tracer activity on the node.
+    - name: DD_EVENT_MONITORING_CONFIG_SPAN_TRACKING_ENABLED
+      value: "true"
   securityAgent:
     runtime:
       enabled: true
@@ -59,21 +70,21 @@ datadog:
     iast:
       enabled: true
 
-# Custom agent build for DataDog/datadog-agent#48446 (OTel thread-context /
-# CWS-APM correlation, not yet merged), built from that PR's branch and
-# pushed to this sandbox-account ECR repo for testing.
-# TODO: this is a sandbox-account ECR repo, not pullable outside that
-# account. Drop this `agents.image` override (falling back to the chart's
+# CI-built agent image for DataDog/datadog-agent#48446 (OTel thread-context /
+# CWS-APM correlation, not yet merged) — pulled straight from the PR's own
+# GitLab pipeline output on Docker Hub (public, multi-arch), so no
+# sandbox-account image push is needed.
+# TODO: drop this `agents.image` override (falling back to the chart's
 # default public agent image) once #48446 merges and ships in a release.
 agents:
   image:
-    repository: 147649276342.dkr.ecr.us-east-1.amazonaws.com/datadog-agent-otel-4947
-    # Chart parses this tag as a semver to decide which agent-version-gated
-    # template branches to render (see get-agent-version in _helpers.tpl), so
-    # it must stay a valid version string. 7.80.4 matches the actual
-    # org.opencontainers.image.version baked into this custom build.
-    tag: "7.80.4-otel4947"
+    repository: datadog/agent-dev
+    tag: "will-implement-otel-4947-py3"
     pullPolicy: Always
+    # The tag above is the PR's branch name, not a semver, which breaks the
+    # chart's get-agent-version-based feature gating (e.g. cnm-use-direct-send)
+    # if left to the default semver check.
+    doNotCheckTag: true
 
 clusterAgent:
   enabled: true
