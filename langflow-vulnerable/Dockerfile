@@ -29,16 +29,18 @@ RUN apt update && apt install -y \
     curl jq awscli dnsutils procps && \
     touch /etc/rc.common
 
-# Custom dd-trace-py build (DataDog/dd-trace-py#18872) that publishes the OTel
+# Custom dd-trace-py build (DataDog/dd-trace-py#18872, branch
+# florentin.labelle/thread-context-sharing) that publishes the OTel
 # thread-local context CWS reads to correlate APM traces with security events
-# (datadog-agent#48446) -- same build used for playground-app. The upstream
+# (datadog-agent#48446). Newer build than the one currently baked into
+# playground-app (app/Dockerfile still pins the 97c1f5c build). The upstream
 # image's venv ships without pip (PATH resolves the system /usr/local/bin/pip
 # instead, which would install into the wrong Python), so bootstrap pip into
 # /app/.venv directly before installing the wheel there.
 RUN /app/.venv/bin/python3 -m ensurepip --default-pip && \
     /app/.venv/bin/python3 -m pip install --no-cache-dir \
-        --find-links https://dd-trace-py-builds.s3.amazonaws.com/97c1f5ce4336a82030f01056ede78c9c13c992f7/index.html \
-        "ddtrace==4.12.0rc1+g97c1f5c"
+        --find-links https://dd-trace-py-builds.s3.amazonaws.com/81bc1deb8cb43703e82a42c72a9387f037c0a8db/index.html \
+        "ddtrace==4.12.0rc1"
 
 # ddtrace-run wraps the process for manual instrumentation now that this pod
 # opts out of SSI (see the admission-controller exclusion label in
