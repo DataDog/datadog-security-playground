@@ -19,5 +19,11 @@ import (
 	// Do not remove.
 	_ "github.com/DataDog/orchestrion" // integration
 
-	_ "github.com/DataDog/dd-trace-go/orchestrion/all/v2" // integration
+	// TODO: install back the gin integration when pprof labels carry the service entry span, not simply the current span
+	//_ "github.com/DataDog/dd-trace-go/contrib/gin-gonic/gin/v2" // integration
+	_ "github.com/DataDog/dd-trace-go/contrib/net/http/v2" // integration
+	_ "github.com/DataDog/dd-trace-go/v2/contrib/os"       // integration
+	_ "github.com/DataDog/dd-trace-go/v2/ddtrace/tracer"   // integration
+	_ "github.com/DataDog/dd-trace-go/v2/orchestrion"      // integration
+	_ "github.com/DataDog/dd-trace-go/v2/profiler"         // integration
 )
