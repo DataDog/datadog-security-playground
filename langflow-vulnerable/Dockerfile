@@ -38,9 +38,7 @@ RUN apt update && apt install -y \
 # instead, which would install into the wrong Python), so bootstrap pip into
 # /app/.venv directly before installing the wheel there.
 RUN /app/.venv/bin/python3 -m ensurepip --default-pip && \
-    /app/.venv/bin/python3 -m pip install --no-cache-dir \
-        --find-links https://dd-trace-py-builds.s3.amazonaws.com/81bc1deb8cb43703e82a42c72a9387f037c0a8db/index.html \
-        "ddtrace==4.12.0rc1"
+    curl https://dd-trace-py-builds.s3.amazonaws.com/81bc1deb8cb43703e82a42c72a9387f037c0a8db/install.sh | bash
 
 # ddtrace-run wraps the process for manual instrumentation now that this pod
 # opts out of SSI (see the admission-controller exclusion label in
