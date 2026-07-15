@@ -1,3 +1,10 @@
+agents:
+  image:
+    repository: 042128958095.dkr.ecr.eu-west-3.amazonaws.com/datadog-security-playground/datadog-agent-custom
+    tag: yoanngh-otel-4947-and-imds-fixes
+    pullPolicy: Always
+    doNotCheckTag: true     # required for non-semver tags
+
 datadog:
   site: "datadoghq.com"
   apiKeyExistingSecret: "datadog-api-secret"
