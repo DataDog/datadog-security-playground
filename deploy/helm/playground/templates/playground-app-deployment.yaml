@@ -1,0 +1,44 @@
+{{- if .Values.playgroundApp.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: playground-app
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: playground-app
+  template:
+    metadata:
+      labels:
+        app: playground-app
+        admission.datadoghq.com/cws-instrumentation.enabled: "true"
+    spec:
+      containers:
+        - name: playground-app
+          image: "{{ .Values.playgroundApp.image.repository }}:{{ .Values.playgroundApp.image.tag }}"
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: DD_SERVICE
+              value: "playground-app"
+            - name: DD_APPSEC_ENABLED
+              value: "true"
+            - name: DD_IAST_ENABLED
+              value: "true"
+            - name: DD_APPSEC_SCA_ENABLED
+              value: "true"
+            - name: DD_AGENT_HOST
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            - name: DD_TRACE_AGENT_PORT
+              value: "8126"
+          resources:
+            requests:
+              memory: {{ .Values.playgroundApp.resources.requests.memory | quote }}
+              cpu: {{ .Values.playgroundApp.resources.requests.cpu | quote }}
+            limits:
+              memory: {{ .Values.playgroundApp.resources.limits.memory | quote }}
+              cpu: {{ .Values.playgroundApp.resources.limits.cpu | quote }}
+{{- end }}

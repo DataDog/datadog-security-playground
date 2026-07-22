@@ -74,31 +74,31 @@ export DD_APP_KEY=<your application key>      # only needed for scenario 1 (rce-
    datadog-agent-rzxs2                            4/4     Running   0          2m8s
    ```
 
-### Step 2: Deploy Vulnerable Application
+### Step 2: Deploy the Playground App
 
-1. **Deploy the Application:**
+1. **Deploy via Helm:**
    ```bash
-   kubectl apply -f deploy/app.yaml
+   helm install playground deploy/helm/playground --namespace playground --create-namespace
    ```
 
-2. **Wait for Application to be Ready:**
+2. **Wait for Applications to be Ready:**
    ```bash
    kubectl get pods -n playground
    ```
-   
+
    Expected output:
    ```
    NAME                                           READY   STATUS              RESTARTS   AGE
-   playground-app-deployment-87b8d4b88-2hmzx      1/1     Running             0          1m30s
+   playground-app-7f8b9c6d5-2hmzx                 1/1     Running             0          1m30s
    ```
 
 ### Cleanup
 
 To remove the playground from your cluster:
 
-1. **Delete the Application:**
+1. **Uninstall the Applications:**
    ```bash
-   kubectl delete -f deploy/app.yaml
+   helm uninstall playground --namespace playground
    ```
 
 2. **Uninstall the Datadog Agent:**
@@ -113,12 +113,11 @@ To remove the playground from your cluster:
 
 ## ☁️ Terraform EKS Setup (Optional)
 
-If you don't have an existing Kubernetes cluster, you can use Terraform to create an Amazon EKS cluster with the playground application and Datadog Agent pre-configured.
+If you don't have an existing Kubernetes cluster, you can use Terraform to create an Amazon EKS cluster. Terraform only provisions the cluster and the `playground` namespace/service account — the Datadog Agent and applications are deployed afterwards via the same `helm install` steps as [above](#-deployment-guide), regardless of how the cluster was created.
 
 ### Prerequisites
 - AWS credentials configured or passed as environment variables
 - Terraform installed (>= 1.0)
-- Datadog API key
 
 ### Deployment
 
@@ -129,7 +128,7 @@ Due to Terraform provider initialization requirements, deployment must be done i
 ```bash
 cd terraform/eks
 terraform init
-terraform apply -var="datadog_api_key=YOUR_API_KEY_HERE" \
+terraform apply \
     -target=module.vpc \
     -target=module.eks
 ```
@@ -139,19 +138,20 @@ This creates:
 - EKS cluster with managed node groups
 - Required IAM roles and policies
 
-#### Stage 2: Deploy Kubernetes Resources
+#### Stage 2: Create Kubernetes-side Cluster Resources
 
-Once the cluster is created, deploy the Kubernetes resources:
+Once the cluster is created, apply the remaining resources:
 
 ```bash
-terraform apply -var="datadog_api_key=YOUR_API_KEY_HERE"
+terraform apply
 ```
 
 This deploys:
-- Kubernetes namespaces (`playground` and `datadog`)
-- Service accounts and secrets
-- Datadog Agent via Helm
-- Playground application
+- The `playground` namespace
+- Service account (with IAM Pod Identity association) and its token secret
+- An Ubuntu test pod for experimentation
+
+Then follow [Step 1](#step-1-deploy-datadog-agent) and [Step 2](#step-2-deploy-vulnerable-applications) above to deploy the Datadog Agent and the applications via Helm.
 
 ### Access the Cluster
 
@@ -170,10 +170,10 @@ To destroy the EKS cluster and all associated AWS resources:
 
 ```bash
 cd terraform/eks
-terraform destroy -var="datadog_api_key=YOUR_API_KEY_HERE"
+terraform destroy
 ```
 
-This removes the EKS cluster, VPC, IAM roles, and all Kubernetes resources deployed by Terraform.
+This removes the EKS cluster, VPC, IAM roles, and the Kubernetes-side cluster resources created by Terraform. Uninstall the Helm releases (Datadog Agent, playground) first per the [Cleanup](#cleanup) section above.
 
 ## 🎯 Available Attack Scenarios
 
