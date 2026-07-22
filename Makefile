@@ -36,3 +36,15 @@ inject:
 
 ping:
 	curl http://$(APP_HOSTNAME):$(APP_PORT)/ping
+
+# AKS convenience targets
+aks-deploy:
+	terraform -chdir=terraform/aks apply
+
+aks-destroy:
+	terraform -chdir=terraform/aks destroy
+
+aks-creds:
+	az aks get-credentials \
+		--resource-group $$(cd terraform/aks && terraform output -raw resource_group_name) \
+		--name $$(cd terraform/aks && terraform output -raw cluster_name)

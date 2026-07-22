@@ -3,7 +3,13 @@ terraform/eks/terraform.tfvars
 terraform/eks/terraform.tfstate
 terraform/eks/terraform.tfstate.backup
 terraform/eks/terraform.tfstate.lock.info
-terraform/eks/terraform.tfstate.lock.info
+
+terraform/aks/.terraform*
+terraform/aks/terraform.tfvars
+terraform/aks/terraform.tfstate
+terraform/aks/terraform.tfstate.backup
+terraform/aks/terraform.tfstate.lock.info
+terraform/aks/kubeconfig.yaml
 
 # python
 __pycache__/

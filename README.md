@@ -24,8 +24,9 @@ You can deploy this playground on:
 
 1. **Your existing Kubernetes cluster** - Follow the deployment guide below
 2. **Amazon EKS using Terraform** - See [Terraform EKS Setup](#-terraform-eks-setup-optional) section
-3. **Local Lima VM** - See [LIMA.md](LIMA.md)
-4. **Local Minikube cluster** - For developers, see [DEVELOPER.md](DEVELOPER.md)
+3. **Azure AKS using Terraform** - See [Terraform AKS Setup](#-terraform-aks-setup-optional) section
+4. **Local Lima VM** - See [LIMA.md](LIMA.md)
+5. **Local Minikube cluster** - For developers, see [DEVELOPER.md](DEVELOPER.md)
 
 ## 🌍 Configuration
 
@@ -175,6 +176,71 @@ terraform destroy -var="datadog_api_key=YOUR_API_KEY_HERE"
 
 This removes the EKS cluster, VPC, IAM roles, and all Kubernetes resources deployed by Terraform.
 
+## ☁️ Terraform AKS Setup (Optional)
+
+If you prefer Azure, you can use Terraform to create an AKS cluster with the playground application and Datadog Agent pre-configured.
+
+### Prerequisites
+- Azure CLI installed and authenticated (`az login`)
+- An active Azure subscription
+- Terraform installed (>= 1.0)
+- Datadog API key
+
+### Deployment
+
+Due to Terraform provider initialization requirements, deployment must be done in **two stages**:
+
+#### Stage 1: Create the AKS Cluster and Networking
+
+```bash
+cd terraform/aks
+terraform init
+terraform apply -var="datadog_api_key=YOUR_API_KEY_HERE" \
+    -target=azurerm_resource_group.playground \
+    -target=azurerm_virtual_network.playground \
+    -target=azurerm_subnet.aks \
+    -target=azurerm_user_assigned_identity.playground \
+    -target=azurerm_kubernetes_cluster.playground \
+    -target=azurerm_kubernetes_cluster_node_pool.user \
+    -target=azurerm_federated_identity_credential.playground
+```
+
+This creates:
+- Azure Resource Group and Virtual Network
+- AKS cluster with system and user node pools
+- User-assigned managed identity with Workload Identity federation
+
+#### Stage 2: Deploy Kubernetes Resources
+
+```bash
+terraform apply -var="datadog_api_key=YOUR_API_KEY_HERE"
+```
+
+This deploys:
+- Kubernetes namespaces (`playground` and `datadog`)
+- Service accounts with Azure Workload Identity annotations
+- Datadog Agent via Helm
+- Playground application
+
+### Access the Cluster
+
+```bash
+az aks get-credentials \
+    --resource-group $(terraform output -raw resource_group_name) \
+    --name $(terraform output -raw cluster_name)
+```
+
+For more details, see [AKS.md](AKS.md).
+
+### Cleanup
+
+To destroy the AKS cluster and all associated Azure resources:
+
+```bash
+cd terraform/aks
+terraform destroy -var="datadog_api_key=YOUR_API_KEY_HERE"
+```
+
 ## 🎯 Available Attack Scenarios
 
 Navigate to the `scenarios/` folder to explore available attack scenarios. Each scenario includes detailed documentation and step-by-step instructions.
@@ -208,7 +274,20 @@ kubectl exec -it -n playground deploy/playground-app -- /scenarios/rce-malware/d
 kubectl exec -it -n playground deploy/playground-app -- /scenarios/cloud-access/detonate.sh --wait
 ```
 
-#### 3. BPFDoor Network Backdoor Attack
+#### 3. Cloud Access - Azure Managed Identity Token Theft and Resource Abuse
+- **Location**: `scenarios/cloud-access-azure/`
+- **Description**: Simulates cloud credential theft and resource abuse on AKS by retrieving an Azure managed identity OAuth2 token from the Instance Metadata Service (IMDS) and attempting to create expensive VMs across multiple Azure regions. This demonstrates how attackers pivot from workload compromise to Azure infrastructure abuse.
+- **Attack Vector**: Azure IMDS token theft, unauthorized VM create calls via ARM API
+- **Impact**: Cloud credential theft, unauthorized resource provisioning, financial abuse
+- **Detection**: Azure Activity Log events for unauthorized `Microsoft.Compute/virtualMachines/write` calls, IMDS access patterns in Datadog Workload Protection
+
+**How to Run:**
+```bash
+# Execute the attack simulation from within the playground-app pod
+kubectl exec -it -n playground deploy/playground-app -- /scenarios/cloud-access-azure/detonate.sh --wait
+```
+
+#### 4. BPFDoor Network Backdoor Attack
 - **Location**: `scenarios/bpfdoor/`
 - **Description**: Simulates a command injection attack that deploys a persistent BPFDoor network backdoor
 - **Attack Vector**: Command injection vulnerability
@@ -222,7 +301,7 @@ kubectl exec -it -n playground deploy/playground-app -- /scenarios/cloud-access/
 kubectl exec -it -n playground deploy/playground-app -- /scenarios/bpfdoor/detonate.sh --wait
 ```
 
-#### 4. Essential Linux Binary Modified - Findings Generator
+#### 5. Essential Linux Binary Modified - Findings Generator
 - **Location**: `scenarios/findings-generator/`
 - **Description**: Essential system binaries in containers are executable files that perform operating system functions and administrative tasks. These binaries typically reside in protected system directories such as `/bin`, `/sbin`, `/usr/bin`, and `/usr/sbin`. In containerized environments, these binaries are part of the container image layers and should be immutable during runtime. 
 - **Attack Vector**: File system modifications to critical binaries
