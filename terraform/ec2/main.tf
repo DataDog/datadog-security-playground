@@ -11,6 +11,10 @@ locals {
   # Shared by the bootstrap script and the policy-loading SSM document, so the
   # two cannot drift apart.
   agent_container = "dd-agent"
+
+  # Split so swapping agent versions is a one-word override, while still
+  # allowing another registry.
+  agent_image = "${var.agent_image_repo}:${var.agent_image_tag}"
 }
 
 resource "random_string" "suffix" {
@@ -147,7 +151,7 @@ resource "aws_instance" "playground" {
     region          = var.region
     api_key_path    = aws_ssm_parameter.datadog_api_key.name
     datadog_site    = var.datadog_site
-    agent_image     = var.agent_image
+    agent_image     = local.agent_image
     agent_container = local.agent_container
   })
 

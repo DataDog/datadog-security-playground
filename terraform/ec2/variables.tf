@@ -25,8 +25,14 @@ variable "instance_type" {
   default     = "t3.medium"
 }
 
-variable "agent_image" {
-  description = "Datadog Agent image. Defaults to a pinned release candidate, so this playground exercises Workload Protection changes before they ship and every apply gets the same Agent; override with registry.datadoghq.com/agent:7 for the stable Agent. Requires Agent 7.46 or later."
+variable "agent_image_repo" {
+  description = "Datadog Agent image repository, without a tag. Override to run an agent from another registry, such as a development build pushed to ECR."
   type        = string
-  default     = "gcr.io/datadoghq/agent:7.83.0-rc.3"
+  default     = "gcr.io/datadoghq/agent"
+}
+
+variable "agent_image_tag" {
+  description = "Tag of the Datadog Agent image to run. Defaults to a pinned release candidate, so this playground exercises Workload Protection changes before they ship and every apply gets the same Agent; override with 7 for the latest stable Agent. Requires Agent 7.46 or later."
+  type        = string
+  default     = "7.83.0-rc.3"
 }
