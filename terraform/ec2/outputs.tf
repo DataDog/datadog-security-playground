@@ -21,4 +21,12 @@ output "ssm_session_command" {
   value       = "aws ssm start-session --region ${var.region} --target ${aws_instance.playground.id}"
 }
 
+output "load_policy_document_name" {
+  description = "SSM document that loads a local CWS policy file. Used by ./load-policy.sh."
+  value       = aws_ssm_document.load_cws_policy.name
+}
 
+output "load_policy_command" {
+  description = "Load a policy file onto the instance"
+  value       = "./load-policy.sh <path-to-file>.policy"
+}
