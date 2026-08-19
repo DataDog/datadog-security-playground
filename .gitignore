@@ -1,9 +1,9 @@
-terraform/eks/.terraform*
-terraform/eks/terraform.tfvars
-terraform/eks/terraform.tfstate
-terraform/eks/terraform.tfstate.backup
-terraform/eks/terraform.tfstate.lock.info
-terraform/eks/terraform.tfstate.lock.info
+# terraform (applies to every stack under terraform/)
+**/.terraform/
+*.tfvars
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
 
 # python
 __pycache__/
