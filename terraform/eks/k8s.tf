@@ -128,3 +128,22 @@ resource "kubernetes_manifest" "playground_app" {
   )
 }
 
+# Deploy the Langflow CVE-2025-3248 vulnerable container alongside the
+# playground app, instrumented with the released ddtrace==4.14.0 build
+# and SSI opt-out (see deploy/langflow-vulnerable.yaml).
+resource "kubernetes_manifest" "langflow_vulnerable" {
+  depends_on = [kubernetes_namespace.playground, helm_release.datadog_agent]
+
+  manifest = merge(
+    yamldecode(file("${path.module}/../../deploy/langflow-vulnerable.yaml")),
+    {
+      metadata = merge(
+        yamldecode(file("${path.module}/../../deploy/langflow-vulnerable.yaml")).metadata,
+        {
+          namespace = kubernetes_namespace.playground.metadata[0].name
+        }
+      )
+    }
+  )
+}
+

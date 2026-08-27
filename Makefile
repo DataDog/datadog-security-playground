@@ -1,7 +1,11 @@
-.PHONY: build build-no-art clean rebuild load reload
+.PHONY: build build-no-art build-langflow-vulnerable push-langflow-vulnerable clean rebuild load reload
 
 APP_IMG_NAME=datadog/datadog-security-playground
 APP_IMG_TAG?=latest
+LANGFLOW_IMG_NAME?=ghcr.io/datadog/datadog-security-playground
+LANGFLOW_DDTRACE_VERSION?=4.14.0
+LANGFLOW_IMG_TAG?=langflow-vulnerable-ddtrace-$(LANGFLOW_DDTRACE_VERSION)
+LANGFLOW_PLATFORM?=linux/amd64
 APP_HOSTNAME=localhost
 APP_PORT=5000
 ATOMIC_RED_TEAM?=false
@@ -15,6 +19,12 @@ build:
 
 push:
 	$(MAKE) build EXTRA_ARGS="--push"
+
+build-langflow-vulnerable:
+	docker buildx build --platform $(LANGFLOW_PLATFORM) . -t $(LANGFLOW_IMG_NAME):$(LANGFLOW_IMG_TAG) -f langflow-vulnerable/Dockerfile --build-arg GIT_SHA=$(GIT_SHA) --build-arg DDTRACE_VERSION=$(LANGFLOW_DDTRACE_VERSION) $(EXTRA_ARGS) --load
+
+push-langflow-vulnerable:
+	docker buildx build --platform $(LANGFLOW_PLATFORM) . -t $(LANGFLOW_IMG_NAME):$(LANGFLOW_IMG_TAG) -f langflow-vulnerable/Dockerfile --build-arg GIT_SHA=$(GIT_SHA) --build-arg DDTRACE_VERSION=$(LANGFLOW_DDTRACE_VERSION) --push
 
 build-redteam:
 	$(MAKE) build ATOMIC_RED_TEAM=true APP_IMG_TAG=redteam PLATFORM=linux/amd64
