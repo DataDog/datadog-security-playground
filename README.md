@@ -195,7 +195,26 @@ Navigate to the `scenarios/` folder to explore available attack scenarios. Each 
 kubectl exec -it -n playground deploy/playground-app -- /scenarios/rce-malware/detonate.sh --wait
 ```
 
-#### 2. Cloud Access - AWS Credential Theft and Resource Abuse
+#### 2. Langflow CVE-2025-3248 RCE -> Malware + Cloud Credential Theft
+- **Location**: `scenarios/langflow-rce/`
+- **Description**: The real-exploit alternative to scenario 1. Runs from the attacker machine against the `langflow-vulnerable` pod, exploiting CVE-2025-3248 (unauthenticated RCE via `POST /api/v1/validate/code` in Langflow < 1.3.0). It then chains the same `rce-malware` and `cloud-access` payloads through the exploit: a simulated cryptominer with persistence, AWS credential theft via IMDS, and an attempted EC2 pivot. Includes a recon phase (nmap / httpx / nuclei) that runs when the tools are installed.
+- **Attack Vector**: CVE-2025-3248 (unauthenticated RCE) in an exposed Langflow service
+- **Impact**: Remote code execution, malware execution, persistence, cloud credential theft, attempted lateral movement
+- **Detection**: AppSec signal for the CVE-2025-3248 exploit attempt, plus the same Workload Protection signals as scenarios 1 and 3 (cryptominer, mining-pool DNS, persistence, IMDS access)
+- **Prerequisites**: `python3` + the `requests` package on the attacker machine, and a port-forward to the langflow pod (`kubectl port-forward -n playground deployment/langflow-vulnerable 7860:7860`). Recon tools (`nmap`, `httpx`, `nuclei`) are optional.
+
+**How to Run:**
+```bash
+# Port-forward the vulnerable langflow pod to the attacker machine
+kubectl port-forward -n playground deployment/langflow-vulnerable 7860:7860
+
+# Run the exploit chain from the repo root (attacker machine)
+./scenarios/langflow-rce/detonate.sh --wait
+# Or against an explicit target:
+./scenarios/langflow-rce/detonate.sh --target http://localhost:7860 --wait
+```
+
+#### 3. Cloud Access - AWS Credential Theft and Resource Abuse
 - **Location**: `scenarios/cloud-access/`
 - **Description**: Simulates cloud credential theft and resource abuse by retrieving AWS credentials from the Instance Metadata Service (IMDS) and attempting to launch expensive EC2 instances across multiple regions. This demonstrates how attackers pivot from workload compromise to cloud infrastructure abuse.
 - **Attack Vector**: IMDS credential theft, unauthorized EC2 instance launches
@@ -208,7 +227,7 @@ kubectl exec -it -n playground deploy/playground-app -- /scenarios/rce-malware/d
 kubectl exec -it -n playground deploy/playground-app -- /scenarios/cloud-access/detonate.sh --wait
 ```
 
-#### 3. BPFDoor Network Backdoor Attack
+#### 4. BPFDoor Network Backdoor Attack
 - **Location**: `scenarios/bpfdoor/`
 - **Description**: Simulates a command injection attack that deploys a persistent BPFDoor network backdoor
 - **Attack Vector**: Command injection vulnerability
@@ -222,7 +241,7 @@ kubectl exec -it -n playground deploy/playground-app -- /scenarios/cloud-access/
 kubectl exec -it -n playground deploy/playground-app -- /scenarios/bpfdoor/detonate.sh --wait
 ```
 
-#### 4. Essential Linux Binary Modified - Findings Generator
+#### 5. Essential Linux Binary Modified - Findings Generator
 - **Location**: `scenarios/findings-generator/`
 - **Description**: Essential system binaries in containers are executable files that perform operating system functions and administrative tasks. These binaries typically reside in protected system directories such as `/bin`, `/sbin`, `/usr/bin`, and `/usr/sbin`. In containerized environments, these binaries are part of the container image layers and should be immutable during runtime. 
 - **Attack Vector**: File system modifications to critical binaries
