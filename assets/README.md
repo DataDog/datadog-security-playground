@@ -18,6 +18,9 @@ This directory contains the assets used by the different detonation scenarios of
 - **`correlation/`** : Contains the script to run the threats correlation and attack chain demonstration
   - `payload.sh` : First stage of the attack, retrieved by exploiting the playground app
 
+- **`langflow-rce/`** : Contains the CVE-2025-3248 PoC used by the `scenarios/langflow-rce/` scenario
+  - `CVE-2025-3248.py` : Langflow unauthenticated RCE PoC (vendored from verylazytech/EQST, with a `--quiet` flag added for the chained driver). Exploits `POST /api/v1/validate/code` on Langflow < 1.3.0
+
 ## Building Binaries
 
 The Makefile uses Docker to build binaries in a reproducible environment:
