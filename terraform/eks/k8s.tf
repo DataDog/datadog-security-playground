@@ -111,9 +111,11 @@ resource "helm_release" "datadog_agent" {
 }
 
 # Deploy playground app using existing manifest
+# Note: deploy/app.yaml contains only the Deployment; the Namespace is managed
+# by kubernetes_namespace.playground (and deploy/namespace.yaml for kubectl).
 resource "kubernetes_manifest" "playground_app" {
   depends_on = [kubernetes_namespace.playground, helm_release.datadog_agent]
-  
+
   manifest = merge(
     yamldecode(file("${path.module}/../../deploy/app.yaml")),
     {
@@ -121,7 +123,7 @@ resource "kubernetes_manifest" "playground_app" {
         yamldecode(file("${path.module}/../../deploy/app.yaml")).metadata,
         {
           namespace = kubernetes_namespace.playground.metadata[0].name
-          name = "playground-app"
+          name      = "playground-app"
         }
       )
     }

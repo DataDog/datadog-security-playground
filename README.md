@@ -78,7 +78,7 @@ export DD_APP_KEY=<your application key>      # only needed for scenario 1 (rce-
 
 1. **Deploy the Application:**
    ```bash
-   kubectl apply -f deploy/app.yaml
+   kubectl apply -f deploy/namespace.yaml -f deploy/app.yaml
    ```
 
 2. **Wait for Application to be Ready:**
@@ -98,7 +98,7 @@ To remove the playground from your cluster:
 
 1. **Delete the Application:**
    ```bash
-   kubectl delete -f deploy/app.yaml
+   kubectl delete -f deploy/app.yaml -f deploy/namespace.yaml
    ```
 
 2. **Uninstall the Datadog Agent:**

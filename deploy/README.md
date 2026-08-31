@@ -9,7 +9,7 @@ All manifests can be automatically deployed via Terraform (alongside with the ag
 ## Manual Deployment
 
 ```bash
-kubectl apply -f deploy/app.yaml -n playground
+kubectl apply -f deploy/namespace.yaml -f deploy/app.yaml
 
 # Verify
 kubectl get pods -n playground
