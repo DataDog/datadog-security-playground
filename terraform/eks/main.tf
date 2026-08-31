@@ -58,7 +58,7 @@ data "aws_iam_policy_document" "assume_role" {
 }
 
 resource "aws_iam_role" "playground" {
-  name               = "eks-pod-identity-playground"
+  name               = var.pod_identity_role_name
   assume_role_policy = data.aws_iam_policy_document.assume_role.json
 }
 

@@ -25,6 +25,12 @@ variable "service_account_name" {
   default     = "playground-sa"
 }
 
+variable "pod_identity_role_name" {
+  description = "Name of the IAM role used by the EKS pod identity association"
+  type        = string
+  default     = "eks-pod-identity-playground"
+}
+
 variable "datadog_api_key" {
   description = "Datadog API key for agent authentication"
   type        = string
