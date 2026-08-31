@@ -23,7 +23,7 @@ A comprehensive educational security simulation environment designed to demonstr
 You can deploy this playground on:
 
 1. **Your existing Kubernetes cluster** - Follow the deployment guide below
-2. **Amazon EKS using Terraform** - See [Terraform EKS Setup](#-terraform-eks-setup-optional) section
+2. **Amazon EKS using Terraform** - See [Terraform EKS Setup](#terraform-eks-setup-optional) section
 3. **Local Lima VM** - See [LIMA.md](LIMA.md)
 4. **Local Minikube cluster** - For developers, see [DEVELOPER.md](DEVELOPER.md)
 
