@@ -6,6 +6,9 @@ agents:
   image:
     repository: datadog/agent-dev
     tag: daniel-mercier-implement-otel-4947-py3
+    # The dev build tag is not semver-shaped, so skip the chart's version
+    # checks (semverCompare) that would otherwise fail on this tag.
+    doNotCheckTag: true
 
 datadog:
   site: "datadoghq.com"
