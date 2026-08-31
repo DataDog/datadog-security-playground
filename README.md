@@ -129,7 +129,7 @@ Due to Terraform provider initialization requirements, deployment must be done i
 ```bash
 cd terraform/eks
 terraform init
-terraform apply -var="datadog_api_key=YOUR_API_KEY_HERE" \
+terraform apply -var="datadog_api_key=$DD_API_KEY" \
     -target=module.vpc \
     -target=module.eks
 ```
@@ -144,7 +144,7 @@ This creates:
 Once the cluster is created, deploy the Kubernetes resources:
 
 ```bash
-terraform apply -var="datadog_api_key=YOUR_API_KEY_HERE"
+terraform apply -var="datadog_api_key=$DD_API_KEY"
 ```
 
 This deploys:
@@ -170,7 +170,7 @@ To destroy the EKS cluster and all associated AWS resources:
 
 ```bash
 cd terraform/eks
-terraform destroy -var="datadog_api_key=YOUR_API_KEY_HERE"
+terraform destroy -var="datadog_api_key=$DD_API_KEY"
 ```
 
 This removes the EKS cluster, VPC, IAM roles, and all Kubernetes resources deployed by Terraform.
