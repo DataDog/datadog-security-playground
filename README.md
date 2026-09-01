@@ -76,12 +76,17 @@ export DD_APP_KEY=<your application key>      # only needed for scenario 1 (rce-
 
 ### Step 2: Deploy Vulnerable Application
 
-1. **Deploy the Application:**
+1. **Add the Kubernetes Namespace:**
+   ```bash
+   kubectl apply -f deploy/namespace.yaml
+   ```
+   
+2. **Deploy the Application:**
    ```bash
    kubectl apply -f deploy/app.yaml
    ```
 
-2. **Wait for Application to be Ready:**
+3. **Wait for Application to be Ready:**
    ```bash
    kubectl get pods -n playground
    ```
@@ -95,18 +100,23 @@ export DD_APP_KEY=<your application key>      # only needed for scenario 1 (rce-
 ### Cleanup
 
 To remove the playground from your cluster:
-
+   
 1. **Delete the Application:**
    ```bash
    kubectl delete -f deploy/app.yaml
    ```
 
-2. **Uninstall the Datadog Agent:**
+2. **Delete the Kubernetes Namespace:**
+   ```bash
+   kubectl delete -f deploy/namespace.yaml
+   ```
+
+3. **Uninstall the Datadog Agent:**
    ```bash
    helm uninstall datadog-agent
    ```
 
-3. **Delete the API Key Secret:**
+4. **Delete the API Key Secret:**
    ```bash
    kubectl delete secret $DATADOG_API_SECRET_NAME
    ```
