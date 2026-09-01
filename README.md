@@ -23,7 +23,7 @@ A comprehensive educational security simulation environment designed to demonstr
 You can deploy this playground on:
 
 1. **Your existing Kubernetes cluster** - Follow the deployment guide below
-2. **Amazon EKS using Terraform** - See [Terraform EKS Setup](#-terraform-eks-setup-optional) section
+2. **Amazon EKS using Terraform** - See [Terraform EKS Setup](#terraform-eks-setup-optional) section
 3. **Local Lima VM** - See [LIMA.md](LIMA.md)
 4. **Local Minikube cluster** - For developers, see [DEVELOPER.md](DEVELOPER.md)
 
@@ -78,7 +78,7 @@ export DD_APP_KEY=<your application key>      # only needed for scenario 1 (rce-
 
 1. **Deploy the Application:**
    ```bash
-   kubectl apply -f deploy/app.yaml
+   kubectl apply -f deploy/namespace.yaml -f deploy/app.yaml
    ```
 
 2. **Wait for Application to be Ready:**
@@ -98,7 +98,7 @@ To remove the playground from your cluster:
 
 1. **Delete the Application:**
    ```bash
-   kubectl delete -f deploy/app.yaml
+   kubectl delete -f deploy/app.yaml -f deploy/namespace.yaml
    ```
 
 2. **Uninstall the Datadog Agent:**
@@ -129,7 +129,7 @@ Due to Terraform provider initialization requirements, deployment must be done i
 ```bash
 cd terraform/eks
 terraform init
-terraform apply -var="datadog_api_key=YOUR_API_KEY_HERE" \
+terraform apply -var="datadog_api_key=$DD_API_KEY" \
     -target=module.vpc \
     -target=module.eks
 ```
@@ -144,7 +144,7 @@ This creates:
 Once the cluster is created, deploy the Kubernetes resources:
 
 ```bash
-terraform apply -var="datadog_api_key=YOUR_API_KEY_HERE"
+terraform apply -var="datadog_api_key=$DD_API_KEY"
 ```
 
 This deploys:
@@ -170,7 +170,7 @@ To destroy the EKS cluster and all associated AWS resources:
 
 ```bash
 cd terraform/eks
-terraform destroy -var="datadog_api_key=YOUR_API_KEY_HERE"
+terraform destroy -var="datadog_api_key=$DD_API_KEY"
 ```
 
 This removes the EKS cluster, VPC, IAM roles, and all Kubernetes resources deployed by Terraform.

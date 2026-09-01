@@ -9,11 +9,12 @@ from datetime import datetime
 from flask import Flask, request, send_from_directory, render_template
 
 # Configure logging
+LOG_FILE = os.environ.get('LOG_FILE', '/var/log/app.log')
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler('/var/log/app.log'),
+        logging.FileHandler(LOG_FILE),
         logging.StreamHandler()
     ]
 )
