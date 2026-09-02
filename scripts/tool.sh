@@ -65,7 +65,7 @@ wait_for_confirmation() {
     if [ "$WAIT_FOR_CONFIRM" = "true" ]; then
         echo ""
         echo "${YELLOW}Press Enter to continue to the next step, or Ctrl+C to exit...${NC}"
-        read -r dummy
+        read -r dummy < /dev/tty
         echo ""
     fi
 }
