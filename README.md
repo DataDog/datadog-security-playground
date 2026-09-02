@@ -14,16 +14,19 @@ A comprehensive educational security simulation environment designed to demonstr
 ## 🛠️ Prerequisites
 
 ### Required Tools
-- **Kubernetes cluster** (existing cluster or see infrastructure options below)
+- **AWS account** for the recommended Terraform EKS path, or a **Kubernetes cluster** for manual deployment
 - **kubectl**: [Installation Guide](https://kubernetes.io/docs/tasks/tools/)
 - **Helm Charts**: [Installation Guide](https://helm.sh/docs/intro/install/)
 
 ### Infrastructure Options
 
-You can deploy this playground on:
+Recommended and most maintained:
 
-1. **Your existing Kubernetes cluster** - Follow the deployment guide below
-2. **Amazon EKS using Terraform** - See [Terraform EKS Setup](#terraform-eks-setup-optional) section
+1. **Amazon EKS using Terraform** - See [Terraform EKS Setup](#terraform-eks-setup-recommended)
+
+Alternatives:
+
+2. **Your existing Kubernetes cluster** - Follow [Manual Kubernetes Deployment](#manual-kubernetes-deployment)
 3. **Local Lima VM** - See [LIMA.md](LIMA.md)
 4. **Local Minikube cluster** - For developers, see [DEVELOPER.md](DEVELOPER.md)
 
@@ -37,7 +40,71 @@ export DD_API_KEY=<your API key>              # https://app.datadoghq.com/organi
 export DD_APP_KEY=<your application key>      # only needed for scenario 1 (rce-malware); requires security_monitoring_rules_write scope
 ```
 
-## 🚀 Deployment Guide
+## ☁️ Terraform EKS Setup (Recommended)
+
+The recommended and most maintained path is Terraform-managed Amazon EKS with the playground application and Datadog Agent pre-configured.
+
+### Prerequisites
+- AWS credentials configured or passed as environment variables
+- Terraform installed (>= 1.0)
+- Datadog API key
+
+### Deployment
+
+Due to Terraform provider initialization requirements, deployment must be done in **two stages**:
+
+#### Stage 1: Create the EKS Cluster and VPC
+
+```bash
+cd terraform/eks
+terraform init
+terraform apply -var="datadog_api_key=$DD_API_KEY" \
+    -target=module.vpc \
+    -target=module.eks
+```
+
+This creates:
+- VPC with public and private subnets
+- EKS cluster with managed node groups
+- Required IAM roles and policies
+
+#### Stage 2: Deploy Kubernetes Resources
+
+Once the cluster is created, deploy the Kubernetes resources:
+
+```bash
+terraform apply -var="datadog_api_key=$DD_API_KEY"
+```
+
+This deploys:
+- Kubernetes namespaces (`playground` and `datadog`)
+- Service accounts and secrets
+- Datadog Agent via Helm
+- Playground application
+
+### Access the Cluster
+
+Update your kubeconfig to access the cluster:
+
+```bash
+aws eks --region $(terraform output -raw region) update-kubeconfig \
+    --name $(terraform output -raw cluster_name)
+```
+
+For more details, see [terraform/eks/README.md](terraform/eks/README.md).
+
+### Cleanup
+
+To destroy the EKS cluster and all associated AWS resources:
+
+```bash
+cd terraform/eks
+terraform destroy -var="datadog_api_key=$DD_API_KEY"
+```
+
+This removes the EKS cluster, VPC, IAM roles, and all Kubernetes resources deployed by Terraform.
+
+## 🚀 Manual Kubernetes Deployment
 
 ### Step 1: Deploy Datadog Agent
 
@@ -110,70 +177,6 @@ To remove the playground from your cluster:
    ```bash
    kubectl delete secret $DATADOG_API_SECRET_NAME
    ```
-
-## ☁️ Terraform EKS Setup (Optional)
-
-If you don't have an existing Kubernetes cluster, you can use Terraform to create an Amazon EKS cluster with the playground application and Datadog Agent pre-configured.
-
-### Prerequisites
-- AWS credentials configured or passed as environment variables
-- Terraform installed (>= 1.0)
-- Datadog API key
-
-### Deployment
-
-Due to Terraform provider initialization requirements, deployment must be done in **two stages**:
-
-#### Stage 1: Create the EKS Cluster and VPC
-
-```bash
-cd terraform/eks
-terraform init
-terraform apply -var="datadog_api_key=$DD_API_KEY" \
-    -target=module.vpc \
-    -target=module.eks
-```
-
-This creates:
-- VPC with public and private subnets
-- EKS cluster with managed node groups
-- Required IAM roles and policies
-
-#### Stage 2: Deploy Kubernetes Resources
-
-Once the cluster is created, deploy the Kubernetes resources:
-
-```bash
-terraform apply -var="datadog_api_key=$DD_API_KEY"
-```
-
-This deploys:
-- Kubernetes namespaces (`playground` and `datadog`)
-- Service accounts and secrets
-- Datadog Agent via Helm
-- Playground application
-
-### Access the Cluster
-
-Update your kubeconfig to access the cluster:
-
-```bash
-aws eks --region $(terraform output -raw region) update-kubeconfig \
-    --name $(terraform output -raw cluster_name)
-```
-
-For more details, see [terraform/eks/README.md](terraform/eks/README.md).
-
-### Cleanup
-
-To destroy the EKS cluster and all associated AWS resources:
-
-```bash
-cd terraform/eks
-terraform destroy -var="datadog_api_key=$DD_API_KEY"
-```
-
-This removes the EKS cluster, VPC, IAM roles, and all Kubernetes resources deployed by Terraform.
 
 ## 🎯 Available Attack Scenarios
 
