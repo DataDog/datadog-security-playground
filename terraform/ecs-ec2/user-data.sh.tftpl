@@ -1,0 +1,43 @@
+#!/bin/bash
+# Register a stock Ubuntu 24.04 host as an ECS container instance.
+#
+# AWS publishes no ECS-optimized Ubuntu AMI, so Docker and the ECS agent are
+# installed here from the amazon-ecs-init package, following
+# https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-agent-install.html
+set -euxo pipefail
+
+export DEBIAN_FRONTEND=noninteractive
+
+# DPkg::Lock::Timeout waits for unattended-upgrades to release the dpkg lock
+# rather than failing, which it otherwise does routinely in the first minutes
+# of a fresh boot. Note this script runs under `set -e`, so any apt failure
+# aborts the bootstrap and leaves the host with no Docker and no ECS agent.
+apt_get() {
+  apt-get -o DPkg::Lock::Timeout=600 "$@"
+}
+
+apt_get update
+apt_get install -y curl docker.io
+systemctl enable --now docker
+
+# ecs-init requires Docker to already be installed.
+curl -fsSL -o /tmp/amazon-ecs-init.deb \
+  "https://s3.${region}.amazonaws.com/amazon-ecs-agent-${region}/amazon-ecs-init-latest.amd64.deb"
+dpkg -i /tmp/amazon-ecs-init.deb
+rm -f /tmp/amazon-ecs-init.deb
+
+mkdir -p /etc/ecs
+cat >> /etc/ecs/ecs.config <<'CONFIG'
+ECS_CLUSTER=${cluster_name}
+# Off by default outside the ECS-optimized AMI. Required for the app task's IAM
+# role to work in bridge network mode.
+ECS_ENABLE_TASK_IAM_ROLE=true
+CONFIG
+
+# The ecs and docker systemd units wait for cloud-init to finish, and cloud-init
+# is not finished until this script returns. Ordering ecs.service after
+# cloud-final and starting it with --no-block avoids the deadlock the ECS docs
+# warn about.
+sed -i '/^\[Unit\]$/a After=cloud-final.service' /lib/systemd/system/ecs.service
+systemctl daemon-reload
+systemctl enable --now --no-block ecs.service
