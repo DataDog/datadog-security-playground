@@ -27,7 +27,6 @@ resource "datadog_csm_threats_agent_rule" "imds_host_aws_access_key_ids" {
   name       = "imds_host_aws_access_key_ids"
   policy_id  = local.default_csm_policy_id
   enabled    = true
-  silent     = true
   expression = "imds.type == \"response\" && imds.cloud_provider == \"aws\" && imds.aws.security_credentials.access_key_id != \"\""
 
   description = "Track the AWS access key IDs a host resolved from IMDS to correlate its activity with Cloud SIEM and CloudTrail"
