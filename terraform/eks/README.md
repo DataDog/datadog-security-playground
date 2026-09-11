@@ -69,6 +69,7 @@ aws eks --region $(terraform output -raw region) update-kubeconfig \
 
 - `imds_host_aws_access_key_ids` agent rule ([csm_threats_agent_rule](https://registry.terraform.io/providers/DataDog/datadog/latest/docs/resources/csm_threats_agent_rule)): tracks the AWS access key IDs a host resolved from IMDS to correlate its activity with Cloud SIEM and CloudTrail. Mirrors the upstream default rule from `security-monitoring/workload-security/agent-rules/linux/network/imds_host_aws_access_key_ids.yaml`.
 - The rule is attached to and enabled in the org's default CSM Threats policy (`Default Policy`), which is the policy the helm-deployed agent uses.
+- A second agent rule, `imds_v2_tracking`, lives in its own `[CADR] IMDSv2 tracking` policy. It tracks IMDSv2 responses carrying AWS HMAC security credentials; its events are consumed by backend correlation rules via `@agent.rule_id:imds_v2_tracking` (see the `[CADR] Cryptomining attack chain detected` backend rule). The `@process.variables.correlation_key` it relies on is populated by the default execution-context agent rules, so it needs no set action. Without `host_tags_lists`, the policy applies to all hosts — set them to scope it to a subset of hosts.
 
 To test the Datadog resources alone, without touching the cluster:
 
