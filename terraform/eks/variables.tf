@@ -41,4 +41,16 @@ variable "datadog_site" {
   description = "Datadog site (e.g., datadoghq.com, datadoghq.eu, us3.datadoghq.com)"
   type        = string
   default     = "datadoghq.com"
+}
+
+variable "datadog_app_key" {
+  description = "Datadog application key used to manage Datadog resources (CSM Threats agent rules). Needs the security_monitoring_cws_agent_rules_write permission. https://app.datadoghq.com/organization-settings/application-keys"
+  type        = string
+  sensitive   = true
+}
+
+variable "csm_default_policy_name" {
+  description = "Name of the CSM Threats (Workload Protection) policy the agent rules are attached to. The helm-deployed agent uses the org default."
+  type        = string
+  default     = "Default Policy"
 } 

@@ -7,6 +7,7 @@ The Terraform code inside this repository provides a simple way to create an EKS
 - AWS credentials configured or passed as environment variables
 - Terraform installed (>= 1.0)
 - Datadog API key
+- Datadog application key with the `security_monitoring_cws_agent_rules_write` permission ([Organization Settings → Application Keys](https://app.datadoghq.com/organization-settings/application-keys)) — needed to manage the CSM Threats agent rule in `datadog.tf`
 - (Optional) Datadog site if yours differs from `datadoghq.com`.
 
 ## Deployment
@@ -42,6 +43,7 @@ Once the cluster is created, deploy the Kubernetes resources:
 
 ```bash
 terraform apply -var="datadog_api_key=YOUR_API_KEY_HERE" \
+    -var="datadog_app_key=YOUR_APP_KEY_HERE" \
     -var="datadog_site=datadoghq.com"
 ```
 
@@ -50,6 +52,7 @@ This deploys:
 - Service accounts and secrets
 - Datadog Agent via Helm
 - Playground application
+- Datadog CSM Threats agent rule `imds_host_aws_access_key_ids` (see [Datadog resources](#datadog-resources))
 
 ## Access the Cluster
 
@@ -59,6 +62,27 @@ Update your kubeconfig to access the cluster:
 aws eks --region $(terraform output -raw region) update-kubeconfig \
     --name $(terraform output -raw cluster_name)
 ```
+
+## Datadog Resources
+
+`datadog.tf` manages Datadog resources through the Datadog provider, independently of the cluster:
+
+- `imds_host_aws_access_key_ids` agent rule ([csm_threats_agent_rule](https://registry.terraform.io/providers/DataDog/datadog/latest/docs/resources/csm_threats_agent_rule)): tracks the AWS access key IDs a host resolved from IMDS to correlate its activity with Cloud SIEM and CloudTrail. Mirrors the upstream default rule from `security-monitoring/workload-security/agent-rules/linux/network/imds_host_aws_access_key_ids.yaml`.
+- The rule is attached to and enabled in the org's default CSM Threats policy (`Default Policy`), which is the policy the helm-deployed agent uses.
+
+To test the Datadog resources alone, without touching the cluster:
+
+```bash
+terraform apply -var="datadog_api_key=YOUR_API_KEY_HERE" \
+    -var="datadog_app_key=YOUR_APP_KEY_HERE" \
+    -var="datadog_site=datadoghq.com" \
+    -target=datadog_csm_threats_agent_rule.imds_host_aws_access_key_ids
+```
+
+Notes:
+- The rule is set to `silent = true`: it only enriches events with the `host_aws_access_key_ids` set action and does not generate signals on its own.
+- `priority`, `osFilter`, `agentConstraint` and `category` from the upstream YAML are not part of the agent-rule create/update API and are not carried over — the rule behavior lives in `expression` + `actions`.
+- The action TTL (`12h` in the YAML) is expressed in nanoseconds in the provider (`43200000000000`).
 
 ## What Gets Deployed
 
@@ -76,6 +100,7 @@ aws eks --region $(terraform output -raw region) update-kubeconfig \
 
 - `main.tf`: EKS cluster, VPC, and provider configurations
 - `k8s.tf`: Kubernetes resources (namespaces, deployments, etc.)
+- `datadog.tf`: Datadog provider and CSM Threats agent rules
 - `variables.tf`: Input variables
 - `outputs.tf`: Output values
 - `terraform.tf`: Terraform and provider version constraints
