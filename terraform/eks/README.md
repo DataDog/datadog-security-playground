@@ -83,6 +83,7 @@ terraform apply -var="datadog_api_key=YOUR_API_KEY_HERE" \
 Notes:
 - The rule is set to `silent = true`: it only enriches events with the `host_aws_access_key_ids` set action and does not generate signals on its own.
 - `priority`, `osFilter`, `agentConstraint` and `category` from the upstream YAML are not part of the agent-rule create/update API and are not carried over — the rule behavior lives in `expression` + `actions`.
+- The action TTL (`12h` in the YAML) is expressed in nanoseconds in the provider (`43200000000000`).
 
 ### Backend Rules
 
@@ -90,7 +91,6 @@ Notes:
 
 - **`[CADR] Cryptomining attack chain detected`** (type `workload_security`): correlates cryptomining indicators (miner execution, pool connection, persistence setup, system optimization) plus IMDSv2 cloud credential resolution (`@agent.rule_id:imds_v2_tracking`, provided by the agent rule in the `[CADR] IMDSv2 tracking` policy) within the same execution context (`@process.variables.correlation_key`), and raises signals at critical/high/medium severity depending on the combination.
 - Backend rules use the security monitoring rules API, which requires the `security_monitoring_rules_write` permission on the application key.
-- The action TTL (`12h` in the YAML) is expressed in nanoseconds in the provider (`43200000000000`).
 
 ## What Gets Deployed
 
