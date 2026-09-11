@@ -7,7 +7,7 @@ The Terraform code inside this repository provides a simple way to create an EKS
 - AWS credentials configured or passed as environment variables
 - Terraform installed (>= 1.0)
 - Datadog API key
-- Datadog application key with the `security_monitoring_cws_agent_rules_write` permission ([Organization Settings → Application Keys](https://app.datadoghq.com/organization-settings/application-keys)) — needed to manage the CSM Threats agent rule in `datadog.tf`
+- Datadog application key with the `security_monitoring_cws_agent_rules_write` permission (agent rules, `datadog.tf`) and the `security_monitoring_rules_write` permission (backend rules, `datadog-backend.tf`) — [Organization Settings → Application Keys](https://app.datadoghq.com/organization-settings/application-keys)
 - (Optional) Datadog site if yours differs from `datadoghq.com`.
 
 ## Deployment
@@ -83,6 +83,13 @@ terraform apply -var="datadog_api_key=YOUR_API_KEY_HERE" \
 Notes:
 - The rule is set to `silent = true`: it only enriches events with the `host_aws_access_key_ids` set action and does not generate signals on its own.
 - `priority`, `osFilter`, `agentConstraint` and `category` from the upstream YAML are not part of the agent-rule create/update API and are not carried over — the rule behavior lives in `expression` + `actions`.
+
+### Backend Rules
+
+`datadog-backend.tf` manages backend detection rules (`datadog_security_monitoring_rule`), which run in the Datadog backend instead of in the agent:
+
+- **`[CADR] Cryptomining attack chain detected`** (type `workload_security`): correlates cryptomining indicators (miner execution, pool connection, persistence setup, system optimization) plus IMDSv2 cloud credential resolution (`@agent.rule_id:imds_v2_tracking`, provided by the agent rule in the `[CADR] IMDSv2 tracking` policy) within the same execution context (`@process.variables.correlation_key`), and raises signals at critical/high/medium severity depending on the combination.
+- Backend rules use the security monitoring rules API, which requires the `security_monitoring_rules_write` permission on the application key.
 - The action TTL (`12h` in the YAML) is expressed in nanoseconds in the provider (`43200000000000`).
 
 ## What Gets Deployed
@@ -102,6 +109,7 @@ Notes:
 - `main.tf`: EKS cluster, VPC, and provider configurations
 - `k8s.tf`: Kubernetes resources (namespaces, deployments, etc.)
 - `datadog.tf`: Datadog provider and CSM Threats agent rules
+- `datadog-backend.tf`: Datadog backend security monitoring rules
 - `variables.tf`: Input variables
 - `outputs.tf`: Output values
 - `terraform.tf`: Terraform and provider version constraints
