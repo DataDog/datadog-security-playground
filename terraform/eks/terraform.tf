@@ -32,6 +32,13 @@ terraform {
       source  = "hashicorp/helm"
       version = "~> 2.13.0"
     }
+
+    datadog = {
+      source = "DataDog/datadog"
+      # >= 3.78.0 for full `actions { set { ... } }` support (size, ttl, scope)
+      # >= 3.84.0 for the `silent` attribute
+      version = "~> 3.84.0"
+    }
   }
 
   required_version = "~> 1.3"

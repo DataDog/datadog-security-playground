@@ -37,7 +37,7 @@ Set these environment variables **once** before running any setup steps — they
 ```bash
 export DD_SITE=datadoghq.com                  # your Datadog site
 export DD_API_KEY=<your API key>              # https://app.datadoghq.com/organization-settings/api-keys
-export DD_APP_KEY=<your application key>      # only needed for scenario 1 (rce-malware); requires security_monitoring_rules_write scope
+export DD_APP_KEY=<your application key>      # needs security_monitoring_rules_write (scenario 1 rce-malware) and security_monitoring_cws_agent_rules_write (Terraform CSM Threats agent rule) scopes
 ```
 
 ## ☁️ Terraform EKS Setup (Recommended)
@@ -73,7 +73,7 @@ This creates:
 Once the cluster is created, deploy the Kubernetes resources:
 
 ```bash
-terraform apply -var="datadog_api_key=$DD_API_KEY"
+terraform apply -var="datadog_api_key=$DD_API_KEY" -var="datadog_app_key=$DD_APP_KEY"
 ```
 
 This deploys:
@@ -81,6 +81,7 @@ This deploys:
 - Service accounts and secrets
 - Datadog Agent via Helm
 - Playground application
+- Datadog CSM Threats agent rule `imds_host_aws_access_key_ids` (see [terraform/eks/README.md](terraform/eks/README.md#datadog-resources))
 
 ### Access the Cluster
 
@@ -99,7 +100,7 @@ To destroy the EKS cluster and all associated AWS resources:
 
 ```bash
 cd terraform/eks
-terraform destroy -var="datadog_api_key=$DD_API_KEY"
+terraform destroy -var="datadog_api_key=$DD_API_KEY" -var="datadog_app_key=$DD_APP_KEY"
 ```
 
 This removes the EKS cluster, VPC, IAM roles, and all Kubernetes resources deployed by Terraform.
