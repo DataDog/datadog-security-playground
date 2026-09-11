@@ -103,6 +103,10 @@ def ssrf():
     url = request.args.get("url")
     logger.info(f"Received SSRF request from {request.remote_addr} with URL: {url}")
     try:
+        if url and url.startswith("file://"):
+            path = url[len("file://"):]
+            with open(path, "r") as file:
+                return file.read()
         response = requests.get(f"http://{url}/safe")
         return response.text
     except Exception as e:
