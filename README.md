@@ -81,7 +81,7 @@ This deploys:
 - Service accounts and secrets
 - Datadog Agent via Helm
 - Playground application
-- Datadog agent rule `imds_v2_tracking` (see [terraform/eks/README.md](terraform/eks/README.md#datadog-resources))
+- Datadog rules: `imds_v2_tracking` agent rule and `[CADR] Cryptomining attack chain detected` backend rule (see [terraform/eks/README.md](terraform/eks/README.md#datadog-resources))
 
 ### Access the Cluster
 
