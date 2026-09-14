@@ -41,4 +41,10 @@ variable "datadog_site" {
   description = "Datadog site (e.g., datadoghq.com, datadoghq.eu, us3.datadoghq.com)"
   type        = string
   default     = "datadoghq.com"
-} 
+}
+
+variable "datadog_app_key" {
+  description = "Datadog application key used to manage the Datadog resources (permissions listed in the README)"
+  type        = string
+  sensitive   = true
+}
