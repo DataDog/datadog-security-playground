@@ -7,6 +7,7 @@ The Terraform code inside this repository provides a simple way to create an EKS
 - AWS credentials configured or passed as environment variables
 - Terraform installed (>= 1.0)
 - Datadog API key
+- Datadog application key with the `security_monitoring_cws_agent_rules_write` permission — [Organization Settings → Application Keys](https://app.datadoghq.com/organization-settings/application-keys)
 - (Optional) Datadog site if yours differs from `datadoghq.com`.
 
 ## Deployment
@@ -42,6 +43,7 @@ Once the cluster is created, deploy the Kubernetes resources:
 
 ```bash
 terraform apply -var="datadog_api_key=YOUR_API_KEY_HERE" \
+    -var="datadog_app_key=YOUR_APP_KEY_HERE" \
     -var="datadog_site=datadoghq.com"
 ```
 
@@ -50,6 +52,7 @@ This deploys:
 - Service accounts and secrets
 - Datadog Agent via Helm
 - Playground application
+- Datadog CSM Threats agent rule `imds_v2_tracking` (see [Datadog Resources](#datadog-resources))
 
 ## Access the Cluster
 
@@ -58,6 +61,21 @@ Update your kubeconfig to access the cluster:
 ```bash
 aws eks --region $(terraform output -raw region) update-kubeconfig \
     --name $(terraform output -raw cluster_name)
+```
+
+## Datadog Resources
+
+`datadog.tf` manages Datadog resources through the Datadog provider, independently of the cluster:
+
+- The `[CADR] IMDSv2 tracking` policy and its `imds_v2_tracking` agent rule: tracks IMDSv2 responses carrying AWS HMAC credentials. The policy applies to all hosts (`host_tags_lists` empty); the rule's events are consumed by backend rules via `@agent.rule_id:imds_v2_tracking`.
+
+To apply only the Datadog resources, without touching the cluster:
+
+```bash
+terraform apply -var="datadog_api_key=YOUR_API_KEY_HERE" \
+    -var="datadog_app_key=YOUR_APP_KEY_HERE" \
+    -var="datadog_site=datadoghq.com" \
+    -target=datadog_csm_threats_agent_rule.imds_v2_tracking
 ```
 
 ## What Gets Deployed
@@ -76,6 +94,7 @@ aws eks --region $(terraform output -raw region) update-kubeconfig \
 
 - `main.tf`: EKS cluster, VPC, and provider configurations
 - `k8s.tf`: Kubernetes resources (namespaces, deployments, etc.)
+- `datadog.tf`: Datadog provider and CSM Threats agent rules
 - `variables.tf`: Input variables
 - `outputs.tf`: Output values
 - `terraform.tf`: Terraform and provider version constraints
