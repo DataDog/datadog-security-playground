@@ -67,7 +67,7 @@ aws eks --region $(terraform output -raw region) update-kubeconfig \
 
 `datadog.tf` manages Datadog resources through the Datadog provider, independently of the cluster:
 
-- The `[CADR] IMDSv2 tracking` policy and its `imds_v2_tracking` agent rule: tracks IMDSv2 responses carrying AWS HMAC credentials. The policy applies to all hosts (`host_tags_lists` empty); the rule's events are consumed by backend rules via `@agent.rule_id:imds_v2_tracking`.
+- The `[CADR] IMDSv2 tracking` policy and its `imds_v2_tracking` agent rule: tracks IMDSv2 responses carrying AWS HMAC credentials; the rule's events are consumed by backend rules via `@agent.rule_id:imds_v2_tracking`. The policy is scoped to hosts tagged `env:playground-env` (from `DD_ENV` in `deploy/datadog-agent.yaml`), so it doesn't apply to hosts outside this playground.
 
 To apply only the Datadog resources, without touching the cluster:
 

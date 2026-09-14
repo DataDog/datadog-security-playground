@@ -7,11 +7,12 @@ provider "datadog" {
   api_url = "https://api.${var.datadog_site}"
 }
 
-# Applies to all hosts; set host_tags_lists to scope it to a subset.
+# Scoped to the playground agents: env:playground-env, from DD_ENV in deploy/datadog-agent.yaml.
 resource "datadog_csm_threats_policy" "cadr_imdsv2_tracking" {
-  name        = "[CADR] IMDSv2 tracking"
-  description = "Policy for the imds_v2_tracking agent rule"
-  enabled     = true
+  name            = "[CADR] IMDSv2 tracking"
+  description     = "Policy for the imds_v2_tracking agent rule"
+  enabled         = true
+  host_tags_lists = [["env:playground-env"]]
 }
 
 # Consumed by the cryptomining backend rule via @agent.rule_id:imds_v2_tracking.
