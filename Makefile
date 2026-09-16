@@ -10,15 +10,16 @@ APP_HOSTNAME=localhost
 APP_PORT=5000
 ATOMIC_RED_TEAM?=false
 PLATFORM?=linux/amd64,linux/arm64
+LOCAL_PLATFORM?=linux/$(shell uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')
 GIT_SHA?=$(shell git rev-parse HEAD 2>/dev/null || echo main)
 
 all: build load
 
 build:
-	docker buildx build --platform $(PLATFORM) . -t $(APP_IMG_NAME):$(APP_IMG_TAG) -f app/Dockerfile --build-arg ATOMIC_RED_TEAM=$(ATOMIC_RED_TEAM) --build-arg APP_PORT=$(APP_PORT) --build-arg GIT_SHA=$(GIT_SHA) $(EXTRA_ARGS) --load
+	docker buildx build --platform $(LOCAL_PLATFORM) . -t $(APP_IMG_NAME):$(APP_IMG_TAG) -f app/Dockerfile --build-arg ATOMIC_RED_TEAM=$(ATOMIC_RED_TEAM) --build-arg APP_PORT=$(APP_PORT) --build-arg GIT_SHA=$(GIT_SHA) $(EXTRA_ARGS) --load
 
 push:
-	$(MAKE) build EXTRA_ARGS="--push"
+	docker buildx build --platform $(PLATFORM) . -t $(APP_IMG_NAME):$(APP_IMG_TAG) -f app/Dockerfile --build-arg ATOMIC_RED_TEAM=$(ATOMIC_RED_TEAM) --build-arg APP_PORT=$(APP_PORT) --build-arg GIT_SHA=$(GIT_SHA) --push
 
 build-langflow-vulnerable:
 	docker buildx build --platform $(LANGFLOW_PLATFORM) . -t $(LANGFLOW_IMG_NAME):$(LANGFLOW_IMG_TAG) -f langflow-vulnerable/Dockerfile --build-arg GIT_SHA=$(GIT_SHA) --build-arg DDTRACE_VERSION=$(LANGFLOW_DDTRACE_VERSION) $(EXTRA_ARGS) --load
