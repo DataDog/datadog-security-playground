@@ -1,6 +1,6 @@
 module appsec_test_api_go
 
-go 1.25.0
+go 1.26.6
 
 require (
 	github.com/DataDog/dd-trace-go/v2 v2.10.1
