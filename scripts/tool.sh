@@ -72,19 +72,30 @@ wait_for_confirmation() {
 
 # Inject command to target
 inject() {
-    if [ "$SILENT_MODE" = "true" ]; then
-        # Silent mode: execute command without any output
-        curl -s -X POST -d "$1" ${ENDPOINT}/inject -o /dev/null
-    else
-        # Normal mode: show command and execute
+    if [ "$SILENT_MODE" != "true" ]; then
+        # Normal mode: show the command before running it
         echo "${BLUE}Executing command...${NC}"
         echo
         echo "\033[0;36m\`\`\`\033[0m"
         echo "\033[1;33m$ curl -s -X POST -d \"$1\" ${ENDPOINT}/inject\033[0m"
         echo "\033[0;36m\`\`\`\033[0m"
         echo
-        curl -s -X POST -d "$1" ${ENDPOINT}/inject -o /dev/null
     fi
+
+    # The target can drop the request body under rapid back-to-back calls, so confirm each
+    # step was accepted (HTTP 200) and retry a few times; without this a dropped step is
+    # silently skipped and later steps (and the detections they produce) never happen.
+    attempt=1
+    while [ "$attempt" -le 5 ]; do
+        code=$(curl -s -o /dev/null -w "%{http_code}" -X POST -d "$1" "${ENDPOINT}/inject")
+        if [ "$code" = "200" ]; then
+            return 0
+        fi
+        attempt=$(( attempt + 1 ))
+        sleep 1
+    done
+    echo "${RED}ERROR: the target did not run the command (last HTTP status ${code:-000}): $1${NC}" >&2
+    return 1
 }
 
 # Print function for here-documents
