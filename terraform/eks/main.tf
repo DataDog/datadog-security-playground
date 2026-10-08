@@ -3,29 +3,42 @@
 
 provider "aws" {
   region = var.region
+
+  default_tags {
+    tags = var.tags
+  }
 }
 
+# exec refreshes tokens: a static aws_eks_cluster_auth token expires 15 minutes in, which long applies outlast.
 provider "kubernetes" {
   host                   = module.eks.cluster_endpoint
   cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
-  token                  = data.aws_eks_cluster_auth.cluster.token
+
+  exec {
+    api_version = "client.authentication.k8s.io/v1beta1"
+    command     = "aws"
+    args        = ["eks", "get-token", "--cluster-name", module.eks.cluster_name, "--region", var.region]
+  }
 }
 
 provider "helm" {
   kubernetes {
     host                   = module.eks.cluster_endpoint
     cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
-    token                  = data.aws_eks_cluster_auth.cluster.token
+
+    exec {
+      api_version = "client.authentication.k8s.io/v1beta1"
+      command     = "aws"
+      args        = ["eks", "get-token", "--cluster-name", module.eks.cluster_name, "--region", var.region]
+    }
   }
 }
 
-data "aws_eks_cluster_auth" "cluster" {
-  name = module.eks.cluster_name
-}
-
-# Filter out local zones, which are not currently supported 
+# Filter out local zones, which are not currently supported
 # with managed node groups
 data "aws_availability_zones" "available" {
+  exclude_zone_ids = var.exclude_zone_ids
+
   filter {
     name   = "opt-in-status"
     values = ["opt-in-not-required"]
@@ -103,7 +116,9 @@ module "eks" {
   cluster_version = "1.35"
 
   cluster_endpoint_public_access           = true
+  cluster_endpoint_public_access_cidrs     = var.cluster_endpoint_public_access_cidrs
   enable_cluster_creator_admin_permissions = true
+  access_entries                           = var.access_entries
 
   # Enable audit logs only
   cluster_enabled_log_types              = ["audit"]

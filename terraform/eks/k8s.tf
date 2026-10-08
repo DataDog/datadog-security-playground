@@ -94,6 +94,7 @@ resource "helm_release" "datadog_agent" {
   name       = "datadog-agent"
   repository = "https://helm.datadoghq.com"
   chart      = "datadog"
+  version    = var.datadog_helm_chart_version
   namespace  = kubernetes_namespace.datadog.metadata[0].name
   
   set {
@@ -105,8 +106,23 @@ resource "helm_release" "datadog_agent" {
         value = var.datadog_site
     }
   
-  values = [
-    file("${path.module}/../../deploy/datadog-agent.yaml")
+  values = concat(
+    [file("${path.module}/../../deploy/datadog-agent.yaml")],
+    var.extra_agent_values,
+  )
+}
+
+locals {
+  playground_app      = yamldecode(file("${path.module}/../../deploy/app.yaml"))
+  langflow_vulnerable = yamldecode(file("${path.module}/../../deploy/langflow-vulnerable.yaml"))
+
+  playground_app_containers = [
+    for c in local.playground_app.spec.template.spec.containers :
+    c.name == "playground-app" ? merge(c, { image = coalesce(var.playground_image, c.image) }) : c
+  ]
+  langflow_vulnerable_containers = [
+    for c in local.langflow_vulnerable.spec.template.spec.containers :
+    c.name == "langflow-vulnerable" ? merge(c, { image = coalesce(var.langflow_image, c.image) }) : c
   ]
 }
 
@@ -116,18 +132,19 @@ resource "helm_release" "datadog_agent" {
 resource "kubernetes_manifest" "playground_app" {
   depends_on = [kubernetes_namespace.playground, helm_release.datadog_agent]
 
-  manifest = merge(
-    yamldecode(file("${path.module}/../../deploy/app.yaml")),
-    {
-      metadata = merge(
-        yamldecode(file("${path.module}/../../deploy/app.yaml")).metadata,
-        {
-          namespace = kubernetes_namespace.playground.metadata[0].name
-          name      = "playground-app"
-        }
-      )
-    }
-  )
+  manifest = merge(local.playground_app, {
+    metadata = merge(local.playground_app.metadata, {
+      namespace = kubernetes_namespace.playground.metadata[0].name
+      name      = "playground-app"
+    })
+    spec = merge(local.playground_app.spec, {
+      template = merge(local.playground_app.spec.template, {
+        spec = merge(local.playground_app.spec.template.spec, {
+          containers = local.playground_app_containers
+        })
+      })
+    })
+  })
 }
 
 # Deploy the Langflow CVE-2025-3248 vulnerable container alongside the
@@ -136,16 +153,39 @@ resource "kubernetes_manifest" "playground_app" {
 resource "kubernetes_manifest" "langflow_vulnerable" {
   depends_on = [kubernetes_namespace.playground, helm_release.datadog_agent]
 
-  manifest = merge(
-    yamldecode(file("${path.module}/../../deploy/langflow-vulnerable.yaml")),
-    {
-      metadata = merge(
-        yamldecode(file("${path.module}/../../deploy/langflow-vulnerable.yaml")).metadata,
-        {
-          namespace = kubernetes_namespace.playground.metadata[0].name
-        }
-      )
+  manifest = merge(local.langflow_vulnerable, {
+    metadata = merge(local.langflow_vulnerable.metadata, {
+      namespace = kubernetes_namespace.playground.metadata[0].name
+    })
+    spec = merge(local.langflow_vulnerable.spec, {
+      template = merge(local.langflow_vulnerable.spec.template, {
+        spec = merge(local.langflow_vulnerable.spec.template.spec, {
+          containers = local.langflow_vulnerable_containers
+        })
+      })
+    })
+  })
+}
+
+resource "kubernetes_service_v1" "langflow" {
+  count = var.langflow_service == null ? 0 : 1
+
+  metadata {
+    name        = "langflow-vulnerable"
+    namespace   = kubernetes_namespace.playground.metadata[0].name
+    annotations = var.langflow_service.annotations
+  }
+
+  spec {
+    type                        = var.langflow_service.type
+    selector                    = local.langflow_vulnerable.spec.selector.matchLabels
+    load_balancer_source_ranges = var.langflow_service.type == "LoadBalancer" ? var.langflow_service.source_ranges : null
+
+    port {
+      name        = "http"
+      port        = 7860
+      target_port = "http"
     }
-  )
+  }
 }
 

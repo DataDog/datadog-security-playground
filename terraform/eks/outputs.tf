@@ -20,3 +20,8 @@ output "cluster_name" {
   description = "Kubernetes Cluster Name"
   value       = module.eks.cluster_name
 }
+
+output "langflow_lb_hostname" {
+  description = "Load balancer hostname of the langflow-vulnerable Service, when langflow_service.type is LoadBalancer"
+  value       = try(kubernetes_service_v1.langflow[0].status[0].load_balancer[0].ingress[0].hostname, null)
+}
