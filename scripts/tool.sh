@@ -85,6 +85,8 @@ inject() {
     # The target can drop the request body under rapid back-to-back calls, so confirm each
     # step was accepted (HTTP 200) and retry a few times; without this a dropped step is
     # silently skipped and later steps (and the detections they produce) never happen.
+    # Callers source this file without `set -e`, so on exhaustion we exit rather than return:
+    # a bare `return 1` would be ignored and the scenario would march on and claim success.
     attempt=1
     while [ "$attempt" -le 5 ]; do
         code=$(curl -s -o /dev/null -w "%{http_code}" -X POST -d "$1" "${ENDPOINT}/inject")
@@ -95,7 +97,7 @@ inject() {
         sleep 1
     done
     echo "${RED}ERROR: the target did not run the command (last HTTP status ${code:-000}): $1${NC}" >&2
-    return 1
+    exit 1
 }
 
 # Print function for here-documents

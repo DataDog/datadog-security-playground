@@ -16,19 +16,18 @@ class AppClient:
     def inject(self, cmd: str, timeout: float = 60, attempts: int = 5, retry_delay: float = 1.0) -> str:
         """Send a command to the /inject endpoint.
 
-        The app can drop the request body under rapid back-to-back calls, which the endpoint
-        answers with 4xx/5xx; retry so a transient drop does not silently skip the command.
+        Under rapid back-to-back calls the app can drop the request body; the endpoint
+        then answers 400 without running anything, so only that pre-execution rejection is
+        retried. Timeouts and connection losses are left to propagate: the command may
+        already be executing, and retrying would run it a second time.
         """
-        last_error: Exception | None = None
-        for _ in range(attempts):
-            try:
-                resp = requests.post(f"{self.base_url}/inject", data=cmd, timeout=timeout)
-                resp.raise_for_status()
-                return resp.text
-            except requests.RequestException as error:
-                last_error = error
+        for attempt in range(1, attempts + 1):
+            resp = requests.post(f"{self.base_url}/inject", data=cmd, timeout=timeout)
+            if resp.status_code == 400 and attempt < attempts:
                 time.sleep(retry_delay)
-        raise RuntimeError(f"/inject did not accept the command after {attempts} attempts: {cmd[:80]}") from last_error
+                continue
+            resp.raise_for_status()
+            return resp.text
 
     def ping(self, timeout: float = 5) -> bool:
         """Check if the playground app is reachable."""
