@@ -5,7 +5,8 @@ The Terraform code inside this repository provides a simple way to create an EKS
 ## Prerequisites
 
 - AWS credentials configured or passed as environment variables
-- Terraform installed (>= 1.0)
+- AWS CLI: the Kubernetes and Helm providers get cluster tokens with `aws eks get-token`
+- Terraform installed (>= 1.3)
 - Datadog API key
 - Datadog application key with the `security_monitoring_cws_agent_rules_write` (agent rules) and `security_monitoring_rules_write` (backend rules) permissions — [Organization Settings → Application Keys](https://app.datadoghq.com/organization-settings/application-keys)
 - (Optional) Datadog site if yours differs from `datadoghq.com`.
@@ -53,6 +54,32 @@ This deploys:
 - Datadog Agent via Helm
 - Playground application
 - Datadog CSM Threats agent rule `imds_v2_tracking` and the `[CADR] Cryptomining attack chain detected` backend rule (see [Datadog Resources](#datadog-resources))
+
+## Optional Variables
+
+Each optional variable defaults to the behavior described above.
+
+| Variable | Default | Use |
+|---|---|---|
+| `region` | `eu-west-3` | AWS region |
+| `tags` | `{}` | Tags added to every AWS resource Terraform creates |
+| `cluster_endpoint_public_access_cidrs` | `["0.0.0.0/0"]` | CIDR blocks allowed to reach the public EKS API endpoint |
+| `access_entries` | `{}` | Extra EKS access entries, for example to give another IAM principal access to the cluster |
+| `exclude_zone_ids` | `[]` | Availability zone IDs never used for the cluster, for example `use1-az3`, which EKS doesn't support |
+| `datadog_helm_chart_version` | latest | Version of the `datadog` Helm chart |
+| `extra_agent_values` | `[]` | Helm values applied after `deploy/datadog-agent.yaml`, for example to pin the agent image |
+| `playground_image` | image in `deploy/app.yaml` | Image of the `playground-app` container |
+| `langflow_image` | image in `deploy/langflow-vulnerable.yaml` | Image of the `langflow-vulnerable` container |
+| `langflow_service` | none | Service exposing `langflow-vulnerable` on port 7860 |
+
+A `LoadBalancer` `langflow_service` must restrict `source_ranges`, and they can't include `0.0.0.0/0` or `::/0`: `langflow-vulnerable` is exploitable (CVE-2025-3248). For example, to reach it from a single IP through a Network Load Balancer:
+
+```bash
+terraform apply -var="datadog_api_key=YOUR_API_KEY_HERE" \
+    -var="datadog_app_key=YOUR_APP_KEY_HERE" \
+    -var='langflow_service={type="LoadBalancer", source_ranges=["203.0.113.10/32"], annotations={"service.beta.kubernetes.io/aws-load-balancer-type"="nlb"}}'
+terraform output -raw langflow_lb_hostname
+```
 
 ## Access the Cluster
 
@@ -110,5 +137,7 @@ terraform apply -var="datadog_api_key=YOUR_API_KEY_HERE" \
 ## Troubleshooting
 
 **AWS token expires**: Get fresh credentials.
+
+**`executable aws not found`**: Install the AWS CLI; the Kubernetes and Helm providers run `aws eks get-token`.
 
 **Provider initialization errors**: Make sure to follow the two-stage deployment process. The Kubernetes provider needs the cluster to exist before it can initialize.
