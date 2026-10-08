@@ -118,6 +118,11 @@ variable "langflow_service" {
   }
 
   validation {
+    condition     = var.langflow_service == null ? true : var.langflow_service.type == "LoadBalancer" || length(var.langflow_service.source_ranges) == 0
+    error_message = "langflow_service.source_ranges only applies when langflow_service.type is LoadBalancer."
+  }
+
+  validation {
     condition = var.langflow_service == null ? true : (
       var.langflow_service.type != "LoadBalancer" || (
         length(var.langflow_service.source_ranges) > 0 &&
