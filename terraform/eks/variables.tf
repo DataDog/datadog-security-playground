@@ -115,9 +115,9 @@ variable "langflow_service" {
     condition = var.langflow_service == null ? true : (
       var.langflow_service.type != "LoadBalancer" || (
         length(var.langflow_service.source_ranges) > 0 &&
-        length(setintersection(var.langflow_service.source_ranges, ["0.0.0.0/0", "::/0"])) == 0
+        alltrue([for r in var.langflow_service.source_ranges : try(tonumber(regex("^[0-9.]+/([0-9]+)$", r)[0]) >= 16, false)])
       )
     )
-    error_message = "A LoadBalancer langflow_service needs source_ranges that don't include 0.0.0.0/0 or ::/0: langflow-vulnerable is exploitable (CVE-2025-3248)."
+    error_message = "A LoadBalancer langflow_service needs source_ranges, each an IPv4 CIDR block no broader than /16: langflow-vulnerable is exploitable (CVE-2025-3248)."
   }
 }
