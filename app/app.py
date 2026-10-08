@@ -24,6 +24,9 @@ logger = logging.getLogger(__name__)
 
 DB_PATH = '/tmp/playground.db'
 
+# Kept below gunicorn's --timeout so a slow command returns a 504 rather than killing the worker.
+COMMAND_TIMEOUT = 540
+
 
 def init_db():
     conn = sqlite3.connect(DB_PATH)
@@ -79,23 +82,23 @@ def inject():
         return "No command provided", 400
     
     logger.info(f"Executing command: {data}")
-    
-    try:
-        process = subprocess.Popen(
-            data, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout = process.stdout.read().decode()
-        stderr = process.stderr.read().decode()
-        
-        logger.info(f"Command executed successfully. Exit code: {process.returncode}")
-        if stderr:
-            logger.warning(f"Command stderr: {stderr}")
 
-        output = f"{stdout}\n"
-        output += f"{stderr}\n"
-        return f"{output}"
+    try:
+        # run() waits and drains the pipes, unlike the old Popen().read() which leaked the
+        # process and could block forever; the timeout stays under gunicorn's so the handler
+        # returns an error instead of having its worker killed.
+        result = subprocess.run(
+            data, shell=True, capture_output=True, text=True, timeout=COMMAND_TIMEOUT)
+        logger.info(f"Command finished with exit code: {result.returncode}")
+        if result.stderr:
+            logger.warning(f"Command stderr: {result.stderr}")
+        return f"{result.stdout}\n{result.stderr}\n"
+    except subprocess.TimeoutExpired:
+        logger.error(f"Command timed out after {COMMAND_TIMEOUT}s: {data}")
+        return "Command timed out\n", 504
     except Exception as e:
         logger.error(f"Error executing command: {str(e)}", exc_info=True)
-        raise
+        return f"Error executing command: {e}\n", 500
 
 
 @app.route("/ssrf", methods=["GET"])
