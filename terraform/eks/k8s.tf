@@ -179,7 +179,7 @@ resource "kubernetes_service_v1" "langflow" {
   spec {
     type                        = var.langflow_service.type
     selector                    = local.langflow_vulnerable.spec.selector.matchLabels
-    load_balancer_source_ranges = var.langflow_service.type == "LoadBalancer" ? var.langflow_service.source_ranges : null
+    load_balancer_source_ranges = var.langflow_service.source_ranges
 
     port {
       name        = "http"

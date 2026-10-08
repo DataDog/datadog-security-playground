@@ -72,7 +72,7 @@ Each optional variable defaults to the behavior described above.
 | `langflow_image` | image in `deploy/langflow-vulnerable.yaml` | Image of the `langflow-vulnerable` container |
 | `langflow_service` | none | Service exposing `langflow-vulnerable` on port 7860 |
 
-A `LoadBalancer` `langflow_service` must restrict `source_ranges`, and they can't include `0.0.0.0/0` or `::/0`: `langflow-vulnerable` is exploitable (CVE-2025-3248). For example, to reach it from a single IP through a Network Load Balancer:
+A `LoadBalancer` `langflow_service` needs `source_ranges`, each an IPv4 CIDR block no broader than `/16`: `langflow-vulnerable` is exploitable (CVE-2025-3248). For example, to reach it from a single IP through a Network Load Balancer:
 
 ```bash
 terraform apply -var="datadog_api_key=YOUR_API_KEY_HERE" \

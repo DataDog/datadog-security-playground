@@ -59,6 +59,12 @@ variable "cluster_endpoint_public_access_cidrs" {
   description = "CIDR blocks allowed to reach the public EKS API endpoint"
   type        = list(string)
   default     = ["0.0.0.0/0"]
+  nullable    = false
+
+  validation {
+    condition     = length(var.cluster_endpoint_public_access_cidrs) > 0
+    error_message = "cluster_endpoint_public_access_cidrs can't be empty: EKS would open the endpoint to 0.0.0.0/0."
+  }
 }
 
 variable "access_entries" {
@@ -112,12 +118,17 @@ variable "langflow_service" {
   }
 
   validation {
+    condition     = var.langflow_service == null ? true : var.langflow_service.type == "LoadBalancer" || length(var.langflow_service.source_ranges) == 0
+    error_message = "langflow_service.source_ranges only applies when langflow_service.type is LoadBalancer."
+  }
+
+  validation {
     condition = var.langflow_service == null ? true : (
       var.langflow_service.type != "LoadBalancer" || (
         length(var.langflow_service.source_ranges) > 0 &&
-        length(setintersection(var.langflow_service.source_ranges, ["0.0.0.0/0", "::/0"])) == 0
+        alltrue([for r in var.langflow_service.source_ranges : try(tonumber(regex("^[0-9.]+/([0-9]+)$", r)[0]) >= 16, false)])
       )
     )
-    error_message = "A LoadBalancer langflow_service needs source_ranges that don't include 0.0.0.0/0 or ::/0: langflow-vulnerable is exploitable (CVE-2025-3248)."
+    error_message = "A LoadBalancer langflow_service needs source_ranges, each an IPv4 CIDR block no broader than /16: langflow-vulnerable is exploitable (CVE-2025-3248)."
   }
 }
