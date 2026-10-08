@@ -43,6 +43,13 @@ data "aws_availability_zones" "available" {
     name   = "opt-in-status"
     values = ["opt-in-not-required"]
   }
+
+  lifecycle {
+    postcondition {
+      condition     = length(self.names) >= 2
+      error_message = "Fewer than two availability zones remain after exclude_zone_ids: EKS needs at least two."
+    }
+  }
 }
 
 locals {
@@ -90,7 +97,7 @@ module "vpc" {
   name = "datadog-security-playground-vpc"
 
   cidr = "10.0.0.0/16"
-  azs  = slice(data.aws_availability_zones.available.names, 0, 3)
+  azs  = slice(data.aws_availability_zones.available.names, 0, min(3, length(data.aws_availability_zones.available.names)))
 
   private_subnets = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
   public_subnets  = ["10.0.4.0/24", "10.0.5.0/24", "10.0.6.0/24"]
