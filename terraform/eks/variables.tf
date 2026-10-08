@@ -59,6 +59,12 @@ variable "cluster_endpoint_public_access_cidrs" {
   description = "CIDR blocks allowed to reach the public EKS API endpoint"
   type        = list(string)
   default     = ["0.0.0.0/0"]
+  nullable    = false
+
+  validation {
+    condition     = length(var.cluster_endpoint_public_access_cidrs) > 0
+    error_message = "cluster_endpoint_public_access_cidrs can't be empty: EKS would open the endpoint to 0.0.0.0/0."
+  }
 }
 
 variable "access_entries" {
