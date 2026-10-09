@@ -83,10 +83,10 @@ resource "aws_iam_role" "playground" {
 }
 
 resource "aws_eks_pod_identity_association" "association" {
-  cluster_name = local.cluster_name
-  namespace = var.playground_namespace
+  cluster_name    = local.cluster_name
+  namespace       = var.playground_namespace
   service_account = var.service_account_name
-  role_arn = aws_iam_role.playground.arn
+  role_arn        = aws_iam_role.playground.arn
 }
 
 
