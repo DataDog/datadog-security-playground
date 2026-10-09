@@ -1,0 +1,50 @@
+name: Terraform
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "terraform/eks/**"
+      - "deploy/**"
+      - ".github/workflows/terraform.yaml"
+  pull_request:
+    paths:
+      - "terraform/eks/**"
+      - "deploy/**"
+      - ".github/workflows/terraform.yaml"
+
+permissions:
+  contents: read
+
+env:
+  TERRAFORM_VERSION: "1.14.8"
+  # linux_amd64 entry of terraform_<version>_SHA256SUMS, which HashiCorp signs.
+  TERRAFORM_SHA256: "56a5d12f47cbc1c6bedb8f5426ae7d5df984d1929572c24b56f4c82e9f9bf709"
+
+jobs:
+  eks:
+    name: Check terraform/eks
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Install Terraform
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/terraform.zip" \
+            "https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip"
+          echo "${TERRAFORM_SHA256}  $RUNNER_TEMP/terraform.zip" | sha256sum -c -
+          unzip -q "$RUNNER_TEMP/terraform.zip" -d "$RUNNER_TEMP/terraform-bin"
+          echo "$RUNNER_TEMP/terraform-bin" >> "$GITHUB_PATH"
+
+      - name: Check formatting
+        run: terraform fmt -check -recursive -diff terraform/eks
+
+      - name: Validate the module
+        working-directory: terraform/eks
+        run: |
+          terraform init -backend=false -input=false
+          terraform validate
