@@ -81,6 +81,36 @@ terraform apply -var="datadog_api_key=YOUR_API_KEY_HERE" \
 terraform output -raw langflow_lb_hostname
 ```
 
+## Use as a Module
+
+Other configurations can call this folder as a module, pinned to a release:
+
+```hcl
+module "playground" {
+  source = "git::https://github.com/DataDog/datadog-security-playground.git//terraform/eks?ref=<release>"
+
+  region          = "us-east-1"
+  datadog_api_key = var.datadog_api_key
+  datadog_app_key = var.datadog_app_key
+}
+```
+
+- Terraform downloads the whole repository, so the module still finds `deploy/`.
+- The two stages still apply, with the module prefix: first `terraform apply -target=module.playground.module.vpc -target=module.playground.module.eks`, then `terraform apply`.
+- The module configures its own providers, so its `module` block can't use `count`, `for_each`, or `depends_on`.
+
+Callers depend on the variable and output names: see `AGENTS.md` before renaming or removing one.
+
+## Checks
+
+CI checks formatting and validates the module when `terraform/eks` or `deploy` changes. To run the same checks locally from the repository root:
+
+```bash
+terraform fmt -check -recursive terraform/eks
+terraform -chdir=terraform/eks init -backend=false
+terraform -chdir=terraform/eks validate
+```
+
 ## Access the Cluster
 
 Update your kubeconfig to access the cluster:
@@ -133,6 +163,7 @@ terraform apply -var="datadog_api_key=YOUR_API_KEY_HERE" \
 - `variables.tf`: Input variables
 - `outputs.tf`: Output values
 - `terraform.tf`: Terraform and provider version constraints
+- `AGENTS.md`: Constraints to keep in mind when changing this folder
 
 ## Troubleshooting
 
