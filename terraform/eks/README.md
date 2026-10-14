@@ -158,7 +158,9 @@ Notes:
 - **Cloud SIEM must be enabled** for your Datadog org — it is an account-level product, not something Terraform configures here. Once on, the out-of-the-box AWS CloudTrail detection rules generate signals from these logs.
 - The applying AWS principal needs permission to create CloudTrail, S3, Lambda, IAM, and CloudFormation resources (the Forwarder template creates the Lambda's execution role).
 - Confirm logs are arriving in [Log Explorer](https://app.datadoghq.com/logs) with `source:cloudtrail`.
-- Cost stays low for a short-lived demo: the bucket expires objects after 7 days, and a trail's first copy of management events is free. If the account already has a management-events trail, this second copy is billed per event.
+- AWS cost stays low for a short-lived demo: the bucket expires objects after 7 days, and a trail's first copy of management events is free. If the account already has a management-events trail, this second copy is billed per event.
+- The trail records every management event in the account, not only the playground's, and all of them are billed as Datadog logs and Cloud SIEM analyzed logs. In a busy shared account, or one whose CloudTrail already reaches Datadog (which duplicates logs and signals), set `enable_cloudtrail=false`.
+- AWS allows 5 trails per region per account, and a multi-region trail counts in every region: several playgrounds in one account can hit `MaximumNumberOfTrailsExceededException`.
 
 ## What Gets Deployed
 
@@ -192,3 +194,5 @@ Notes:
 **`executable aws not found`**: Install the AWS CLI; the Kubernetes and Helm providers run `aws eks get-token`.
 
 **Provider initialization errors**: Make sure to follow the two-stage deployment process. The Kubernetes provider needs the cluster to exist before it can initialize.
+
+**`AccessDenied` on CloudTrail, CloudFormation, or Lambda, or `MaximumNumberOfTrailsExceededException`**: CloudTrail collection is on by default; set `enable_cloudtrail=false` if the account doesn't allow it (see [CloudTrail Logs](#cloudtrail-logs)).
