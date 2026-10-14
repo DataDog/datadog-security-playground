@@ -142,9 +142,7 @@ resource "aws_cloudformation_stack" "forwarder" {
   name         = local.cloudtrail_forwarder_name
   template_url = "https://datadog-cloudformation-template.s3.amazonaws.com/aws/forwarder/5.4.16.yaml"
 
-  # IAM: creates the Lambda's execution role. AUTO_EXPAND: the template uses the
-  # SAM macro.
-  capabilities = ["CAPABILITY_IAM", "CAPABILITY_NAMED_IAM", "CAPABILITY_AUTO_EXPAND"]
+  capabilities = ["CAPABILITY_IAM"]
 
   parameters = {
     DdApiKey     = var.datadog_api_key
