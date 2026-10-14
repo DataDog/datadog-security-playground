@@ -55,6 +55,13 @@ variable "tags" {
   default     = {}
 }
 
+variable "enable_cloudtrail" {
+  description = "Collect AWS CloudTrail logs into Datadog (multi-region trail + S3 + Datadog Forwarder Lambda) so Cloud SIEM can raise signals from the langflow-rce scenario; set false to skip it"
+  type        = bool
+  default     = true
+  nullable    = false
+}
+
 variable "cluster_endpoint_public_access_cidrs" {
   description = "CIDR blocks allowed to reach the public EKS API endpoint"
   type        = list(string)

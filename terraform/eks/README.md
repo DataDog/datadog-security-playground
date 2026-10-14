@@ -4,7 +4,7 @@ The Terraform code inside this repository provides a simple way to create an EKS
 
 ## Prerequisites
 
-- AWS credentials configured or passed as environment variables
+- AWS credentials configured or passed as environment variables, also allowed to create the CloudTrail resources unless `enable_cloudtrail=false` (see [CloudTrail Logs](#cloudtrail-logs))
 - AWS CLI: the Kubernetes and Helm providers get cluster tokens with `aws eks get-token`
 - Terraform installed (>= 1.3)
 - Datadog API key
@@ -54,6 +54,7 @@ This deploys:
 - Datadog Agent via Helm
 - Playground application
 - Datadog CSM Threats agent rule `imds_v2_tracking` and the `[CADR] Cryptomining attack chain detected` backend rule (see [Datadog Resources](#datadog-resources))
+- AWS CloudTrail collection into Datadog, unless disabled (see [CloudTrail Logs](#cloudtrail-logs))
 
 ## Optional Variables
 
@@ -63,6 +64,7 @@ Each optional variable defaults to the behavior described above.
 |---|---|---|
 | `region` | `eu-west-3` | AWS region |
 | `tags` | `{}` | Tags added to every AWS resource Terraform creates |
+| `enable_cloudtrail` | `true` | Collect CloudTrail logs into Datadog for Cloud SIEM (see [CloudTrail Logs](#cloudtrail-logs)); set `false` to skip |
 | `cluster_endpoint_public_access_cidrs` | `["0.0.0.0/0"]` | CIDR blocks allowed to reach the public EKS API endpoint |
 | `access_entries` | `{}` | Extra EKS access entries, for example to give another IAM principal access to the cluster |
 | `exclude_zone_ids` | `[]` | Availability zone IDs never used for the cluster, for example `use1-az3`, which EKS doesn't support |
@@ -142,6 +144,24 @@ terraform apply -var="datadog_api_key=YOUR_API_KEY_HERE" \
 
 - **`[CADR] Cryptomining attack chain detected`**: correlates cryptomining indicators (miner execution, pool connection, persistence, system optimization) and IMDSv2 credential resolution within the same execution context (`@process.variables.correlation_key`); critical/high/medium depending on the combination.
 
+## CloudTrail Logs
+
+`cloudtrail.tf` ships AWS CloudTrail logs to Datadog so Cloud SIEM can raise signals from the API calls the [langflow-rce](../../scenarios/langflow-rce) scenario makes with stolen node credentials, such as the cross-region `RunInstances` pivot. It follows the [CloudTrail logs setup](https://docs.datadoghq.com/security/cloud_security_management/setup/cloudtrail_logs/), reuses `datadog_api_key`, and is **on by default**; set `enable_cloudtrail=false` to skip it.
+
+It creates:
+
+- a **multi-region** CloudTrail trail (management events) writing to a dedicated S3 bucket. Multi-region matters: the scenario's credential pivot calls `RunInstances` in regions other than the cluster's, which a single-region trail would miss.
+- the **Datadog Forwarder** Lambda, from Datadog's pinned CloudFormation template, with an S3 trigger on that bucket. Forwarded logs arrive tagged `source:cloudtrail` and `env:playground-env`.
+
+Notes:
+
+- **Cloud SIEM must be enabled** for your Datadog org — it is an account-level product, not something Terraform configures here. Once on, the out-of-the-box AWS CloudTrail detection rules generate signals from these logs.
+- The applying AWS principal needs permission to create CloudTrail, S3, Lambda, IAM, CloudFormation, Secrets Manager, and CloudWatch Logs resources: the Forwarder stack runs with the principal's credentials and creates the Lambda's execution role, an API key secret, and a log group.
+- Confirm logs are arriving in [Log Explorer](https://app.datadoghq.com/logs) with `source:cloudtrail`.
+- AWS cost stays low for a short-lived demo: the bucket expires objects after 7 days, and a trail's first copy of management events is free. If the account already has a management-events trail, this second copy is billed per event.
+- The trail records every management event in the account, not only the playground's, and all of them are billed as Datadog logs and Cloud SIEM analyzed logs. In a busy shared account, or one whose CloudTrail already reaches Datadog (which duplicates logs and signals), set `enable_cloudtrail=false`.
+- AWS allows 5 trails per region per account, and a multi-region trail counts in every region: several playgrounds in one account can hit `MaximumNumberOfTrailsExceededException`.
+
 ## What Gets Deployed
 
 ### Namespaces
@@ -153,6 +173,7 @@ terraform apply -var="datadog_api_key=YOUR_API_KEY_HERE" \
 - Datadog Agent deployed via Helm chart
 - Ubuntu test pod for experimentation
 - Pod Identity associations for AWS IAM integration
+- Multi-region CloudTrail trail, S3 bucket, and Datadog Forwarder Lambda (unless `enable_cloudtrail=false`)
 
 ## File Structure
 
@@ -160,6 +181,7 @@ terraform apply -var="datadog_api_key=YOUR_API_KEY_HERE" \
 - `k8s.tf`: Kubernetes resources (namespaces, deployments, etc.)
 - `datadog.tf`: Datadog provider and CSM Threats agent rules
 - `datadog-backend.tf`: Datadog backend detection rules
+- `cloudtrail.tf`: CloudTrail trail, S3 bucket, and Datadog Forwarder for Cloud SIEM
 - `variables.tf`: Input variables
 - `outputs.tf`: Output values
 - `terraform.tf`: Terraform and provider version constraints
@@ -172,3 +194,5 @@ terraform apply -var="datadog_api_key=YOUR_API_KEY_HERE" \
 **`executable aws not found`**: Install the AWS CLI; the Kubernetes and Helm providers run `aws eks get-token`.
 
 **Provider initialization errors**: Make sure to follow the two-stage deployment process. The Kubernetes provider needs the cluster to exist before it can initialize.
+
+**`AccessDenied` on CloudTrail, CloudFormation, or Lambda, or `MaximumNumberOfTrailsExceededException`**: CloudTrail collection is on by default; set `enable_cloudtrail=false` if the account doesn't allow it (see [CloudTrail Logs](#cloudtrail-logs)).
