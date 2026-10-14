@@ -4,7 +4,7 @@ The Terraform code inside this repository provides a simple way to create an EKS
 
 ## Prerequisites
 
-- AWS credentials configured or passed as environment variables
+- AWS credentials configured or passed as environment variables, also allowed to create the CloudTrail resources unless `enable_cloudtrail=false` (see [CloudTrail Logs](#cloudtrail-logs))
 - AWS CLI: the Kubernetes and Helm providers get cluster tokens with `aws eks get-token`
 - Terraform installed (>= 1.3)
 - Datadog API key
@@ -156,7 +156,7 @@ It creates:
 Notes:
 
 - **Cloud SIEM must be enabled** for your Datadog org — it is an account-level product, not something Terraform configures here. Once on, the out-of-the-box AWS CloudTrail detection rules generate signals from these logs.
-- The applying AWS principal needs permission to create CloudTrail, S3, Lambda, IAM, and CloudFormation resources (the Forwarder template creates the Lambda's execution role).
+- The applying AWS principal needs permission to create CloudTrail, S3, Lambda, IAM, CloudFormation, Secrets Manager, and CloudWatch Logs resources: the Forwarder stack runs with the principal's credentials and creates the Lambda's execution role, an API key secret, and a log group.
 - Confirm logs are arriving in [Log Explorer](https://app.datadoghq.com/logs) with `source:cloudtrail`.
 - AWS cost stays low for a short-lived demo: the bucket expires objects after 7 days, and a trail's first copy of management events is free. If the account already has a management-events trail, this second copy is billed per event.
 - The trail records every management event in the account, not only the playground's, and all of them are billed as Datadog logs and Cloud SIEM analyzed logs. In a busy shared account, or one whose CloudTrail already reaches Datadog (which duplicates logs and signals), set `enable_cloudtrail=false`.
