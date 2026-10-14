@@ -11,7 +11,12 @@ This folder is run directly (two-stage apply, see README.md) and is also called 
 
 ## Rules
 
-- New variables default to the current behavior.
+- New variables default to the current behavior. Exception: `enable_cloudtrail` defaults to `true` and adds
+  resources, because the user wants CloudTrail collection on by default.
+- Keep the CloudTrail trail multi-region: the langflow-rce credential pivot calls RunInstances outside var.region,
+  so a single-region trail would miss it. The CloudTrail S3 bucket keeps force_destroy so destroy removes it with
+  logs inside. The Datadog Forwarder is Datadog's CloudFormation template pinned by version in template_url; bump by
+  changing that version. Cloud SIEM itself is an org-level setting, not managed here.
 - Provider blocks live in this folder, so callers can't pass providers or use count, for_each, or depends_on on the
   module block. Keep it working as a single plain module call.
 - The Kubernetes and Helm providers authenticate with `aws eks get-token --output json`: a static token expires
