@@ -145,10 +145,11 @@ resource "aws_cloudformation_stack" "forwarder" {
   capabilities = ["CAPABILITY_IAM"]
 
   parameters = {
-    DdApiKey     = var.datadog_api_key
-    DdSite       = var.datadog_site
-    FunctionName = local.cloudtrail_forwarder_name
-    DdTags       = "env:playground-env"
+    DdApiKey           = var.datadog_api_key
+    DdSite             = var.datadog_site
+    FunctionName       = local.cloudtrail_forwarder_name
+    DdTags             = "env:playground-env"
+    LogRetentionInDays = "7"
     # Otherwise the template creates a tag-cache bucket that CloudFormation can't delete once non-empty, breaking destroy.
     DdFetchLambdaTags = "false"
   }
