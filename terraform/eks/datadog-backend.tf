@@ -4,6 +4,8 @@
 # Correlates cryptomining indicators and IMDSv2 credential resolution
 # (imds_v2_tracking) within the same execution context.
 resource "datadog_security_monitoring_rule" "cryptomining_attack_chain_detected" {
+  count = var.enable_cadr_rules ? 1 : 0
+
   case {
     condition     = "miner_execution > 0 && pool_connection > 0 && persistence_setup > 0 && system_optimization > 0"
     name          = "advanced_cryptomining_operation"
@@ -84,6 +86,12 @@ resource "datadog_security_monitoring_rule" "cryptomining_attack_chain_detected"
   type = "workload_security"
 }
 
+# Keeps the rule created before enable_cadr_rules existed instead of replacing it.
+moved {
+  from = datadog_security_monitoring_rule.cryptomining_attack_chain_detected
+  to   = datadog_security_monitoring_rule.cryptomining_attack_chain_detected[0]
+}
+
 output "cryptomining_attack_chain_rule_id" {
-  value = datadog_security_monitoring_rule.cryptomining_attack_chain_detected.id
+  value = try(datadog_security_monitoring_rule.cryptomining_attack_chain_detected[0].id, null)
 }

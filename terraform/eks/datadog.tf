@@ -9,6 +9,8 @@ provider "datadog" {
 
 # Scoped to the playground agents: env:playground-env, from DD_ENV in deploy/datadog-agent.yaml.
 resource "datadog_csm_threats_policy" "cadr_imdsv2_tracking" {
+  count = var.enable_cadr_rules ? 1 : 0
+
   name            = "[CADR] IMDSv2 tracking"
   description     = "Policy for the imds_v2_tracking agent rule"
   enabled         = true
@@ -17,8 +19,10 @@ resource "datadog_csm_threats_policy" "cadr_imdsv2_tracking" {
 
 # Consumed by the cryptomining backend rule via @agent.rule_id:imds_v2_tracking.
 resource "datadog_csm_threats_agent_rule" "imds_v2_tracking" {
+  count = var.enable_cadr_rules ? 1 : 0
+
   name       = "imds_v2_tracking"
-  policy_id  = datadog_csm_threats_policy.cadr_imdsv2_tracking.id
+  policy_id  = datadog_csm_threats_policy.cadr_imdsv2_tracking[0].id
   enabled    = true
   expression = "imds.aws.is_imds_v2 == true && imds.type == \"response\" && imds.aws.security_credentials.type == \"AWS-HMAC\""
 
@@ -31,10 +35,21 @@ resource "datadog_csm_threats_agent_rule" "imds_v2_tracking" {
   ]
 }
 
+# Keeps rules created before enable_cadr_rules existed instead of replacing them.
+moved {
+  from = datadog_csm_threats_policy.cadr_imdsv2_tracking
+  to   = datadog_csm_threats_policy.cadr_imdsv2_tracking[0]
+}
+
+moved {
+  from = datadog_csm_threats_agent_rule.imds_v2_tracking
+  to   = datadog_csm_threats_agent_rule.imds_v2_tracking[0]
+}
+
 output "cadr_imdsv2_tracking_policy_id" {
-  value = datadog_csm_threats_policy.cadr_imdsv2_tracking.id
+  value = try(datadog_csm_threats_policy.cadr_imdsv2_tracking[0].id, null)
 }
 
 output "imds_v2_tracking_rule_id" {
-  value = datadog_csm_threats_agent_rule.imds_v2_tracking.id
+  value = try(datadog_csm_threats_agent_rule.imds_v2_tracking[0].id, null)
 }
