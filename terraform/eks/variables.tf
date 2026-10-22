@@ -63,7 +63,7 @@ variable "enable_cloudtrail" {
 }
 
 variable "enable_cadr_rules" {
-  description = "Create the [CADR] IMDSv2 tracking agent policy and rule and the [CADR] Cryptomining attack chain detected backend rule, for agents whose default rules don't already cover these detections"
+  description = "Create the [CADR] IMDSv2 tracking agent policy and rule and the [CADR] Cryptomining attack chain detected backend rule, for agents older than 7.84 whose default rules don't cover these detections"
   type        = bool
   default     = false
   nullable    = false

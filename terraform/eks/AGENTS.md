@@ -13,7 +13,7 @@ This folder is run directly (two-stage apply, see README.md) and is also called 
 
 - New variables default to the current behavior. Exceptions: `enable_cloudtrail` defaults to `true` and adds
   resources, because the user wants CloudTrail collection on by default; `enable_cadr_rules` defaults to `false`
-  and drops the [CADR] rules, because agents whose default rules already cover these detections don't need them.
+  and drops the [CADR] rules, because the default rules of agents 7.84 and later already cover these detections.
 - Keep the CloudTrail trail multi-region: the langflow-rce credential pivot calls RunInstances outside var.region,
   so a single-region trail would miss it. The CloudTrail S3 bucket keeps force_destroy so destroy removes it with
   logs inside. The Datadog Forwarder is Datadog's CloudFormation template pinned by version in template_url; bump by

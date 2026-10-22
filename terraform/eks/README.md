@@ -65,7 +65,7 @@ Each optional variable defaults to the behavior described above.
 | `region` | `eu-west-3` | AWS region |
 | `tags` | `{}` | Tags added to every AWS resource Terraform creates |
 | `enable_cloudtrail` | `true` | Collect CloudTrail logs into Datadog for Cloud SIEM (see [CloudTrail Logs](#cloudtrail-logs)); set `false` to skip |
-| `enable_cadr_rules` | `false` | Create the `[CADR]` agent and backend rules (see [Datadog Resources](#datadog-resources)), for agents whose default rules don't already cover these detections |
+| `enable_cadr_rules` | `false` | Create the `[CADR]` agent and backend rules (see [Datadog Resources](#datadog-resources)), for agents older than 7.84 whose default rules don't cover these detections |
 | `cluster_endpoint_public_access_cidrs` | `["0.0.0.0/0"]` | CIDR blocks allowed to reach the public EKS API endpoint |
 | `access_entries` | `{}` | Extra EKS access entries, for example to give another IAM principal access to the cluster |
 | `exclude_zone_ids` | `[]` | Availability zone IDs never used for the cluster, for example `use1-az3`, which EKS doesn't support |
@@ -125,7 +125,7 @@ aws eks --region $(terraform output -raw region) update-kubeconfig \
 
 ## Datadog Resources
 
-`datadog.tf` manages Datadog resources through the Datadog provider, independently of the cluster. They, and the backend rule below, are only created with `enable_cadr_rules=true`: it's off by default because agents whose default rules already cover these detections don't need them.
+`datadog.tf` manages Datadog resources through the Datadog provider, independently of the cluster. They, and the backend rule below, are only created with `enable_cadr_rules=true`: it's off by default because the default rules of agents 7.84 and later already cover these detections.
 
 - The `[CADR] IMDSv2 tracking` policy and its `imds_v2_tracking` agent rule: tracks IMDSv2 responses carrying AWS HMAC credentials; the rule's events are consumed by backend rules via `@agent.rule_id:imds_v2_tracking`. The policy is scoped to hosts tagged `env:playground-env` (from `DD_ENV` in `deploy/datadog-agent.yaml`), so it doesn't apply to hosts outside this playground.
 

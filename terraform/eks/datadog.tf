@@ -35,6 +35,17 @@ resource "datadog_csm_threats_agent_rule" "imds_v2_tracking" {
   ]
 }
 
+# Keeps rules created before enable_cadr_rules existed instead of replacing them.
+moved {
+  from = datadog_csm_threats_policy.cadr_imdsv2_tracking
+  to   = datadog_csm_threats_policy.cadr_imdsv2_tracking[0]
+}
+
+moved {
+  from = datadog_csm_threats_agent_rule.imds_v2_tracking
+  to   = datadog_csm_threats_agent_rule.imds_v2_tracking[0]
+}
+
 output "cadr_imdsv2_tracking_policy_id" {
   value = try(datadog_csm_threats_policy.cadr_imdsv2_tracking[0].id, null)
 }
