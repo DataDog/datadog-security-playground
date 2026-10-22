@@ -8,7 +8,7 @@ The Terraform code inside this repository provides a simple way to create an EKS
 - AWS CLI: the Kubernetes and Helm providers get cluster tokens with `aws eks get-token`
 - Terraform installed (>= 1.3)
 - Datadog API key
-- Datadog application key with the `security_monitoring_cws_agent_rules_write` (agent rules) and `security_monitoring_rules_write` (backend rules) permissions — [Organization Settings → Application Keys](https://app.datadoghq.com/organization-settings/application-keys)
+- Datadog application key — [Organization Settings → Application Keys](https://app.datadoghq.com/organization-settings/application-keys). With `enable_cadr_rules=true`, it also needs the `security_monitoring_cws_agent_rules_write` (agent rules) and `security_monitoring_rules_write` (backend rules) permissions
 - (Optional) Datadog site if yours differs from `datadoghq.com`.
 
 ## Deployment
@@ -53,7 +53,7 @@ This deploys:
 - Service accounts and secrets
 - Datadog Agent via Helm
 - Playground application
-- Datadog CSM Threats agent rule `imds_v2_tracking` and the `[CADR] Cryptomining attack chain detected` backend rule (see [Datadog Resources](#datadog-resources))
+- Datadog CSM Threats agent rule `imds_v2_tracking` and the `[CADR] Cryptomining attack chain detected` backend rule, if enabled (see [Datadog Resources](#datadog-resources))
 - AWS CloudTrail collection into Datadog, unless disabled (see [CloudTrail Logs](#cloudtrail-logs))
 
 ## Optional Variables
@@ -65,6 +65,7 @@ Each optional variable defaults to the behavior described above.
 | `region` | `eu-west-3` | AWS region |
 | `tags` | `{}` | Tags added to every AWS resource Terraform creates |
 | `enable_cloudtrail` | `true` | Collect CloudTrail logs into Datadog for Cloud SIEM (see [CloudTrail Logs](#cloudtrail-logs)); set `false` to skip |
+| `enable_cadr_rules` | `false` | Create the `[CADR]` agent and backend rules (see [Datadog Resources](#datadog-resources)), for agents whose default rules don't already cover these detections |
 | `cluster_endpoint_public_access_cidrs` | `["0.0.0.0/0"]` | CIDR blocks allowed to reach the public EKS API endpoint |
 | `access_entries` | `{}` | Extra EKS access entries, for example to give another IAM principal access to the cluster |
 | `exclude_zone_ids` | `[]` | Availability zone IDs never used for the cluster, for example `use1-az3`, which EKS doesn't support |
@@ -124,7 +125,7 @@ aws eks --region $(terraform output -raw region) update-kubeconfig \
 
 ## Datadog Resources
 
-`datadog.tf` manages Datadog resources through the Datadog provider, independently of the cluster:
+`datadog.tf` manages Datadog resources through the Datadog provider, independently of the cluster. They, and the backend rule below, are only created with `enable_cadr_rules=true`: it's off by default because agents whose default rules already cover these detections don't need them.
 
 - The `[CADR] IMDSv2 tracking` policy and its `imds_v2_tracking` agent rule: tracks IMDSv2 responses carrying AWS HMAC credentials; the rule's events are consumed by backend rules via `@agent.rule_id:imds_v2_tracking`. The policy is scoped to hosts tagged `env:playground-env` (from `DD_ENV` in `deploy/datadog-agent.yaml`), so it doesn't apply to hosts outside this playground.
 
@@ -134,6 +135,7 @@ To apply only the Datadog resources, without touching the cluster:
 terraform apply -var="datadog_api_key=YOUR_API_KEY_HERE" \
     -var="datadog_app_key=YOUR_APP_KEY_HERE" \
     -var="datadog_site=datadoghq.com" \
+    -var="enable_cadr_rules=true" \
     -target=datadog_csm_threats_agent_rule.imds_v2_tracking \
     -target=datadog_security_monitoring_rule.cryptomining_attack_chain_detected
 ```
@@ -174,6 +176,7 @@ Notes:
 - Ubuntu test pod for experimentation
 - Pod Identity associations for AWS IAM integration
 - Multi-region CloudTrail trail, S3 bucket, and Datadog Forwarder Lambda (unless `enable_cloudtrail=false`)
+- `[CADR]` agent and backend detection rules (only with `enable_cadr_rules=true`)
 
 ## File Structure
 

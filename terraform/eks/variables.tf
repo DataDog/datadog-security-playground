@@ -62,6 +62,13 @@ variable "enable_cloudtrail" {
   nullable    = false
 }
 
+variable "enable_cadr_rules" {
+  description = "Create the [CADR] IMDSv2 tracking agent policy and rule and the [CADR] Cryptomining attack chain detected backend rule, for agents whose default rules don't already cover these detections"
+  type        = bool
+  default     = false
+  nullable    = false
+}
+
 variable "cluster_endpoint_public_access_cidrs" {
   description = "CIDR blocks allowed to reach the public EKS API endpoint"
   type        = list(string)
