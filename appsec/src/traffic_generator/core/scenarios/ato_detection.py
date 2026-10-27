@@ -22,14 +22,13 @@ if TYPE_CHECKING:
 # additionally needs one successful login from the same IP, with failures still
 # above 5x successes. Attack enough distinct users to clear every threshold.
 CREDENTIAL_STUFFING_ATTEMPTS = 60
+FAILED_LOGIN_THRESHOLD = 30
 # Seeded demo accounts the attacker would hit with leaked-password guesses.
 KNOWN_USERNAMES = ("alice", "bob")
 # One seeded account whose real password the attacker "knows" from the dump, so
 # a single guess lands and the detection escalates to account compromise.
 COMPROMISED_USERNAME = "alice"
 DEMO_PASSWORD = "dogfooding-password"  # noqa: S105
-# Own IP so logins from other scenarios do not dilute the failure/success ratio.
-ATTACKER_IP = random_public_ipv4()
 
 
 @register
@@ -43,10 +42,12 @@ class CredentialStuffingAtoScenario(Scenario):
 
     name = "ato_credential_stuffing"
     display_name = "ATO: Credential Stuffing (/login)"
+    # Own IP so logins from other scenarios do not dilute the failure/success ratio.
+    source_ip = random_public_ipv4()
 
     def before(self) -> None:
         self.public_client: httpx.Client = get_client(
-            headers={"X-Forwarded-For": ATTACKER_IP}
+            headers={"X-Forwarded-For": self.source_ip}
         )
 
     def after(self) -> None:
@@ -56,7 +57,7 @@ class CredentialStuffingAtoScenario(Scenario):
         return (self.replay_failed_logins, self.compromise_known_account)
 
     def datadog_link(self, *, service_name: str | None) -> str | None:
-        terms = [f"@http.client_ip:{ATTACKER_IP}"]
+        terms = [f"@http.client_ip:{self.source_ip}"]
         if service_name is not None:
             terms.append(f"service:{service_name}")
         query = quote(" ".join(terms), safe="")
@@ -87,17 +88,20 @@ class CredentialStuffingAtoScenario(Scenario):
             for username in self.attack_usernames()
         )
 
-        if failures == 0:
+        if failures <= FAILED_LOGIN_THRESHOLD:
             return StepSummary(
                 outcome="failure",
-                summary="`/login` accepted the credential stuffing guesses.",
+                summary=(
+                    f"Only {failures} of {CREDENTIAL_STUFFING_ATTEMPTS} logins failed. "
+                    f"The ATO rule needs more than {FAILED_LOGIN_THRESHOLD}."
+                ),
             )
 
         return StepSummary(
             outcome="success",
             summary=(
                 f"Replayed {failures} failed logins across distinct usernames from "
-                f"`{ATTACKER_IP}`. Datadog groups these by IP to detect a "
+                f"`{self.source_ip}`. Datadog groups these by IP to detect a "
                 f"credential stuffing attack."
             ),
         )
@@ -121,7 +125,7 @@ class CredentialStuffingAtoScenario(Scenario):
         return StepSummary(
             outcome="success",
             summary=(
-                f"Compromised `{COMPROMISED_USERNAME}` from `{ATTACKER_IP}`. "
+                f"Compromised `{COMPROMISED_USERNAME}` from `{self.source_ip}`. "
                 f"Datadog can detect this as an account compromised by credential "
                 f"stuffing."
             ),
