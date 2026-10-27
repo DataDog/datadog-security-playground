@@ -1,5 +1,7 @@
 """HTTP client for the playground Flask app."""
 
+import time
+
 import requests
 
 DEFAULT_APP_URL = "http://localhost:5000"
@@ -11,15 +13,21 @@ class AppClient:
     def __init__(self, base_url: str = DEFAULT_APP_URL):
         self.base_url = base_url
 
-    def inject(self, cmd: str, timeout: float = 60) -> str:
-        """Send a command to the /inject endpoint."""
-        resp = requests.post(
-            f"{self.base_url}/inject",
-            data=cmd,
-            timeout=timeout,
-        )
-        resp.raise_for_status()
-        return resp.text
+    def inject(self, cmd: str, timeout: float = 60, attempts: int = 5, retry_delay: float = 1.0) -> str:
+        """Send a command to the /inject endpoint.
+
+        Under rapid back-to-back calls the app can drop the request body; the endpoint
+        then answers 400 without running anything, so only that pre-execution rejection is
+        retried. Timeouts and connection losses are left to propagate: the command may
+        already be executing, and retrying would run it a second time.
+        """
+        for attempt in range(1, attempts + 1):
+            resp = requests.post(f"{self.base_url}/inject", data=cmd, timeout=timeout)
+            if resp.status_code == 400 and attempt < attempts:
+                time.sleep(retry_delay)
+                continue
+            resp.raise_for_status()
+            return resp.text
 
     def ping(self, timeout: float = 5) -> bool:
         """Check if the playground app is reachable."""

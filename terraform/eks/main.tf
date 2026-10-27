@@ -3,32 +3,52 @@
 
 provider "aws" {
   region = var.region
+
+  default_tags {
+    tags = var.tags
+  }
 }
 
+# exec refreshes tokens: a static aws_eks_cluster_auth token expires 15 minutes in, which long applies outlast.
 provider "kubernetes" {
   host                   = module.eks.cluster_endpoint
   cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
-  token                  = data.aws_eks_cluster_auth.cluster.token
+
+  exec {
+    api_version = "client.authentication.k8s.io/v1beta1"
+    command     = "aws"
+    args        = ["eks", "get-token", "--cluster-name", module.eks.cluster_name, "--region", var.region, "--output", "json"]
+  }
 }
 
 provider "helm" {
   kubernetes {
     host                   = module.eks.cluster_endpoint
     cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
-    token                  = data.aws_eks_cluster_auth.cluster.token
+
+    exec {
+      api_version = "client.authentication.k8s.io/v1beta1"
+      command     = "aws"
+      args        = ["eks", "get-token", "--cluster-name", module.eks.cluster_name, "--region", var.region, "--output", "json"]
+    }
   }
 }
 
-data "aws_eks_cluster_auth" "cluster" {
-  name = module.eks.cluster_name
-}
-
-# Filter out local zones, which are not currently supported 
+# Filter out local zones, which are not currently supported
 # with managed node groups
 data "aws_availability_zones" "available" {
+  exclude_zone_ids = var.exclude_zone_ids
+
   filter {
     name   = "opt-in-status"
     values = ["opt-in-not-required"]
+  }
+
+  lifecycle {
+    postcondition {
+      condition     = length(self.names) >= 2
+      error_message = "Fewer than two availability zones remain after exclude_zone_ids: EKS needs at least two."
+    }
   }
 }
 
@@ -58,15 +78,15 @@ data "aws_iam_policy_document" "assume_role" {
 }
 
 resource "aws_iam_role" "playground" {
-  name               = "eks-pod-identity-playground"
+  name               = var.pod_identity_role_name
   assume_role_policy = data.aws_iam_policy_document.assume_role.json
 }
 
 resource "aws_eks_pod_identity_association" "association" {
-  cluster_name = local.cluster_name
-  namespace = var.playground_namespace
+  cluster_name    = local.cluster_name
+  namespace       = var.playground_namespace
   service_account = var.service_account_name
-  role_arn = aws_iam_role.playground.arn
+  role_arn        = aws_iam_role.playground.arn
 }
 
 
@@ -77,7 +97,7 @@ module "vpc" {
   name = "datadog-security-playground-vpc"
 
   cidr = "10.0.0.0/16"
-  azs  = slice(data.aws_availability_zones.available.names, 0, 3)
+  azs  = slice(data.aws_availability_zones.available.names, 0, min(3, length(data.aws_availability_zones.available.names)))
 
   private_subnets = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
   public_subnets  = ["10.0.4.0/24", "10.0.5.0/24", "10.0.6.0/24"]
@@ -103,7 +123,9 @@ module "eks" {
   cluster_version = "1.35"
 
   cluster_endpoint_public_access           = true
+  cluster_endpoint_public_access_cidrs     = var.cluster_endpoint_public_access_cidrs
   enable_cluster_creator_admin_permissions = true
+  access_entries                           = var.access_entries
 
   # Enable audit logs only
   cluster_enabled_log_types              = ["audit"]

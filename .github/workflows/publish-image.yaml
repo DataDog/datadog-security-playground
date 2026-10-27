@@ -1,13 +1,27 @@
-name: Publish container image
+name: Publish container images
 
 on:
   release:
     types: [published]
   workflow_dispatch:
     inputs:
-      tag:
-        description: "Image tag to publish (e.g. 1.2.4-hotfix). Validated; 'latest' is rejected."
+      image:
+        description: "Image to publish"
         required: true
+        default: playground
+        type: choice
+        options:
+          - playground
+          - langflow-vulnerable
+          - all
+      tag:
+        description: "Playground image tag to publish (e.g. 1.2.4-hotfix). Required for playground/all dispatch; 'latest' is rejected."
+        required: false
+        type: string
+      ddtrace_version:
+        description: "ddtrace version for the Langflow vulnerable image"
+        required: false
+        default: "4.14.0"
         type: string
 
 # Serialize all runs to prevent races on shared image tags — most importantly :latest,
@@ -20,8 +34,9 @@ permissions:
   contents: read
 
 jobs:
-  publish:
-    name: Build and push image
+  publish-playground:
+    name: Build and push playground app image
+    if: ${{ github.event_name == 'release' || inputs.image == 'playground' || inputs.image == 'all' }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment:
@@ -49,11 +64,15 @@ jobs:
             exit 1
           fi
 
-      - name: Validate tag input
+      - name: Validate playground tag input
         if: github.event_name == 'workflow_dispatch'
         env:
           TAG: ${{ inputs.tag }}
         run: |
+          if [[ -z "$TAG" ]]; then
+            echo "::error::The tag input is required when publishing the playground image."
+            exit 1
+          fi
           if [[ ! "$TAG" =~ ^[a-zA-Z0-9][a-zA-Z0-9._-]{0,63}$ ]]; then
             echo "::error::Invalid tag format: $TAG"
             exit 1
@@ -76,7 +95,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Compute image metadata
+      - name: Compute playground image metadata
         id: meta
         uses: docker/metadata-action@80c7e94dd9b9319bd5eb7a0e0fe9291e23a2a2e9 # v6.1.0
         env:
@@ -88,7 +107,7 @@ jobs:
             type=raw,value=latest,enable=${{ github.event_name == 'release' && github.event.release.prerelease == false }}
             type=raw,value=${{ env.DISPATCH_TAG }},enable=${{ github.event_name == 'workflow_dispatch' }}
 
-      - name: Build and push image
+      - name: Build and push playground app image
         id: push
         uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
         with:
@@ -101,7 +120,77 @@ jobs:
           build-args: | # Pass GIT_SHA to allow for reproducible scenarios when downloading payloads from Github
             GIT_SHA=${{ github.sha }}
 
-      - name: Attest build provenance
+      - name: Attest playground app build provenance
+        uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
+        with:
+          subject-name: ghcr.io/datadog/datadog-security-playground
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+
+  publish-langflow-vulnerable:
+    name: Build and push Langflow vulnerable image
+    if: ${{ github.event_name == 'workflow_dispatch' && (inputs.image == 'langflow-vulnerable' || inputs.image == 'all') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment:
+      name: protected-main-env
+      url: https://ghcr.io/datadog/datadog-security-playground
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    env:
+      DDTRACE_VERSION: ${{ inputs.ddtrace_version || '4.14.0' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Validate ddtrace version input
+        run: |
+          if [[ ! "$DDTRACE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([a-zA-Z0-9._-]+)?$ ]]; then
+            echo "::error::Invalid ddtrace version: $DDTRACE_VERSION"
+            exit 1
+          fi
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@06116385d9baf250c9f4dcb4858b16962ea869c3 # v4.1.0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4.1.0
+
+      - name: Log in to GHCR
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute Langflow vulnerable image metadata
+        id: meta
+        uses: docker/metadata-action@80c7e94dd9b9319bd5eb7a0e0fe9291e23a2a2e9 # v6.1.0
+        with:
+          images: ghcr.io/datadog/datadog-security-playground
+          tags: |
+            type=raw,value=langflow-vulnerable-ddtrace-${{ env.DDTRACE_VERSION }}
+
+      - name: Build and push Langflow vulnerable image
+        id: push
+        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
+        with:
+          context: .
+          file: ./langflow-vulnerable/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            GIT_SHA=${{ github.sha }}
+            DDTRACE_VERSION=${{ env.DDTRACE_VERSION }}
+
+      - name: Attest Langflow vulnerable build provenance
         uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
         with:
           subject-name: ghcr.io/datadog/datadog-security-playground

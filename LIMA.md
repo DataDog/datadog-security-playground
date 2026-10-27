@@ -68,8 +68,7 @@ export KUBECONFIG=$(limactl list k8s --format 'unix://{{.Dir}}/copied-from-guest
 #### Step 4: Deploy the Playground Application
 
 ```bash
-kubectl apply -f deploy/namespace.yaml
-kubectl apply -f deploy/app.yaml
+kubectl apply -f deploy/namespace.yaml -f deploy/app.yaml
 ```
 
 #### Step 5: Validate the Deployment
@@ -139,7 +138,7 @@ This creates a dedicated `k8s` Colima profile running K3s on Ubuntu 24.04 (kerne
 #### Step 3: Deploy the Playground Application
 
 ```bash
-kubectl apply -f deploy/app.yaml
+kubectl apply -f deploy/namespace.yaml -f deploy/app.yaml
 kubectl get pods -n playground -w
 ```
 

@@ -14,16 +14,19 @@ A comprehensive educational security simulation environment designed to demonstr
 ## 🛠️ Prerequisites
 
 ### Required Tools
-- **Kubernetes cluster** (existing cluster or see infrastructure options below)
+- **AWS account** for the recommended Terraform EKS path, or a **Kubernetes cluster** for manual deployment
 - **kubectl**: [Installation Guide](https://kubernetes.io/docs/tasks/tools/)
 - **Helm Charts**: [Installation Guide](https://helm.sh/docs/intro/install/)
 
 ### Infrastructure Options
 
-You can deploy this playground on:
+Recommended and most maintained:
 
-1. **Your existing Kubernetes cluster** - Follow the deployment guide below
-2. **Amazon EKS using Terraform** - See [Terraform EKS Setup](#-terraform-eks-setup-optional) section
+1. **Amazon EKS using Terraform** - See [Terraform EKS Setup](#terraform-eks-setup-recommended)
+
+Alternatives:
+
+2. **Your existing Kubernetes cluster** - Follow [Manual Kubernetes Deployment](#manual-kubernetes-deployment)
 3. **Local Lima VM** - See [LIMA.md](LIMA.md)
 4. **Local Minikube cluster** - For developers, see [DEVELOPER.md](DEVELOPER.md)
 
@@ -34,10 +37,75 @@ Set these environment variables **once** before running any setup steps — they
 ```bash
 export DD_SITE=datadoghq.com                  # your Datadog site
 export DD_API_KEY=<your API key>              # https://app.datadoghq.com/organization-settings/api-keys
-export DD_APP_KEY=<your application key>      # only needed for scenario 1 (rce-malware); requires security_monitoring_rules_write scope
+export DD_APP_KEY=<your application key>      # needed for scenario 1 (rce-malware) and the Terraform Datadog rules; requires security_monitoring_rules_write and security_monitoring_cws_agent_rules_write scopes
 ```
 
-## 🚀 Deployment Guide
+## ☁️ Terraform EKS Setup (Recommended)
+
+The recommended and most maintained path is Terraform-managed Amazon EKS with the playground application and Datadog Agent pre-configured.
+
+### Prerequisites
+- AWS credentials configured or passed as environment variables
+- Terraform installed (>= 1.0)
+- Datadog API key
+
+### Deployment
+
+Due to Terraform provider initialization requirements, deployment must be done in **two stages**:
+
+#### Stage 1: Create the EKS Cluster and VPC
+
+```bash
+cd terraform/eks
+terraform init
+terraform apply -var="datadog_api_key=$DD_API_KEY" \
+    -target=module.vpc \
+    -target=module.eks
+```
+
+This creates:
+- VPC with public and private subnets
+- EKS cluster with managed node groups
+- Required IAM roles and policies
+
+#### Stage 2: Deploy Kubernetes Resources
+
+Once the cluster is created, deploy the Kubernetes resources:
+
+```bash
+terraform apply -var="datadog_api_key=$DD_API_KEY" -var="datadog_app_key=$DD_APP_KEY"
+```
+
+This deploys:
+- Kubernetes namespaces (`playground` and `datadog`)
+- Service accounts and secrets
+- Datadog Agent via Helm
+- Playground application
+- Datadog rules, only with `-var="enable_cadr_rules=true"` for agents older than 7.84: `imds_v2_tracking` agent rule and `[CADR] Cryptomining attack chain detected` backend rule (see [terraform/eks/README.md](terraform/eks/README.md#datadog-resources))
+
+### Access the Cluster
+
+Update your kubeconfig to access the cluster:
+
+```bash
+aws eks --region $(terraform output -raw region) update-kubeconfig \
+    --name $(terraform output -raw cluster_name)
+```
+
+For more details, see [terraform/eks/README.md](terraform/eks/README.md).
+
+### Cleanup
+
+To destroy the EKS cluster and all associated AWS resources:
+
+```bash
+cd terraform/eks
+terraform destroy -var="datadog_api_key=$DD_API_KEY" -var="datadog_app_key=$DD_APP_KEY"
+```
+
+This removes the EKS cluster, VPC, IAM roles, and all Kubernetes resources deployed by Terraform.
+
+## 🚀 Manual Kubernetes Deployment
 
 ### Step 1: Deploy Datadog Agent
 
@@ -78,7 +146,7 @@ export DD_APP_KEY=<your application key>      # only needed for scenario 1 (rce-
 
 1. **Deploy the Application:**
    ```bash
-   kubectl apply -f deploy/app.yaml
+   kubectl apply -f deploy/namespace.yaml -f deploy/app.yaml
    ```
 
 2. **Wait for Application to be Ready:**
@@ -98,7 +166,7 @@ To remove the playground from your cluster:
 
 1. **Delete the Application:**
    ```bash
-   kubectl delete -f deploy/app.yaml
+   kubectl delete -f deploy/app.yaml -f deploy/namespace.yaml
    ```
 
 2. **Uninstall the Datadog Agent:**
@@ -110,70 +178,6 @@ To remove the playground from your cluster:
    ```bash
    kubectl delete secret $DATADOG_API_SECRET_NAME
    ```
-
-## ☁️ Terraform EKS Setup (Optional)
-
-If you don't have an existing Kubernetes cluster, you can use Terraform to create an Amazon EKS cluster with the playground application and Datadog Agent pre-configured.
-
-### Prerequisites
-- AWS credentials configured or passed as environment variables
-- Terraform installed (>= 1.0)
-- Datadog API key
-
-### Deployment
-
-Due to Terraform provider initialization requirements, deployment must be done in **two stages**:
-
-#### Stage 1: Create the EKS Cluster and VPC
-
-```bash
-cd terraform/eks
-terraform init
-terraform apply -var="datadog_api_key=YOUR_API_KEY_HERE" \
-    -target=module.vpc \
-    -target=module.eks
-```
-
-This creates:
-- VPC with public and private subnets
-- EKS cluster with managed node groups
-- Required IAM roles and policies
-
-#### Stage 2: Deploy Kubernetes Resources
-
-Once the cluster is created, deploy the Kubernetes resources:
-
-```bash
-terraform apply -var="datadog_api_key=YOUR_API_KEY_HERE"
-```
-
-This deploys:
-- Kubernetes namespaces (`playground` and `datadog`)
-- Service accounts and secrets
-- Datadog Agent via Helm
-- Playground application
-
-### Access the Cluster
-
-Update your kubeconfig to access the cluster:
-
-```bash
-aws eks --region $(terraform output -raw region) update-kubeconfig \
-    --name $(terraform output -raw cluster_name)
-```
-
-For more details, see [terraform/eks/README.md](terraform/eks/README.md).
-
-### Cleanup
-
-To destroy the EKS cluster and all associated AWS resources:
-
-```bash
-cd terraform/eks
-terraform destroy -var="datadog_api_key=YOUR_API_KEY_HERE"
-```
-
-This removes the EKS cluster, VPC, IAM roles, and all Kubernetes resources deployed by Terraform.
 
 ## 🎯 Available Attack Scenarios
 
@@ -195,7 +199,26 @@ Navigate to the `scenarios/` folder to explore available attack scenarios. Each 
 kubectl exec -it -n playground deploy/playground-app -- /scenarios/rce-malware/detonate.sh --wait
 ```
 
-#### 2. Cloud Access - AWS Credential Theft and Resource Abuse
+#### 2. Langflow CVE-2025-3248 RCE -> Malware + Cloud Credential Theft
+- **Location**: `scenarios/langflow-rce/`
+- **Description**: The real-exploit alternative to scenario 1. Runs from the attacker machine against the `langflow-vulnerable` pod, exploiting CVE-2025-3248 (unauthenticated RCE via `POST /api/v1/validate/code` in Langflow < 1.3.0). It then chains the same `rce-malware` and `cloud-access` payloads through the exploit: a simulated cryptominer with persistence, AWS credential theft via IMDS, and an attempted EC2 pivot. Includes a recon phase (nmap / httpx / nuclei) that runs when the tools are installed.
+- **Attack Vector**: CVE-2025-3248 (unauthenticated RCE) in an exposed Langflow service
+- **Impact**: Remote code execution, malware execution, persistence, cloud credential theft, attempted lateral movement
+- **Detection**: AppSec signal for the CVE-2025-3248 exploit attempt, plus the same Workload Protection signals as scenarios 1 and 3 (cryptominer, mining-pool DNS, persistence, IMDS access)
+- **Prerequisites**: `python3` + the `requests` package on the attacker machine, and a port-forward to the langflow pod (`kubectl port-forward -n playground deployment/langflow-vulnerable 7860:7860`). Recon tools (`nmap`, `httpx`, `nuclei`) are optional.
+
+**How to Run:**
+```bash
+# Port-forward the vulnerable langflow pod to the attacker machine
+kubectl port-forward -n playground deployment/langflow-vulnerable 7860:7860
+
+# Run the exploit chain from the repo root (attacker machine)
+./scenarios/langflow-rce/detonate.sh --wait
+# Or against an explicit target:
+./scenarios/langflow-rce/detonate.sh --target http://localhost:7860 --wait
+```
+
+#### 3. Cloud Access - AWS Credential Theft and Resource Abuse
 - **Location**: `scenarios/cloud-access/`
 - **Description**: Simulates cloud credential theft and resource abuse by retrieving AWS credentials from the Instance Metadata Service (IMDS) and attempting to launch expensive EC2 instances across multiple regions. This demonstrates how attackers pivot from workload compromise to cloud infrastructure abuse.
 - **Attack Vector**: IMDS credential theft, unauthorized EC2 instance launches
@@ -208,7 +231,7 @@ kubectl exec -it -n playground deploy/playground-app -- /scenarios/rce-malware/d
 kubectl exec -it -n playground deploy/playground-app -- /scenarios/cloud-access/detonate.sh --wait
 ```
 
-#### 3. BPFDoor Network Backdoor Attack
+#### 4. BPFDoor Network Backdoor Attack
 - **Location**: `scenarios/bpfdoor/`
 - **Description**: Simulates a command injection attack that deploys a persistent BPFDoor network backdoor
 - **Attack Vector**: Command injection vulnerability
@@ -222,7 +245,7 @@ kubectl exec -it -n playground deploy/playground-app -- /scenarios/cloud-access/
 kubectl exec -it -n playground deploy/playground-app -- /scenarios/bpfdoor/detonate.sh --wait
 ```
 
-#### 4. Essential Linux Binary Modified - Findings Generator
+#### 5. Essential Linux Binary Modified - Findings Generator
 - **Location**: `scenarios/findings-generator/`
 - **Description**: Essential system binaries in containers are executable files that perform operating system functions and administrative tasks. These binaries typically reside in protected system directories such as `/bin`, `/sbin`, `/usr/bin`, and `/usr/sbin`. In containerized environments, these binaries are part of the container image layers and should be immutable during runtime. 
 - **Attack Vector**: File system modifications to critical binaries
