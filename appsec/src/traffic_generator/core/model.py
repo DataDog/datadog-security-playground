@@ -21,7 +21,7 @@ DATADOG_SITE = os.getenv("DD_SITE", "datadoghq.com")
 TEST_API_TIMEOUT_SECONDS = float(os.getenv("DOGFOODING_TEST_API_TIMEOUT_SECONDS", "5"))
 
 
-def _random_public_ipv4() -> str:
+def random_public_ipv4() -> str:
     random_source = random.SystemRandom()
     # Pick from a known global range to avoid retries over special-use blocks.
     return ".".join(
@@ -34,7 +34,7 @@ def _random_public_ipv4() -> str:
     )
 
 
-PUBLIC_TEST_SOURCE_IP = _random_public_ipv4()
+PUBLIC_TEST_SOURCE_IP = random_public_ipv4()
 APPSEC_ATTACKER_UNBLOCK_LINK = (
     f"https://app.{DATADOG_SITE}/security/appsec/investigate/attackers"
     f"?column=count&fromUser=false&group=ip&ipAttacker={PUBLIC_TEST_SOURCE_IP}"
