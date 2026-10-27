@@ -1,17 +1,10 @@
 name: Terraform
 
+# Paths are filtered per job: a skipped job satisfies a required check, a workflow that never starts doesn't.
 on:
   push:
     branches: [main]
-    paths:
-      - "terraform/eks/**"
-      - "deploy/**"
-      - ".github/workflows/terraform.yaml"
   pull_request:
-    paths:
-      - "terraform/eks/**"
-      - "deploy/**"
-      - ".github/workflows/terraform.yaml"
 
 permissions:
   contents: read
@@ -22,8 +15,35 @@ env:
   TERRAFORM_SHA256: "56a5d12f47cbc1c6bedb8f5426ae7d5df984d1929572c24b56f4c82e9f9bf709"
 
 jobs:
+  changes:
+    name: Detect terraform/eks changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      eks: ${{ steps.diff.outputs.eks }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+          fetch-depth: 2
+
+      - name: Diff against the base branch
+        id: diff
+        run: |
+          # HEAD^1 is the base branch tip, both on the PR merge commit and on a merge to main.
+          changed="$(git diff --no-renames --name-only HEAD^1 HEAD)"
+          if grep -qE '^(terraform/eks/|deploy/|\.github/workflows/terraform\.yaml$)' <<<"$changed"; then
+            echo "eks=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "eks=false" >> "$GITHUB_OUTPUT"
+          fi
+
   eks:
     name: Check terraform/eks
+    needs: changes
+    # Run if detection failed too, otherwise the skip would pass the required check.
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.eks == 'true') }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
