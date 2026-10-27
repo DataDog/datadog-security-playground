@@ -31,17 +31,7 @@ output "app_port_forward_command" {
 }
 
 output "app_exec_command" {
-  description = "Open a shell inside the playground app container. AWS supports ECS Exec only on ECS-optimized AMIs, so on this Ubuntu host prefer app_exec_fallback_command."
-  value = join(" ", [
-    "aws ecs execute-command --region ${var.region}",
-    "--cluster ${aws_ecs_cluster.main.name}",
-    "--task <task-id>",
-    "--container playground-app --interactive --command /bin/sh",
-  ])
-}
-
-output "app_exec_fallback_command" {
-  description = "Shell into the app container over an SSM host session. Works regardless of ECS Exec support."
+  description = "Open a shell in the playground app container through the SSM-managed host"
   value = join(" ", [
     "aws ssm start-session --region ${var.region} --target ${aws_instance.ecs.id}",
     "--document-name AWS-StartInteractiveCommand",

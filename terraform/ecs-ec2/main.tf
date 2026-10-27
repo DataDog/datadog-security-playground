@@ -141,48 +141,17 @@ resource "aws_iam_role_policy" "task_execution_read_api_key" {
   policy = data.aws_iam_policy_document.read_api_key.json
 }
 
-# Task role for the app, scoped to what ECS Exec needs so `aws ecs
-# execute-command` works as the equivalent of `kubectl exec`.
-resource "aws_iam_role" "app_task" {
-  name               = "${local.cluster_name}-app-task"
-  assume_role_policy = data.aws_iam_policy_document.ecs_tasks_assume_role.json
-}
-
-data "aws_iam_policy_document" "ecs_exec" {
-  statement {
-    effect = "Allow"
-    actions = [
-      "ssmmessages:CreateControlChannel",
-      "ssmmessages:CreateDataChannel",
-      "ssmmessages:OpenControlChannel",
-      "ssmmessages:OpenDataChannel",
-    ]
-    resources = ["*"]
-  }
-}
-
-resource "aws_iam_role_policy" "app_task_ecs_exec" {
-  name   = "ecs-exec"
-  role   = aws_iam_role.app_task.id
-  policy = data.aws_iam_policy_document.ecs_exec.json
-}
-
 ################################################################################
 # Cluster and container instance
 ################################################################################
 
 resource "aws_ecs_cluster" "main" {
   name = local.cluster_name
-
-  configuration {
-    execute_command_configuration {
-      logging = "DEFAULT"
-    }
-  }
 }
 
 # Ubuntu 24.04, matching ../ec2 and the local Lima VM, so Workload Protection
-# runs against one kernel across every stack in this repository.
+# uses the same OS release across these environments. The latest AMI can
+# contain a different kernel revision.
 #
 # AWS publishes no ECS-optimized Ubuntu AMI (the Linux variants are Amazon Linux
 # and Bottlerocket only), so this is a stock Canonical image and user-data
@@ -215,6 +184,18 @@ resource "aws_instance" "ecs" {
     region       = var.region
     cluster_name = local.cluster_name
   })
+
+  # Leave room for Ubuntu, both images, and image extraction during updates.
+  root_block_device {
+    volume_size = 30
+    volume_type = "gp3"
+    encrypted   = true
+  }
+
+  depends_on = [
+    aws_iam_role_policy_attachment.instance_ecs,
+    aws_iam_role_policy_attachment.instance_ssm,
+  ]
 
   # Re-provision if the bootstrap script or its inputs change.
   user_data_replace_on_change = true

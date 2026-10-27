@@ -4,7 +4,7 @@
 # ECS workloads: the Datadog Agent with Workload Protection, and the playground app.
 #
 # The agent container definition follows
-# https://docs.datadoghq.com/security/workload_protection/setup/agent/ecs_ec2/
+# https://docs.datadoghq.com/security/workload_protection/setup/ecs_ec2/
 # Elevated access is granted through the capability list below rather than
 # through `privileged`.
 
@@ -20,7 +20,7 @@ locals {
     { name = "proc", host_path = "/proc/", container_path = "/host/proc/", read_only = true },
     { name = "cgroup", host_path = "/sys/fs/cgroup/", container_path = "/host/sys/fs/cgroup", read_only = true },
     { name = "passwd", host_path = "/etc/passwd", container_path = "/etc/passwd", read_only = true },
-    { name = "os_release", host_path = "/etc/os-release", container_path = "/host/etc/os-release", read_only = true },
+    { name = "os_release", host_path = "/etc/os-release", container_path = "/etc/os-release", read_only = true },
     { name = "root", host_path = "/", container_path = "/host/root", read_only = true },
     # system-probe attaches eBPF programs through debugfs, which must be writable.
     { name = "kernel_debug", host_path = "/sys/kernel/debug", container_path = "/sys/kernel/debug", read_only = false },
@@ -38,7 +38,8 @@ locals {
   ]
 
   agent_environment = {
-    DD_SITE = var.datadog_site
+    DD_SITE   = var.datadog_site
+    HOST_ROOT = "/host/root"
 
     # Workload Protection: runtime security (CWS) and system-probe.
     DD_RUNTIME_SECURITY_CONFIG_ENABLED                      = "true"
@@ -66,6 +67,8 @@ resource "aws_ecs_task_definition" "datadog_agent" {
   requires_compatibilities = ["EC2"]
   network_mode             = "bridge"
   execution_role_arn       = aws_iam_role.task_execution.arn
+  # Match the Docker Workload Protection setup on this Ubuntu host.
+  pid_mode = "host"
 
   dynamic "volume" {
     for_each = local.agent_volumes
@@ -80,6 +83,8 @@ resource "aws_ecs_task_definition" "datadog_agent" {
       name      = "datadog-agent"
       image     = local.agent_image
       essential = true
+
+      dockerSecurityOptions = ["apparmor:unconfined"]
 
       # The docs call out raising this if SBOM extraction from container images fails.
       memory = 768
@@ -130,7 +135,11 @@ resource "aws_ecs_service" "datadog_agent" {
   task_definition     = aws_ecs_task_definition.datadog_agent.arn
   scheduling_strategy = "DAEMON"
 
-  depends_on = [aws_instance.ecs]
+  depends_on = [
+    aws_instance.ecs,
+    aws_iam_role_policy.task_execution_read_api_key,
+    aws_iam_role_policy_attachment.task_execution,
+  ]
 }
 
 ################################################################################
@@ -142,7 +151,6 @@ resource "aws_ecs_task_definition" "app" {
   requires_compatibilities = ["EC2"]
   network_mode             = "bridge"
   execution_role_arn       = aws_iam_role.task_execution.arn
-  task_role_arn            = aws_iam_role.app_task.arn
 
   container_definitions = jsonencode([
     {
@@ -185,12 +193,10 @@ resource "aws_ecs_service" "app" {
   task_definition = aws_ecs_task_definition.app.arn
   desired_count   = 1
 
-  # Enables `aws ecs execute-command`. Note that AWS only supports ECS Exec on
-  # ECS-optimized AMIs, and this stack runs stock Ubuntu, so it may not come up.
-  # It is left on because it costs nothing if unsupported, and because the
-  # reliable fallback needs no extra infrastructure: open an SSM session on the
-  # host and use `docker exec`. See the README.
-  enable_execute_command = true
+  # Only one instance can bind host port 5000. Stop the old task before
+  # replacing it; the default rolling update would wait forever for capacity.
+  deployment_minimum_healthy_percent = 0
+  deployment_maximum_percent         = 100
 
   depends_on = [aws_instance.ecs]
 }

@@ -18,7 +18,25 @@ apt_get() {
 
 apt_get update
 apt_get install -y curl docker.io
-systemctl enable --now docker
+
+# ECS needs cgroupfs on a non-ECS-optimized host. Expose host cgroups to
+# monitoring containers, and pin docker0 to the app's DD_AGENT_HOST address.
+# Bound local logs so a long-lived lab cannot fill the root volume.
+mkdir -p /etc/docker
+cat > /etc/docker/daemon.json <<'DOCKER'
+{
+  "exec-opts": ["native.cgroupdriver=cgroupfs"],
+  "default-cgroupns-mode": "host",
+  "bip": "172.17.0.1/16",
+  "log-driver": "json-file",
+  "log-opts": {"max-size": "10m", "max-file": "3"}
+}
+DOCKER
+systemctl enable docker
+systemctl restart docker
+
+# Workload Protection requires the debugfs filesystem, not an empty directory.
+mountpoint -q /sys/kernel/debug || mount -t debugfs debugfs /sys/kernel/debug
 
 # ecs-init requires Docker to already be installed.
 curl -fsSL -o /tmp/amazon-ecs-init.deb \
@@ -29,15 +47,19 @@ rm -f /tmp/amazon-ecs-init.deb
 mkdir -p /etc/ecs
 cat >> /etc/ecs/ecs.config <<'CONFIG'
 ECS_CLUSTER=${cluster_name}
-# Off by default outside the ECS-optimized AMI. Required for the app task's IAM
-# role to work in bridge network mode.
-ECS_ENABLE_TASK_IAM_ROLE=true
+# Required on EC2 for Parameter Store secrets resolved by the execution role.
+ECS_ENABLE_AWSLOGS_EXECUTIONROLE_OVERRIDE=true
+# Allows the Datadog task to opt out of Docker's AppArmor profile on Ubuntu.
+ECS_APPARMOR_CAPABLE=true
 CONFIG
 
-# The ecs and docker systemd units wait for cloud-init to finish, and cloud-init
-# is not finished until this script returns. Ordering ecs.service after
-# cloud-final and starting it with --no-block avoids the deadlock the ECS docs
-# warn about.
-sed -i '/^\[Unit\]$/a After=cloud-final.service' /lib/systemd/system/ecs.service
+# Start ECS only once cloud-init has finished writing the host configuration.
+# Starting a unit ordered after cloud-final synchronously from user-data would
+# deadlock: cloud-init cannot finish until this script returns.
+mkdir -p /etc/systemd/system/ecs.service.d
+cat > /etc/systemd/system/ecs.service.d/cloud-init.conf <<'UNIT'
+[Unit]
+After=cloud-final.service
+UNIT
 systemctl daemon-reload
 systemctl enable --now --no-block ecs.service

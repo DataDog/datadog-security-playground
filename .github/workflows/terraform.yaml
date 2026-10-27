@@ -5,11 +5,13 @@ on:
     branches: [main]
     paths:
       - "terraform/eks/**"
+      - "terraform/ecs-ec2/**"
       - "deploy/**"
       - ".github/workflows/terraform.yaml"
   pull_request:
     paths:
       - "terraform/eks/**"
+      - "terraform/ecs-ec2/**"
       - "deploy/**"
       - ".github/workflows/terraform.yaml"
 
@@ -22,8 +24,12 @@ env:
   TERRAFORM_SHA256: "56a5d12f47cbc1c6bedb8f5426ae7d5df984d1929572c24b56f4c82e9f9bf709"
 
 jobs:
-  eks:
-    name: Check terraform/eks
+  terraform:
+    name: Check terraform/${{ matrix.stack }}
+    strategy:
+      fail-fast: false
+      matrix:
+        stack: [eks, ecs-ec2]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -41,10 +47,21 @@ jobs:
           echo "$RUNNER_TEMP/terraform-bin" >> "$GITHUB_PATH"
 
       - name: Check formatting
-        run: terraform fmt -check -recursive -diff terraform/eks
+        run: terraform fmt -check -recursive -diff terraform/${{ matrix.stack }}
 
       - name: Validate the module
-        working-directory: terraform/eks
+        working-directory: terraform/${{ matrix.stack }}
         run: |
           terraform init -backend=false -input=false
           terraform validate
+
+      - name: Check the rendered ECS bootstrap script
+        if: matrix.stack == 'ecs-ec2'
+        working-directory: terraform/ecs-ec2
+        run: |
+          terraform console -var='datadog_api_key=validation-placeholder' <<'EOF' > "$RUNNER_TEMP/ecs-bootstrap.json"
+          jsonencode(templatefile("user-data.sh.tftpl", {region = "eu-west-3", cluster_name = "validation-cluster"}))
+          EOF
+          python3 -c 'import json, sys; sys.stdout.write(json.loads(json.load(sys.stdin)))' \
+            < "$RUNNER_TEMP/ecs-bootstrap.json" > "$RUNNER_TEMP/ecs-bootstrap.sh"
+          bash -n "$RUNNER_TEMP/ecs-bootstrap.sh"
