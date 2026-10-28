@@ -21,7 +21,7 @@ DATADOG_SITE = os.getenv("DD_SITE", "datadoghq.com")
 TEST_API_TIMEOUT_SECONDS = float(os.getenv("DOGFOODING_TEST_API_TIMEOUT_SECONDS", "5"))
 
 
-def _random_public_ipv4() -> str:
+def random_public_ipv4() -> str:
     random_source = random.SystemRandom()
     # Pick from a known global range to avoid retries over special-use blocks.
     return ".".join(
@@ -34,12 +34,7 @@ def _random_public_ipv4() -> str:
     )
 
 
-PUBLIC_TEST_SOURCE_IP = _random_public_ipv4()
-APPSEC_ATTACKER_UNBLOCK_LINK = (
-    f"https://app.{DATADOG_SITE}/security/appsec/investigate/attackers"
-    f"?column=count&fromUser=false&group=ip&ipAttacker={PUBLIC_TEST_SOURCE_IP}"
-    "&paused=true"
-)
+PUBLIC_TEST_SOURCE_IP = random_public_ipv4()
 APPSEC_BLOCK_RESPONSE_MARKERS = (
     "you've been blocked",
     "security provided by datadog",
@@ -84,11 +79,19 @@ class StepSummary:
     meta: dict[str, Any] | None = None
 
 
-def blocked_by_appsec_step_summary() -> StepSummary:
+def appsec_attacker_unblock_link(source_ip: str) -> str:
+    return (
+        f"https://app.{DATADOG_SITE}/security/appsec/investigate/attackers"
+        f"?column=count&fromUser=false&group=ip&ipAttacker={source_ip}"
+        "&paused=true"
+    )
+
+
+def blocked_by_appsec_step_summary(source_ip: str) -> StepSummary:
     return StepSummary(
         outcome="failure",
         summary=("You've been blocked by App and API Protection."),
-        meta={"unblock_link": APPSEC_ATTACKER_UNBLOCK_LINK},
+        meta={"unblock_link": appsec_attacker_unblock_link(source_ip)},
     )
 
 
@@ -183,6 +186,7 @@ class ScenarioRunResult:
 class Scenario(ABC):
     name: ClassVar[str]
     display_name: ClassVar[str | None] = None
+    source_ip: ClassVar[str] = PUBLIC_TEST_SOURCE_IP
     datadog_link_template: ClassVar[str | None] = os.getenv(
         "DOGFOODING_DATADOG_LINK_TEMPLATE"
     )
@@ -278,7 +282,7 @@ class Scenario(ABC):
             try:
                 summary = step()
             except AppSecBlockedError:
-                summary = blocked_by_appsec_step_summary()
+                summary = blocked_by_appsec_step_summary(self.source_ip)
                 blocked_error = True
 
             duration_ms = int((time.perf_counter() - started_at) * 1000)

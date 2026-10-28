@@ -1,5 +1,6 @@
 from .model import ScenarioGroup
 from .registry import register_group
+from .scenarios.ato_detection import CredentialStuffingAtoScenario
 from .scenarios.rasp_detection import RaspLfiScenario, RaspShiScenario, RaspSsrfScenario
 from .scenarios.threat_detection import (
     HealthCommandInjectionThreatScenario,
@@ -38,3 +39,12 @@ class RaspDetectionScenarioGroup(ScenarioGroup):
         RaspShiScenario,
         RaspLfiScenario,
     )
+
+
+@register_group
+class AccountTakeoverScenarioGroup(ScenarioGroup):
+    """Account takeover scenarios that should emit ATO signals."""
+
+    name = "AccountTakeover"
+    display_name = "Account Takeover"
+    scenarios = (CredentialStuffingAtoScenario,)
