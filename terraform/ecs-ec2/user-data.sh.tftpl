@@ -1,0 +1,65 @@
+#!/bin/bash
+# Register a stock Ubuntu 24.04 host as an ECS container instance.
+#
+# AWS publishes no ECS-optimized Ubuntu AMI, so Docker and the ECS agent are
+# installed here from the amazon-ecs-init package, following
+# https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-agent-install.html
+set -euxo pipefail
+
+export DEBIAN_FRONTEND=noninteractive
+
+# DPkg::Lock::Timeout waits for unattended-upgrades to release the dpkg lock
+# rather than failing, which it otherwise does routinely in the first minutes
+# of a fresh boot. Note this script runs under `set -e`, so any apt failure
+# aborts the bootstrap and leaves the host with no Docker and no ECS agent.
+apt_get() {
+  apt-get -o DPkg::Lock::Timeout=600 "$@"
+}
+
+apt_get update
+apt_get install -y curl docker.io
+
+# ECS needs cgroupfs on a non-ECS-optimized host. Expose host cgroups to
+# monitoring containers, and pin docker0 to the app's DD_AGENT_HOST address.
+# Bound local logs so a long-lived lab cannot fill the root volume.
+mkdir -p /etc/docker
+cat > /etc/docker/daemon.json <<'DOCKER'
+{
+  "exec-opts": ["native.cgroupdriver=cgroupfs"],
+  "default-cgroupns-mode": "host",
+  "bip": "172.17.0.1/16",
+  "log-driver": "json-file",
+  "log-opts": {"max-size": "10m", "max-file": "3"}
+}
+DOCKER
+systemctl enable docker
+systemctl restart docker
+
+# Workload Protection requires the debugfs filesystem, not an empty directory.
+mountpoint -q /sys/kernel/debug || mount -t debugfs debugfs /sys/kernel/debug
+
+# ecs-init requires Docker to already be installed.
+curl -fsSL -o /tmp/amazon-ecs-init.deb \
+  "https://s3.${region}.amazonaws.com/amazon-ecs-agent-${region}/amazon-ecs-init-latest.amd64.deb"
+dpkg -i /tmp/amazon-ecs-init.deb
+rm -f /tmp/amazon-ecs-init.deb
+
+mkdir -p /etc/ecs
+cat >> /etc/ecs/ecs.config <<'CONFIG'
+ECS_CLUSTER=${cluster_name}
+# Required on EC2 for Parameter Store secrets resolved by the execution role.
+ECS_ENABLE_AWSLOGS_EXECUTIONROLE_OVERRIDE=true
+# Allows the Datadog task to opt out of Docker's AppArmor profile on Ubuntu.
+ECS_APPARMOR_CAPABLE=true
+CONFIG
+
+# ecs.config is fully written above, so the ECS agent can start now. --no-block
+# avoids the first-boot deadlock: this script runs inside cloud-init, and a
+# blocking `systemctl start` would wait on an agent that is ordered after
+# cloud-init finishes, which cannot happen until this script returns.
+#
+# Do NOT add an `After=cloud-final.service` drop-in here: ecs.service is
+# WantedBy=multi-user.target, and ordering it after cloud-final creates a
+# systemd ordering cycle. On reboot (no user-data) systemd breaks the cycle by
+# deleting the ecs.service start job, so the host never rejoins the cluster.
+systemctl enable --now --no-block ecs.service

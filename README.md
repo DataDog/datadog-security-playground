@@ -27,8 +27,9 @@ Recommended and most maintained:
 Alternatives:
 
 2. **Your existing Kubernetes cluster** - Follow [Manual Kubernetes Deployment](#manual-kubernetes-deployment)
-3. **Local Lima VM** - See [LIMA.md](LIMA.md)
-4. **Local Minikube cluster** - For developers, see [DEVELOPER.md](DEVELOPER.md)
+3. **Amazon ECS on EC2 using Terraform** - See [ECS setup](terraform/ecs-ec2/README.md)
+4. **Local Lima VM** - See [LIMA.md](LIMA.md)
+5. **Local Minikube cluster** - For developers, see [DEVELOPER.md](DEVELOPER.md)
 
 ## 🌍 Configuration
 
