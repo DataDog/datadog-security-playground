@@ -7,11 +7,8 @@ on:
       - "terraform/eks/**"
       - "deploy/**"
       - ".github/workflows/terraform.yaml"
+  # Not path-filtered: the check is required, and a workflow that never starts never reports it.
   pull_request:
-    paths:
-      - "terraform/eks/**"
-      - "deploy/**"
-      - ".github/workflows/terraform.yaml"
 
 permissions:
   contents: read
