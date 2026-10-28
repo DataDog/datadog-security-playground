@@ -53,13 +53,13 @@ ECS_ENABLE_AWSLOGS_EXECUTIONROLE_OVERRIDE=true
 ECS_APPARMOR_CAPABLE=true
 CONFIG
 
-# Start ECS only once cloud-init has finished writing the host configuration.
-# Starting a unit ordered after cloud-final synchronously from user-data would
-# deadlock: cloud-init cannot finish until this script returns.
-mkdir -p /etc/systemd/system/ecs.service.d
-cat > /etc/systemd/system/ecs.service.d/cloud-init.conf <<'UNIT'
-[Unit]
-After=cloud-final.service
-UNIT
-systemctl daemon-reload
+# ecs.config is fully written above, so the ECS agent can start now. --no-block
+# avoids the first-boot deadlock: this script runs inside cloud-init, and a
+# blocking `systemctl start` would wait on an agent that is ordered after
+# cloud-init finishes, which cannot happen until this script returns.
+#
+# Do NOT add an `After=cloud-final.service` drop-in here: ecs.service is
+# WantedBy=multi-user.target, and ordering it after cloud-final creates a
+# systemd ordering cycle. On reboot (no user-data) systemd breaks the cycle by
+# deleting the ecs.service start job, so the host never rejoins the cluster.
 systemctl enable --now --no-block ecs.service
