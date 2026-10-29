@@ -44,9 +44,10 @@ variable "datadog_site" {
 }
 
 variable "datadog_app_key" {
-  description = "Datadog application key used to manage the Datadog resources (permissions listed in the README)"
+  description = "Datadog application key, required only with enable_cadr_rules=true (permissions listed in the README)"
   type        = string
   sensitive   = true
+  default     = ""
 }
 
 variable "tags" {

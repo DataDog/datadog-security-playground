@@ -8,7 +8,7 @@ The Terraform code inside this repository provides a simple way to create an EKS
 - AWS CLI: the Kubernetes and Helm providers get cluster tokens with `aws eks get-token`
 - Terraform installed (>= 1.3)
 - Datadog API key
-- Datadog application key — [Organization Settings → Application Keys](https://app.datadoghq.com/organization-settings/application-keys). With `enable_cadr_rules=true`, it also needs the `security_monitoring_cws_agent_rules_write` (agent rules) and `security_monitoring_rules_write` (backend rules) permissions
+- Datadog application key only with `enable_cadr_rules=true` — [Organization Settings → Application Keys](https://app.datadoghq.com/organization-settings/application-keys). It needs the `security_monitoring_cws_agent_rules_write` (agent rules) and `security_monitoring_rules_write` (backend rules) permissions. With rules disabled (the default), the Agent and Forwarder need only the API key
 - (Optional) Datadog site if yours differs from `datadoghq.com`.
 
 ## Deployment
@@ -44,7 +44,6 @@ Once the cluster is created, deploy the Kubernetes resources:
 
 ```bash
 terraform apply -var="datadog_api_key=YOUR_API_KEY_HERE" \
-    -var="datadog_app_key=YOUR_APP_KEY_HERE" \
     -var="datadog_site=datadoghq.com"
 ```
 
@@ -80,7 +79,6 @@ A `LoadBalancer` `langflow_service` needs `source_ranges`, each an IPv4 CIDR blo
 
 ```bash
 terraform apply -var="datadog_api_key=YOUR_API_KEY_HERE" \
-    -var="datadog_app_key=YOUR_APP_KEY_HERE" \
     -var='langflow_service={type="LoadBalancer", source_ranges=["203.0.113.10/32"], annotations={"service.beta.kubernetes.io/aws-load-balancer-type"="nlb"}}'
 terraform output -raw langflow_lb_hostname
 ```
@@ -95,7 +93,7 @@ module "playground" {
 
   region          = "us-east-1"
   datadog_api_key = var.datadog_api_key
-  datadog_app_key = var.datadog_app_key
+  # datadog_app_key is only needed with enable_cadr_rules=true.
 }
 ```
 
