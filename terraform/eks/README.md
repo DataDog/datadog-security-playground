@@ -8,7 +8,7 @@ The Terraform code inside this repository provides a simple way to create an EKS
 - AWS CLI: the Kubernetes and Helm providers get cluster tokens with `aws eks get-token`
 - Terraform installed (>= 1.3)
 - Datadog API key
-- Datadog application key — [Organization Settings → Application Keys](https://app.datadoghq.com/organization-settings/application-keys). With `enable_cadr_rules=true`, it also needs the `security_monitoring_cws_agent_rules_write` (agent rules) and `security_monitoring_rules_write` (backend rules) permissions
+- Datadog application key only with `enable_cadr_rules=true` — [Organization Settings → Application Keys](https://app.datadoghq.com/organization-settings/application-keys). It needs the `security_monitoring_cws_agent_rules_write` (agent rules) and `security_monitoring_rules_write` (backend rules) permissions. With rules disabled (the default), the Agent and Forwarder need only the API key
 - (Optional) Datadog site if yours differs from `datadoghq.com`.
 
 ## Deployment
@@ -44,7 +44,6 @@ Once the cluster is created, deploy the Kubernetes resources:
 
 ```bash
 terraform apply -var="datadog_api_key=YOUR_API_KEY_HERE" \
-    -var="datadog_app_key=YOUR_APP_KEY_HERE" \
     -var="datadog_site=datadoghq.com"
 ```
 
@@ -65,6 +64,7 @@ Each optional variable defaults to the behavior described above.
 | `region` | `eu-west-3` | AWS region |
 | `tags` | `{}` | Tags added to every AWS resource Terraform creates |
 | `enable_cloudtrail` | `true` | Collect CloudTrail logs into Datadog for Cloud SIEM (see [CloudTrail Logs](#cloudtrail-logs)); set `false` to skip |
+| `enable_eks_audit_logs_to_datadog` | `true` | Subscribe the EKS control-plane audit log group to the Datadog Forwarder so audit events reach Datadog (see [EKS Audit Logs](#eks-audit-logs)); set `false` to leave them in CloudWatch only |
 | `enable_cadr_rules` | `false` | Create the `[CADR]` agent and backend rules (see [Datadog Resources](#datadog-resources)), for agents older than 7.84 whose default rules don't cover these detections |
 | `cluster_endpoint_public_access_cidrs` | `["0.0.0.0/0"]` | CIDR blocks allowed to reach the public EKS API endpoint |
 | `access_entries` | `{}` | Extra EKS access entries, for example to give another IAM principal access to the cluster |
@@ -79,7 +79,6 @@ A `LoadBalancer` `langflow_service` needs `source_ranges`, each an IPv4 CIDR blo
 
 ```bash
 terraform apply -var="datadog_api_key=YOUR_API_KEY_HERE" \
-    -var="datadog_app_key=YOUR_APP_KEY_HERE" \
     -var='langflow_service={type="LoadBalancer", source_ranges=["203.0.113.10/32"], annotations={"service.beta.kubernetes.io/aws-load-balancer-type"="nlb"}}'
 terraform output -raw langflow_lb_hostname
 ```
@@ -94,7 +93,7 @@ module "playground" {
 
   region          = "us-east-1"
   datadog_api_key = var.datadog_api_key
-  datadog_app_key = var.datadog_app_key
+  # datadog_app_key is only needed with enable_cadr_rules=true.
 }
 ```
 
@@ -164,6 +163,24 @@ Notes:
 - The trail records every management event in the account, not only the playground's, and all of them are billed as Datadog logs and Cloud SIEM analyzed logs. In a busy shared account, or one whose CloudTrail already reaches Datadog (which duplicates logs and signals), set `enable_cloudtrail=false`.
 - AWS allows 5 trails per region per account, and a multi-region trail counts in every region: several playgrounds in one account can hit `MaximumNumberOfTrailsExceededException`.
 
+## EKS Audit Logs
+
+`audit-logs.tf` forwards the EKS control-plane audit log to Datadog, so Kubernetes audit detections work: without it, the audit log exists only in CloudWatch (managed EKS writes no audit file on the nodes the Agent could mount), and every control-plane-side detection — `User Exec into a Pod`, cluster-admin bindings, impersonation, the audit side of two-plane pod-UID correlation — sees nothing.
+
+It reuses the Datadog Forwarder Lambda from [CloudTrail Logs](#cloudtrail-logs) (creating it if `enable_cloudtrail=false`), and subscribes the log group `/aws/eks/<cluster>/cluster` to it. EKS writes raw Kubernetes audit events to the `kube-apiserver-audit-*` streams in this group. Since this module enables only audit logging, the subscription forwards the full audit stream without filtering events or projecting fields. It is **on by default**; set `enable_eks_audit_logs_to_datadog=false` to skip.
+
+Verify after the first apply:
+
+1. Wait a few minutes — audit events transit CloudWatch before the Forwarder sees them.
+2. In [Log Explorer](https://app.datadoghq.com/logs), filter `source:kubernetes.audit`: events from `audit.k8s.io` should appear. If they arrive under a different `source`, add a pipeline remapping it to `kubernetes.audit` (match on the `@aws.awslogs.logGroup` attribute), since the out-of-the-box Kubernetes audit rules query `source:kubernetes.audit`.
+3. End-to-end check: `kubectl exec` into the `playground-app` pod, then find the matching `create pods/exec` audit event with `source:kubernetes.audit @objectRef.subresource:exec`.
+
+Notes:
+
+- EKS manages the audit policy: exec requests should arrive with their request object. Verify with the end-to-end check above before writing rules that depend on request bodies.
+- Denied requests are forwarded too (no filter pattern) — several detections key on them.
+- Audit volume on a short-lived demo cluster is small; every event is billed as a Datadog log.
+
 ## What Gets Deployed
 
 ### Namespaces
@@ -176,6 +193,7 @@ Notes:
 - Ubuntu test pod for experimentation
 - Pod Identity associations for AWS IAM integration
 - Multi-region CloudTrail trail, S3 bucket, and Datadog Forwarder Lambda (unless `enable_cloudtrail=false`)
+- CloudWatch subscription sending the EKS control-plane audit log to the Forwarder (unless `enable_eks_audit_logs_to_datadog=false`)
 - `[CADR]` agent and backend detection rules (only with `enable_cadr_rules=true`)
 
 ## File Structure
@@ -185,6 +203,7 @@ Notes:
 - `datadog.tf`: Datadog provider and CSM Threats agent rules
 - `datadog-backend.tf`: Datadog backend detection rules
 - `cloudtrail.tf`: CloudTrail trail, S3 bucket, and Datadog Forwarder for Cloud SIEM
+- `audit-logs.tf`: CloudWatch subscription forwarding the EKS audit log group to the Forwarder
 - `variables.tf`: Input variables
 - `outputs.tf`: Output values
 - `terraform.tf`: Terraform and provider version constraints

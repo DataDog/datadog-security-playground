@@ -44,9 +44,10 @@ variable "datadog_site" {
 }
 
 variable "datadog_app_key" {
-  description = "Datadog application key used to manage the Datadog resources (permissions listed in the README)"
+  description = "Datadog application key, required only with enable_cadr_rules=true (permissions listed in the README)"
   type        = string
   sensitive   = true
+  default     = ""
 }
 
 variable "tags" {
@@ -60,6 +61,12 @@ variable "enable_cloudtrail" {
   type        = bool
   default     = true
   nullable    = false
+}
+
+variable "enable_eks_audit_logs_to_datadog" {
+  description = "Forward the EKS control-plane audit log (/aws/eks/<cluster>/cluster) to Datadog through the Datadog Forwarder, so the out-of-the-box Kubernetes audit detections (exec into pod, RBAC changes, ...) and the audit side of two-plane pod-UID correlation work. Creates the Forwarder even when enable_cloudtrail is false"
+  type        = bool
+  default     = true
 }
 
 variable "enable_cadr_rules" {
