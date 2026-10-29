@@ -1,14 +1,8 @@
-# Node agent image: use the dev build carrying the OTel context-propagation
-# work (datadog-agent PR #4947). The tag only exists on datadog/agent-dev
-# (the node-agent dev registry); the cluster agent has no matching dev tag,
-# so clusterAgent.image is left on the chart default.
+# Pin the node and Cluster Agent images to the stable 7.85.0 release.
 agents:
   image:
-    repository: datadog/agent-dev
-    tag: daniel-mercier-implement-otel-4947-py3
-    # The dev build tag is not semver-shaped, so skip the chart's version
-    # checks (semverCompare) that would otherwise fail on this tag.
-    doNotCheckTag: true
+    repository: gcr.io/datadoghq/agent
+    tag: "7.85.0"
 
 datadog:
   site: "datadoghq.com"
@@ -63,6 +57,9 @@ datadog:
       enabled: true
 
 clusterAgent:
+  image:
+    repository: gcr.io/datadoghq/cluster-agent
+    tag: "7.85.0"
   enabled: true
   admissionController:
     mutateUnlabelled: true

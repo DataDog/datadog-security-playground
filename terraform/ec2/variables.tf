@@ -32,7 +32,7 @@ variable "agent_image_repo" {
 }
 
 variable "agent_image_tag" {
-  description = "Tag of the Datadog Agent image to run. Defaults to a pinned release candidate, so this playground exercises Workload Protection changes before they ship and every apply gets the same Agent; override with 7 for the latest stable Agent. Requires Agent 7.46 or later."
+  description = "Tag of the Datadog Agent image to run. Defaults to stable Agent 7.85.0 so every apply gets the same Agent; override with 7 for the latest stable Agent. Requires Agent 7.46 or later."
   type        = string
-  default     = "7.83.0-rc.3"
+  default     = "7.85.0"
 }

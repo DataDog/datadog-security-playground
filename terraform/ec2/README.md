@@ -57,15 +57,13 @@ Common `datadog_site` values: `datadoghq.com`, `datadoghq.eu`,
   with `--cgroupns host`, `--pid host`,
   `--security-opt apparmor:unconfined`, the 8 Linux capabilities Workload
   Protection requires, and the documented host volume mounts. No
-  `--privileged`. The image defaults to `gcr.io/datadoghq/agent:7.83.0-rc.3`, a
-  pinned release candidate, so the playground exercises Workload Protection
-  changes before they ship and every apply gets the same Agent.
+  `--privileged`. The image defaults to `gcr.io/datadoghq/agent:7.85.0`, a
+  pinned stable release so every apply gets the same Agent.
 
 Swapping agents is a one-word override:
 
 ```bash
 terraform apply -var="agent_image_tag=7"                    # latest stable
-terraform apply -var="agent_image_tag=7.84.0-rc.1"          # a newer RC
 terraform apply -var="agent_image_repo=1234.dkr.ecr.eu-west-3.amazonaws.com/agent" \
                 -var="agent_image_tag=my-dev-build"         # your own build
 ```
