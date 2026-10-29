@@ -16,7 +16,7 @@ x-test_api_common: &test_api_common
 
 services:
   datadog-agent:
-    image: gcr.io/datadoghq/agent:7.85.0
+    image: gcr.io/datadoghq/agent:7
     environment:
       # Agent Configuration goes here
       DD_HOSTNAME: appsec-dogfooding-${USER}

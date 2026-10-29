@@ -56,6 +56,8 @@ This deploys:
 - Datadog CSM Threats agent rule `imds_v2_tracking` and the `[CADR] Cryptomining attack chain detected` backend rule, if enabled (see [Datadog Resources](#datadog-resources))
 - AWS CloudTrail collection into Datadog, unless disabled (see [CloudTrail Logs](#cloudtrail-logs))
 
+The EKS deployment pins both the node Agent and Cluster Agent to stable **7.85.0** using module-specific Helm values applied after `deploy/datadog-agent.yaml`. Use `extra_agent_values` to override these images.
+
 ## Optional Variables
 
 Each optional variable defaults to the behavior described above.
@@ -70,7 +72,7 @@ Each optional variable defaults to the behavior described above.
 | `access_entries` | `{}` | Extra EKS access entries, for example to give another IAM principal access to the cluster |
 | `exclude_zone_ids` | `[]` | Availability zone IDs never used for the cluster, for example `use1-az3`, which EKS doesn't support |
 | `datadog_helm_chart_version` | latest | Version of the `datadog` Helm chart |
-| `extra_agent_values` | `[]` | Helm values applied after `deploy/datadog-agent.yaml`, for example to pin the agent image |
+| `extra_agent_values` | `[]` | Helm values applied after the shared values and EKS Agent 7.85.0 image defaults, for example to override the agent image |
 | `playground_image` | image in `deploy/app.yaml` | Image of the `playground-app` container |
 | `langflow_image` | image in `deploy/langflow-vulnerable.yaml` | Image of the `langflow-vulnerable` container |
 | `langflow_service` | none | Service exposing `langflow-vulnerable` on port 7860 |

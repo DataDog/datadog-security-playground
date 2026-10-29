@@ -63,7 +63,7 @@ docker run -d \
   -e DD_API_KEY=dummy \
   -e HOST_PROC=/host/proc \
   -e HOST_ROOT=/host/root \
-  datadog/agent:7.85.0
+  datadog/agent:latest
 ```
 
 ### 3. Run the tests

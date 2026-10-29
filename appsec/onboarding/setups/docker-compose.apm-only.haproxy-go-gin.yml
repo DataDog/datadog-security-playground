@@ -2,7 +2,7 @@ name: appsec_dogfooding_onboarding_haproxy_go_gin
 
 services:
   datadog-agent:
-    image: gcr.io/datadoghq/agent:7.85.0
+    image: gcr.io/datadoghq/agent:7
     environment:
       DD_HOSTNAME: appsec-dogfooding-${USER}
       DD_API_KEY: ${DD_API_KEY:?DD_API_KEY must be set}
