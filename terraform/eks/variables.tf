@@ -63,7 +63,7 @@ variable "enable_cloudtrail" {
 }
 
 variable "enable_eks_audit_logs_to_datadog" {
-  description = "Forward the EKS control-plane audit log (/aws/eks/<cluster>/audit) to Datadog through the Datadog Forwarder, so the out-of-the-box Kubernetes audit detections (exec into pod, RBAC changes, ...) and the audit side of two-plane pod-UID correlation work. Creates the Forwarder even when enable_cloudtrail is false"
+  description = "Forward the EKS control-plane audit log (/aws/eks/<cluster>/cluster) to Datadog through the Datadog Forwarder, so the out-of-the-box Kubernetes audit detections (exec into pod, RBAC changes, ...) and the audit side of two-plane pod-UID correlation work. Creates the Forwarder even when enable_cloudtrail is false"
   type        = bool
   default     = true
 }

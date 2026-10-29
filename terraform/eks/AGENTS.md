@@ -15,7 +15,7 @@ This folder is run directly (two-stage apply, see README.md) and is also called 
   resources, because the user wants CloudTrail collection on by default; `enable_cadr_rules` defaults to `false`
   and drops the [CADR] rules, because the default rules of agents 7.84 and later already cover these detections;
   `enable_eks_audit_logs_to_datadog` defaults to `true` and subscribes the EKS audit log group
-  (/aws/eks/<cluster>/audit) to the Forwarder, because audit-plane detections are the point of the k8s scenarios.
+  (/aws/eks/<cluster>/cluster) to the Forwarder, because audit-plane detections are the point of the k8s scenarios.
 - Keep the CloudTrail trail multi-region: the langflow-rce credential pivot calls RunInstances outside var.region,
   so a single-region trail would miss it. The CloudTrail S3 bucket keeps force_destroy so destroy removes it with
   logs inside. The Datadog Forwarder is Datadog's CloudFormation template pinned by version in template_url; bump by

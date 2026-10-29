@@ -1,6 +1,6 @@
 # EKS audit logs -> Datadog: the control-plane (plane A) half of the two-plane
 # Kubernetes detections. On managed EKS the api server's audit log exists only
-# in CloudWatch (/aws/eks/<cluster>/audit) — there is no audit file on the nodes
+# in CloudWatch (/aws/eks/<cluster>/cluster) — there is no audit file on the nodes
 # for the Datadog Agent to mount. This file subscribes that log group to the
 # Datadog Forwarder (the same Lambda CloudTrail uses, see cloudtrail.tf) so audit
 # events reach Datadog Logs with source:kubernetes.audit, where the
@@ -12,11 +12,11 @@
 # https://docs.datadoghq.com/logs/guide/send-aws-services-logs-with-the-datadog-lambda-function/
 
 locals {
-  eks_audit_log_group_name = "/aws/eks/${module.eks.cluster_name}/audit"
-
-  # Built from known parts (like the CloudTrail trail ARN in cloudtrail.tf) so
-  # the Lambda permission can reference the log group before it exists.
-  eks_audit_log_group_arn = "arn:${data.aws_partition.current.partition}:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:${local.eks_audit_log_group_name}"
+  # Use the module outputs so the subscription and permission depend on the
+  # actual log group. EKS writes raw audit events to kube-apiserver-audit-*
+  # streams in the cluster log group; there is no separate /audit log group.
+  eks_audit_log_group_name = module.eks.cloudwatch_log_group_name
+  eks_audit_log_group_arn  = module.eks.cloudwatch_log_group_arn
 }
 
 # Let CloudWatch Logs invoke the Forwarder for the audit log group; required

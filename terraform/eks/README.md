@@ -169,7 +169,7 @@ Notes:
 
 `audit-logs.tf` forwards the EKS control-plane audit log to Datadog, so Kubernetes audit detections work: without it, the audit log exists only in CloudWatch (managed EKS writes no audit file on the nodes the Agent could mount), and every control-plane-side detection — `User Exec into a Pod`, cluster-admin bindings, impersonation, the audit side of two-plane pod-UID correlation — sees nothing.
 
-It reuses the Datadog Forwarder Lambda from [CloudTrail Logs](#cloudtrail-logs) (creating it if `enable_cloudtrail=false`), and subscribes the log group `/aws/eks/<cluster>/audit` to it. It is **on by default**; set `enable_eks_audit_logs_to_datadog=false` to skip.
+It reuses the Datadog Forwarder Lambda from [CloudTrail Logs](#cloudtrail-logs) (creating it if `enable_cloudtrail=false`), and subscribes the log group `/aws/eks/<cluster>/cluster` to it. EKS writes raw Kubernetes audit events to the `kube-apiserver-audit-*` streams in this group. Since this module enables only audit logging, the subscription forwards the full audit stream without filtering events or projecting fields. It is **on by default**; set `enable_eks_audit_logs_to_datadog=false` to skip.
 
 Verify after the first apply:
 
