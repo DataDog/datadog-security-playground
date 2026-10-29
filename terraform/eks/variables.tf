@@ -62,6 +62,12 @@ variable "enable_cloudtrail" {
   nullable    = false
 }
 
+variable "enable_eks_audit_logs_to_datadog" {
+  description = "Forward the EKS control-plane audit log (/aws/eks/<cluster>/audit) to Datadog through the Datadog Forwarder, so the out-of-the-box Kubernetes audit detections (exec into pod, RBAC changes, ...) and the audit side of two-plane pod-UID correlation work. Creates the Forwarder even when enable_cloudtrail is false"
+  type        = bool
+  default     = true
+}
+
 variable "enable_cadr_rules" {
   description = "Create the [CADR] IMDSv2 tracking agent policy and rule and the [CADR] Cryptomining attack chain detected backend rule, for agents older than 7.84 whose default rules don't cover these detections"
   type        = bool
