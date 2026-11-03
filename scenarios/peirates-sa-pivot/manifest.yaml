@@ -1,0 +1,29 @@
+# The simulated misconfiguration: the langflow-vulnerable pod's ServiceAccount
+# (playground:default) is over-granted exactly what peirates'
+# attack-pod-hostpath-mount module needs (see scenarios/peirates-sa-pivot/README.md).
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: langflow-sa-pod-creator
+  namespace: playground
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "create", "delete"]
+  - apiGroups: [""]
+    resources: ["pods/exec"]
+    verbs: ["create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: langflow-sa-pod-creator
+  namespace: playground
+subjects:
+  - kind: ServiceAccount
+    name: default
+    namespace: playground
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: langflow-sa-pod-creator
