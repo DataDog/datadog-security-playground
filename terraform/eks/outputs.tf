@@ -25,3 +25,8 @@ output "langflow_lb_hostname" {
   description = "Load balancer hostname of the langflow-vulnerable Service, when langflow_service.type is LoadBalancer"
   value       = try(kubernetes_service_v1.langflow[0].status[0].load_balancer[0].ingress[0].hostname, null)
 }
+
+output "playground_app_lb_hostname" {
+  description = "Load balancer hostname of the playground-app Service, when playground_app_service.type is LoadBalancer"
+  value       = try(kubernetes_service_v1.playground_app[0].status[0].load_balancer[0].ingress[0].hostname, null)
+}

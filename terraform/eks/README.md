@@ -74,8 +74,9 @@ Each optional variable defaults to the behavior described above.
 | `playground_image` | image in `deploy/app.yaml` | Image of the `playground-app` container |
 | `langflow_image` | image in `deploy/langflow-vulnerable.yaml` | Image of the `langflow-vulnerable` container |
 | `langflow_service` | none | Service exposing `langflow-vulnerable` on port 7860 |
+| `playground_app_service` | none | Service exposing `playground-app` on port 5000 |
 
-A `LoadBalancer` `langflow_service` needs `source_ranges`, each an IPv4 CIDR block no broader than `/16`: `langflow-vulnerable` is exploitable (CVE-2025-3248). For example, to reach it from a single IP through a Network Load Balancer:
+A `LoadBalancer` `langflow_service` or `playground_app_service` needs `source_ranges`, each an IPv4 CIDR block no broader than `/16`: both apps are exploitable (`langflow-vulnerable` through CVE-2025-3248, `playground-app` by design). The `langflow_lb_hostname` and `playground_app_lb_hostname` outputs give each load balancer's hostname. For example, to reach Langflow from a single IP through a Network Load Balancer:
 
 ```bash
 terraform apply -var="datadog_api_key=YOUR_API_KEY_HERE" \
