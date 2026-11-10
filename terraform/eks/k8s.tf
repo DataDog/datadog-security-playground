@@ -189,3 +189,26 @@ resource "kubernetes_service_v1" "langflow" {
   }
 }
 
+resource "kubernetes_service_v1" "playground_app" {
+  count = var.playground_app_service == null ? 0 : 1
+
+  metadata {
+    name        = "playground-app"
+    namespace   = kubernetes_namespace.playground.metadata[0].name
+    annotations = var.playground_app_service.annotations
+  }
+
+  spec {
+    type                        = var.playground_app_service.type
+    selector                    = local.playground_app.spec.selector.matchLabels
+    load_balancer_source_ranges = var.playground_app_service.source_ranges
+
+    # deploy/app.yaml names no container port; gunicorn listens on 5000 (app/Dockerfile).
+    port {
+      name        = "http"
+      port        = 5000
+      target_port = 5000
+    }
+  }
+}
+

@@ -146,3 +146,33 @@ variable "langflow_service" {
     error_message = "A LoadBalancer langflow_service needs source_ranges, each an IPv4 CIDR block no broader than /16: langflow-vulnerable is exploitable (CVE-2025-3248)."
   }
 }
+
+variable "playground_app_service" {
+  description = "Service exposing playground-app on port 5000; null creates none"
+  type = object({
+    type          = optional(string, "ClusterIP")
+    source_ranges = optional(list(string), [])
+    annotations   = optional(map(string), {})
+  })
+  default = null
+
+  validation {
+    condition     = var.playground_app_service == null ? true : contains(["ClusterIP", "NodePort", "LoadBalancer"], var.playground_app_service.type)
+    error_message = "playground_app_service.type must be ClusterIP, NodePort, or LoadBalancer."
+  }
+
+  validation {
+    condition     = var.playground_app_service == null ? true : var.playground_app_service.type == "LoadBalancer" || length(var.playground_app_service.source_ranges) == 0
+    error_message = "playground_app_service.source_ranges only applies when playground_app_service.type is LoadBalancer."
+  }
+
+  validation {
+    condition = var.playground_app_service == null ? true : (
+      var.playground_app_service.type != "LoadBalancer" || (
+        length(var.playground_app_service.source_ranges) > 0 &&
+        alltrue([for r in var.playground_app_service.source_ranges : try(tonumber(regex("^[0-9.]+/([0-9]+)$", r)[0]) >= 16, false)])
+      )
+    )
+    error_message = "A LoadBalancer playground_app_service needs source_ranges, each an IPv4 CIDR block no broader than /16: playground-app is exploitable by design (command injection, SSRF, and file inclusion)."
+  }
+}
