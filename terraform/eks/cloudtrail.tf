@@ -20,6 +20,10 @@ locals {
   cloudtrail_trail_name     = "${local.cluster_name}-trail"
   cloudtrail_forwarder_name = "security-playground-forwarder-${random_string.suffix.result}"
 
+  # The Forwarder serves CloudTrail (cloudtrail.tf) and the EKS audit log group
+  # (audit-logs.tf): create it when either is enabled.
+  forwarder_enabled = var.enable_cloudtrail || var.enable_eks_audit_logs_to_datadog
+
   # Built from known parts so the bucket policy can reference the trail without a
   # dependency cycle (the trail needs the bucket policy to exist before it starts).
   cloudtrail_trail_arn = "arn:${data.aws_partition.current.partition}:cloudtrail:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:trail/${local.cloudtrail_trail_name}"
@@ -135,9 +139,11 @@ resource "aws_cloudtrail" "playground" {
 
 # Datadog's published Forwarder, pinned. Bump by changing the version in the URL;
 # latest.yaml tracks the newest release. The template stores the API key in its
-# own Secrets Manager secret rather than in the Lambda environment.
+# own Secrets Manager secret rather than in the Lambda environment. Shared by
+# CloudTrail (S3 trigger below) and the EKS audit log group (audit-logs.tf), so
+# it is created when either is enabled.
 resource "aws_cloudformation_stack" "forwarder" {
-  count = var.enable_cloudtrail ? 1 : 0
+  count = local.forwarder_enabled ? 1 : 0
 
   name         = local.cloudtrail_forwarder_name
   template_url = "https://datadog-cloudformation-template.s3.amazonaws.com/aws/forwarder/5.4.16.yaml"
@@ -192,6 +198,6 @@ output "cloudtrail_trail_arn" {
 }
 
 output "datadog_forwarder_arn" {
-  description = "ARN of the Datadog Forwarder Lambda shipping CloudTrail logs to Datadog, or null when CloudTrail is disabled"
+  description = "ARN of the Datadog Forwarder Lambda shipping CloudTrail and EKS audit logs to Datadog, or null when both are disabled"
   value       = try(aws_cloudformation_stack.forwarder[0].outputs["DatadogForwarderArn"], null)
 }

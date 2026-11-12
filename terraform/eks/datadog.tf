@@ -1,10 +1,14 @@
 # Datadog resources. The API key can be the same one the agent uses; the app
-# key needs the permissions listed in the README.
+# key is only needed when enable_cadr_rules is true (permissions in README).
 
 provider "datadog" {
   api_key = var.datadog_api_key
   app_key = var.datadog_app_key
   api_url = "https://api.${var.datadog_site}"
+
+  # With rules disabled there are no Datadog resources to manage. The Agent
+  # and Forwarder send telemetry with the API key alone.
+  validate = var.enable_cadr_rules
 }
 
 # Scoped to the playground agents: env:playground-env, from DD_ENV in deploy/datadog-agent.yaml.
