@@ -100,7 +100,7 @@ variable "datadog_helm_chart_version" {
 }
 
 variable "extra_agent_values" {
-  description = "Helm values (YAML strings) applied after deploy/datadog-agent.yaml, for example to pin the agent image"
+  description = "Helm values (YAML strings) applied after the shared values and EKS Agent 7.85.0 image defaults, for example to override the agent image"
   type        = list(string)
   default     = []
 }

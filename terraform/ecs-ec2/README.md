@@ -149,15 +149,13 @@ section; if it reports that it cannot reach
   volume mounts from the ECS Workload Protection setup. Host PID and cgroup
   namespaces and an unconfined AppArmor profile match the Docker setup on Ubuntu;
   the Agent is not privileged. The image
-  defaults to `gcr.io/datadoghq/agent:7.83.0-rc.3`, a pinned release candidate,
-  so the playground exercises Workload Protection changes before they ship and
-  every apply gets the same Agent.
+  defaults to `gcr.io/datadoghq/agent:7.85.0`, a pinned stable release
+  so every apply gets the same Agent.
 
 Swapping agents is a one-word override:
 
 ```bash
 terraform apply -var="agent_image_tag=7"                    # latest stable
-terraform apply -var="agent_image_tag=7.84.0-rc.1"          # a newer RC
 terraform apply -var="agent_image_repo=1234.dkr.ecr.eu-west-3.amazonaws.com/agent" \
                 -var="agent_image_tag=my-dev-build"         # your own build
 ```

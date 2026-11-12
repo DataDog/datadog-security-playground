@@ -107,7 +107,25 @@ resource "helm_release" "datadog_agent" {
   }
 
   values = concat(
-    [file("${path.module}/../../deploy/datadog-agent.yaml")],
+    [
+      file("${path.module}/../../deploy/datadog-agent.yaml"),
+      # Pin Terraform's EKS deployment; caller overrides are applied last.
+      yamlencode({
+        agents = {
+          image = {
+            repository    = "gcr.io/datadoghq/agent"
+            tag           = "7.85.0"
+            doNotCheckTag = false
+          }
+        }
+        clusterAgent = {
+          image = {
+            repository = "gcr.io/datadoghq/cluster-agent"
+            tag        = "7.85.0"
+          }
+        }
+      }),
+    ],
     var.extra_agent_values,
   )
 }
