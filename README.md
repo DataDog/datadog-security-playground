@@ -232,6 +232,20 @@ kubectl port-forward -n playground deployment/langflow-vulnerable 7860:7860
 kubectl exec -it -n playground deploy/playground-app -- /scenarios/cloud-access/detonate.sh --wait
 ```
 
+#### 3b. ECS EC2 - RCE → Task Credential Theft → Attempted EC2 Launch (Task-ID Correlation)
+- **Location**: `scenarios/ecs-ec2-cloud-access/`
+- **Description**: The ECS-on-EC2 variant of the cloud-access chain, driven from the attacker's machine through an SSM port-forward. Steals AWS credentials from both IMDS (instance profile) and the ECS task credential endpoint (task role), then attempts EC2 instance launches across 8 regions with the stolen task-role credentials. All attempts fail by design (deny-all task role + invalid AMI), but every CloudTrail event is attributed to the ECS task ID (task credentials use the task ID as the role session name), which is the correlation this scenario demonstrates.
+- **Attack Vector**: RCE via the /inject shim, IMDS and ECS credential endpoint theft, unauthorized EC2 instance launches
+- **Impact**: Task-attributable cloud credential theft, attempted resource provisioning
+- **Detection**: CloudTrail RunInstances events attributed to the task ID, Workload Protection correlation signals (Cryptomining attack chain, high)
+- **Technical Features**: Task-ID correlation in CloudTrail, cgroup correlation keys, severity tuning (high without critical)
+
+**How to Run:**
+```bash
+# Port-forward the app first (see the scenario README), then:
+./scenarios/ecs-ec2-cloud-access/detonate.sh --endpoint http://localhost:5000
+```
+
 #### 4. BPFDoor Network Backdoor Attack
 - **Location**: `scenarios/bpfdoor/`
 - **Description**: Simulates a command injection attack that deploys a persistent BPFDoor network backdoor
