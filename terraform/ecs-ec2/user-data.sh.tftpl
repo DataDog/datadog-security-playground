@@ -8,6 +8,12 @@ set -euxo pipefail
 
 export DEBIAN_FRONTEND=noninteractive
 
+# Unattended upgrades re-executed systemd on 2026-11-14 (apt-daily-upgrade),
+# which broke the Datadog agent's process lineage (CWS-7353) and killed every
+# correlation_key context rule on this host. Keep the playground predictable:
+# no surprise systemd/containerd restarts mid-detonation.
+systemctl disable --now apt-daily.timer apt-daily-upgrade.timer
+
 # DPkg::Lock::Timeout waits for unattended-upgrades to release the dpkg lock
 # rather than failing, which it otherwise does routinely in the first minutes
 # of a fresh boot. Note this script runs under `set -e`, so any apt failure
