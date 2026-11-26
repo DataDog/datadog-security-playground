@@ -148,12 +148,20 @@ terraform apply -var="datadog_api_key=YOUR_API_KEY_HERE" \
     -var="datadog_site=datadoghq.com" \
     -var="enable_cadr_rules=true" \
     -target=datadog_csm_threats_agent_rule.imds_v2_tracking \
+    -target=datadog_security_monitoring_rule.cryptomining_attack_chain_detected
+```
+
+To apply only the langflow blocking policy (separate command from the CADR resources):
+
+```bash
+terraform apply -var="datadog_api_key=YOUR_API_KEY_HERE" \
+    -var="datadog_app_key=YOUR_APP_KEY_HERE" \
+    -var="datadog_site=datadoghq.com" \
     -target=datadog_csm_threats_policy.langflow_blocking \
     -target=datadog_csm_threats_agent_rule.package_management_in_container_v2_blocking \
     -target=datadog_csm_threats_agent_rule.new_binary_execution_in_container_v2_blocking \
     -target=datadog_csm_threats_agent_rule.tty_shell_in_container_blocking \
-    -target=datadog_csm_threats_agent_rule.cryptominer_args_blocking \
-    -target=datadog_security_monitoring_rule.cryptomining_attack_chain_detected
+    -target=datadog_csm_threats_agent_rule.cryptominer_args_blocking
 ```
 
 ### Backend Rules
