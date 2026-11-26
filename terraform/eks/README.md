@@ -132,6 +132,14 @@ aws eks --region $(terraform output -raw region) update-kubeconfig \
 
 - The `[CADR] IMDSv2 tracking` policy and its `imds_v2_tracking` agent rule: tracks IMDSv2 responses carrying AWS HMAC credentials; the rule's events are consumed by backend rules via `@agent.rule_id:imds_v2_tracking`. The policy is scoped to hosts tagged `env:playground-env` (from `DD_ENV` in `deploy/datadog-agent.yaml`), so it doesn't apply to hosts outside this playground.
 
+### Langflow Blocking Policy
+
+`datadog.tf` also creates the `langflow-blocking` policy with four `_blocking` clones of the default container rules (`package_management_in_container_v2`, `new_binary_execution_in_container_v2`, `tty_shell_in_container`, `cryptominer_args`), scoped to the playground agents (`env:playground-env`). They are created **without** kill actions:
+
+- the Terraform provider does not expose the kill action or its `disable_container_disarmer` / `disable_executable_disarmer` flags yet (verified against v4.32.0), so the kill action is added manually to each rule via the API or UI after `terraform apply`;
+- any later `terraform apply` that modifies these rules sends an empty actions list and **wipes the manually-added kill actions** — re-add them after applying;
+- kill actions only take effect because `deploy/datadog-agent.yaml` disables both runtime-security disarmers (`DD_RUNTIME_SECURITY_CONFIG_ENFORCEMENT_DISARMER_CONTAINER_ENABLED=false` and `DD_RUNTIME_SECURITY_CONFIG_ENFORCEMENT_DISARMER_EXECUTABLE_ENABLED=false`); with the disarmers enabled (the agent default) kill actions are silently disarmed and the rules only detect.
+
 To apply only the Datadog resources, without touching the cluster:
 
 ```bash
@@ -140,6 +148,11 @@ terraform apply -var="datadog_api_key=YOUR_API_KEY_HERE" \
     -var="datadog_site=datadoghq.com" \
     -var="enable_cadr_rules=true" \
     -target=datadog_csm_threats_agent_rule.imds_v2_tracking \
+    -target=datadog_csm_threats_policy.langflow_blocking \
+    -target=datadog_csm_threats_agent_rule.package_management_in_container_v2_blocking \
+    -target=datadog_csm_threats_agent_rule.new_binary_execution_in_container_v2_blocking \
+    -target=datadog_csm_threats_agent_rule.tty_shell_in_container_blocking \
+    -target=datadog_csm_threats_agent_rule.cryptominer_args_blocking \
     -target=datadog_security_monitoring_rule.cryptomining_attack_chain_detected
 ```
 
