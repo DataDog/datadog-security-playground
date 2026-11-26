@@ -134,7 +134,7 @@ aws eks --region $(terraform output -raw region) update-kubeconfig \
 
 ### Langflow Blocking Policy
 
-`datadog.tf` also creates the `langflow-blocking` policy with four `_blocking` clones of the default container rules (`package_management_in_container_v2`, `new_binary_execution_in_container_v2`, `tty_shell_in_container`, `cryptominer_args`), scoped to the playground agents (`env:playground-env`). They are created **without** kill actions:
+`datadog-langflow-blocking.tf` creates the `langflow-blocking` policy with four `_blocking` clones of the default container rules (`package_management_in_container_v2`, `new_binary_execution_in_container_v2`, `tty_shell_in_container`, `cryptominer_args`), scoped to the playground agents (`env:playground-env`). They are created **without** kill actions:
 
 - the Terraform provider does not expose the kill action or its `disable_container_disarmer` / `disable_executable_disarmer` flags yet (verified against v4.32.0), so the kill action is added manually to each rule via the API or UI after `terraform apply`;
 - any later `terraform apply` that modifies these rules sends an empty actions list and **wipes the manually-added kill actions** — re-add them after applying;
@@ -207,6 +207,7 @@ Notes:
 - `main.tf`: EKS cluster, VPC, and provider configurations
 - `k8s.tf`: Kubernetes resources (namespaces, deployments, etc.)
 - `datadog.tf`: Datadog provider and CSM Threats agent rules
+- `datadog-langflow-blocking.tf`: langflow `langflow-blocking` policy and its blocking agent-rule clones
 - `datadog-backend.tf`: Datadog backend detection rules
 - `cloudtrail.tf`: CloudTrail trail, S3 bucket, and Datadog Forwarder for Cloud SIEM
 - `variables.tf`: Input variables
