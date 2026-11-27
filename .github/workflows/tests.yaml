@@ -83,6 +83,12 @@ jobs:
         run: docker load -i playground-app.tar.gz
 
       - name: Start DD Agent container
+        # Agent image pinned: latest rolled to 7.86.0 (2026-11-23), which
+        # breaks this harness — its runtime-security event stream dials the
+        # test's plaintext gRPC server with TLS creds (handshake failure),
+        # so system-probe never connects. 7.85.4 is the last version that
+        # passed as `latest`. Re-pin to a newer version once the test server
+        # speaks TLS (or the agent offers a plaintext knob).
         run: |
           # Docker would create it root-owned, leaving pytest unable to create its socket in it
           mkdir -p /tmp/playground-tests
@@ -114,7 +120,7 @@ jobs:
             -e DD_API_KEY=dummy \
             -e HOST_PROC=/host/proc \
             -e HOST_ROOT=/host/root \
-            datadog/agent:latest
+            datadog/agent:7.85.4
 
       - name: Start playground app container
         run: |
