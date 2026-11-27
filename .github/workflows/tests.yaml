@@ -2,7 +2,8 @@ name: Tests
 
 on:
   push:
-    branches: [main]
+    # The merge queue waits for these checks on its working branches.
+    branches: [main, "mq-working-branch-**"]
   pull_request:
 
 permissions:

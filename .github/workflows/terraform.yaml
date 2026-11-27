@@ -1,14 +1,10 @@
 name: Terraform
 
+# Not path-filtered: the check is required, and a workflow that never starts never reports it.
 on:
   push:
-    branches: [main]
-    paths:
-      - "terraform/eks/**"
-      - "terraform/ecs-ec2/**"
-      - "deploy/**"
-      - ".github/workflows/terraform.yaml"
-  # Not path-filtered: the check is required, and a workflow that never starts never reports it.
+    # The merge queue waits for these checks on its working branches.
+    branches: [main, "mq-working-branch-**"]
   pull_request:
 
 permissions:
