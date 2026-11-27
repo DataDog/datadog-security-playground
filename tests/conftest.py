@@ -25,7 +25,7 @@ logger = logging.getLogger("tests")
 # Configuration
 # =============================================================================
 
-DEFAULT_SERVER_PORT = 10000
+DEFAULT_SERVER_SOCKET = "/tmp/playground-tests/runtime-security.sock"
 CONNECTION_TIMEOUT = 120  # seconds to wait for system-probe connection
 POST_CONNECTION_DELAY = 5  # seconds to wait after connection before tests
 DEFAULT_APP_URL = "http://localhost:5000"
@@ -43,14 +43,14 @@ def test_server():
     Starts before any tests run, waits for system-probe to connect,
     and stops after all tests complete.
     """
-    port = int(os.environ.get("TEST_SERVER_PORT", DEFAULT_SERVER_PORT))
+    socket_path = os.environ.get("TEST_SERVER_SOCKET", DEFAULT_SERVER_SOCKET)
     verbose = os.environ.get("TEST_SERVER_VERBOSE", "").lower() in ("1", "true", "yes")
     timeout = float(os.environ.get("CONNECTION_TIMEOUT", CONNECTION_TIMEOUT))
 
-    server = EventServer(port=port, verbose=verbose)
+    server = EventServer(socket_path=socket_path, verbose=verbose)
     server.start()
 
-    logger.info(f"Test server started on port {port}")
+    logger.info(f"Test server listening on {socket_path}")
     logger.info(f"Waiting for system-probe to connect (timeout={timeout}s)...")
 
     if not server.wait_for_connection(timeout=timeout):
@@ -58,7 +58,7 @@ def test_server():
         pytest.fail(
             f"system-probe did not connect within {timeout}s. "
             f"Make sure the DD Agent is running with runtime security enabled and "
-            f"configured to forward events to localhost:{port}"
+            f"configured to forward events to {socket_path}"
         )
 
     delay = float(os.environ.get("POST_CONNECTION_DELAY", POST_CONNECTION_DELAY))

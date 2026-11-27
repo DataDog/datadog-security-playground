@@ -6,7 +6,7 @@ These tests verify the Datadog Agent properly detects security events triggered 
 
 ```
 pytest process
-├── gRPC test server (port 10000) ← receives security events from the agent
+├── gRPC test server (Unix socket /tmp/playground-tests/runtime-security.sock) ← receives security events from the agent
 ├── AppClient → sends commands to the playground /inject endpoint
 └── test assertions (check rule IDs in received events)
 ```
@@ -35,7 +35,10 @@ docker run -d --name playground-app --net=host playground-app
 
 ### 2. Start the DD Agent with runtime security enabled
 
+The agent sends events to the test server over a Unix socket in `/tmp/playground-tests`, shared with the agent container. Create that directory first, otherwise Docker creates it owned by root and the test server can't create its socket there.
+
 ```bash
+mkdir -p /tmp/playground-tests
 docker run -d \
   --name dd-agent \
   --cgroupns=host \
@@ -58,6 +61,7 @@ docker run -d \
   -v /proc/:/host/proc/:ro \
   -v /:/host/root:ro \
   -v /sys/kernel/debug:/sys/kernel/debug \
+  -v /tmp/playground-tests:/tmp/playground-tests \
   -v $(pwd)/tests/agent_config/system-probe.yaml:/etc/datadog-agent/system-probe.yaml:ro \
   -e DD_RUNTIME_SECURITY_CONFIG_ENABLED=true \
   -e DD_API_KEY=dummy \
@@ -83,7 +87,7 @@ docker rm -f dd-agent playground-app
 
 | Variable | Default | Description |
 |---|---|---|
-| `TEST_SERVER_PORT` | `10000` | gRPC server port |
+| `TEST_SERVER_SOCKET` | `/tmp/playground-tests/runtime-security.sock` | gRPC server Unix socket, must match `runtime_security_config.socket` in `agent_config/system-probe.yaml` |
 | `TEST_SERVER_VERBOSE` | `false` | Log every received event |
 | `CONNECTION_TIMEOUT` | `120` | Seconds to wait for the agent to connect |
 | `POST_CONNECTION_DELAY` | `5` | Seconds to wait after connection before running tests |

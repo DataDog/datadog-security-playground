@@ -1,3 +1,4 @@
 runtime_security_config:
   event_grpc_server: security-agent
-  socket: localhost:10000
+  # Unix socket: since Agent 7.86, TCP requires the Agent IPC TLS certificate and auth token.
+  socket: /tmp/playground-tests/runtime-security.sock
