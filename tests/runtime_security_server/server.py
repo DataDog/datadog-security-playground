@@ -106,15 +106,15 @@ class EventServer:
     gRPC test server that receives security events from the DD Agent.
 
     Usage:
-        server = EventServer(port=10000)
+        server = EventServer(socket_path="/tmp/playground-tests/runtime-security.sock")
         server.start()
         server.wait_for_connection(timeout=120)
         # ... run tests ...
         server.stop()
     """
 
-    def __init__(self, port: int = 10000, verbose: bool = False):
-        self.port = port
+    def __init__(self, socket_path: str, verbose: bool = False):
+        self.socket_path = socket_path
         self.verbose = verbose
         self.event_store = EventStore()
         self._server: grpc.Server | None = None
@@ -132,12 +132,12 @@ class EventServer:
             verbose=self.verbose,
         )
         api_pb2_grpc.add_SecurityAgentAPIServicer_to_server(servicer, self._server)
-        self._server.add_insecure_port(f"[::]:{self.port}")
+        self._server.add_insecure_port(f"unix:{self.socket_path}")
         self._server.start()
         self._started = True
 
         if self.verbose:
-            logger.info(f"Started on port {self.port}")
+            logger.info(f"Started on {self.socket_path}")
 
     def wait_for_connection(self, timeout: float = 60.0) -> bool:
         if self.verbose:
