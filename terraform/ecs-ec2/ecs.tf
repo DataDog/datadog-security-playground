@@ -143,6 +143,35 @@ resource "aws_ecs_service" "datadog_agent" {
 }
 
 ################################################################################
+# App task role
+################################################################################
+
+# The app task assumes a role that DENIES EVERYTHING. Credentials for this role
+# are served to the container by the ECS agent on the task credential endpoint
+# (169.254.170.2) and are minted with the ECS TASK ID AS THE ROLE SESSION NAME,
+# so any CloudTrail event signed with them is attributed to the task. Attack
+# scenarios (scenarios/ecs-ec2-cloud-access) steal these credentials and
+# attempt API calls: every call fails, but the CloudTrail events provide the
+# task-ID correlation the scenario demonstrates.
+resource "aws_iam_role" "app_task" {
+  name               = "${local.cluster_name}-app-task-role"
+  assume_role_policy = data.aws_iam_policy_document.ecs_tasks_assume_role.json
+}
+
+resource "aws_iam_role_policy" "app_task_deny_all" {
+  name = "deny-everything"
+  role = aws_iam_role.app_task.id
+  policy = jsonencode({
+    Version   = "2012-10-17"
+    Statement = [{
+      Effect   = "Deny"
+      Action   = "*"
+      Resource = "*"
+    }]
+  })
+}
+
+################################################################################
 # Playground application
 ################################################################################
 
@@ -151,6 +180,10 @@ resource "aws_ecs_task_definition" "app" {
   requires_compatibilities = ["EC2"]
   network_mode             = "bridge"
   execution_role_arn       = aws_iam_role.task_execution.arn
+
+  # Task-role credentials are task-attributable in CloudTrail (session name ==
+  # task ID) but the role denies everything. See aws_iam_role.app_task above.
+  task_role_arn = aws_iam_role.app_task.arn
 
   container_definitions = jsonencode([
     {
