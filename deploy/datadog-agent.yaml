@@ -51,6 +51,15 @@ datadog:
       value: "true"
     - name: DD_REMOTE_CONFIGURATION_REFRESH_INTERVAL
       value: "5s"
+    # Agent-side disarmers are safeguards that automatically strip kill
+    # actions from agent rules (so blocking rules only detect). Disable both
+    # so kill actions added to blocking rules are actually enforced. These
+    # map to runtime_security_config.enforcement.disarmer.container.enabled
+    # and runtime_security_config.enforcement.disarmer.executable.enabled.
+    - name: DD_RUNTIME_SECURITY_CONFIG_ENFORCEMENT_DISARMER_CONTAINER_ENABLED
+      value: "false"
+    - name: DD_RUNTIME_SECURITY_CONFIG_ENFORCEMENT_DISARMER_EXECUTABLE_ENABLED
+      value: "false"
   securityAgent:
     runtime:
       enabled: true
